@@ -1,0 +1,302 @@
+[
+  {
+    "id": "t01",
+    "rawMessage": "Can you explain what this function does and tell me if there are any obvious issues?",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Simple explanation task — no code changes, low risk, cheap tier sufficient",
+    "safetyNotes": "No safety concerns",
+    "expectedTaskType": "explanation"
+  },
+  {
+    "id": "t02",
+    "rawMessage": "Rename the variable userID to userId throughout this file",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Simple rename — no logic change, cheap tier more than sufficient",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "simple_edit"
+  },
+  {
+    "id": "t03",
+    "rawMessage": "Write unit tests for the validateUser function covering happy path and edge cases",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Test generation — no prod code changes, cheap or mid tier fine",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "test_generation"
+  },
+  {
+    "id": "t04",
+    "rawMessage": "Fix the bug where the pagination resets to page 1 when the user sorts the table",
+    "expectedTier": "mid",
+    "acceptableTiers": ["cheap", "mid", "strong"],
+    "unacceptableTiers": [],
+    "rationale": "UI bug fix — low risk, cheap or mid both acceptable",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "local_bug_fix"
+  },
+  {
+    "id": "t05",
+    "rawMessage": "Update the button color from blue to indigo and increase the border radius",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Pure CSS/style change — trivially low risk",
+    "safetyNotes": "No risk",
+    "expectedTaskType": "ui_change"
+  },
+  {
+    "id": "t06",
+    "rawMessage": "Add rate limiting to this Next.js API route and validate the request body with Zod. Follow the same pattern as the other API route we edited earlier.",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "API implementation with runtime behavior changes — mid tier minimum",
+    "safetyNotes": "Rate limiting affects production behavior",
+    "expectedTaskType": "api_implementation"
+  },
+  {
+    "id": "t07",
+    "rawMessage": "Refactor the user service to extract the email sending logic into a separate EmailService class and update all callers",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Multi-file refactor — coordinated changes required, cheap not safe",
+    "safetyNotes": "All callers must be updated",
+    "expectedTaskType": "multi_file_refactor"
+  },
+  {
+    "id": "t08",
+    "rawMessage": "Add a new column 'last_login_at' to the users table and create a Prisma migration",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Database schema change — data integrity risk requires mid minimum",
+    "safetyNotes": "Migration must be reversible",
+    "expectedTaskType": "database_schema_change"
+  },
+  {
+    "id": "t09",
+    "rawMessage": "Refactor the JWT authentication middleware to support both RS256 and HS256 algorithms. Don't break the existing session refresh flow and keep the admin role check intact.",
+    "expectedTier": "strong",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Security-sensitive auth change — mid minimum, strong strongly preferred",
+    "safetyNotes": "JWT algorithm changes can silently break auth flows",
+    "expectedTaskType": "security_sensitive_change"
+  },
+  {
+    "id": "t10",
+    "rawMessage": "Design the overall architecture for our new event-driven notification system. We need to handle email, SMS, and push notifications with retry logic and dead letter queues.",
+    "expectedTier": "strong",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Architecture design — complex reasoning required, mid minimum",
+    "safetyNotes": "Design quality directly impacts implementation",
+    "expectedTaskType": "architecture_design"
+  },
+  {
+    "id": "t11",
+    "rawMessage": "Add a loading spinner to the UserProfile component while the data is fetching",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Simple UI enhancement — low risk",
+    "safetyNotes": "No risk",
+    "expectedTaskType": "ui_change"
+  },
+  {
+    "id": "t12",
+    "rawMessage": "Write integration tests for the /api/orders endpoint covering 200, 400, and 401 status codes",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Test writing — no prod code touched",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "test_generation"
+  },
+  {
+    "id": "t13",
+    "rawMessage": "Fix the TypeScript error: Type 'string | undefined' is not assignable to type 'string' in the getUserName function",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Simple type fix — narrow scope, low risk",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "local_bug_fix"
+  },
+  {
+    "id": "t14",
+    "rawMessage": "Implement the forgot-password flow: send a time-limited reset token via email, validate it on submission, and hash the new password with bcrypt",
+    "expectedTier": "strong",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Auth + security + password hashing — high risk, needs strong model",
+    "safetyNotes": "Token timing, bcrypt parameters, email validation all critical",
+    "expectedTaskType": "security_sensitive_change"
+  },
+  {
+    "id": "t15",
+    "rawMessage": "Add a created_at index to the orders table migration. The table has 50 million rows.",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "DB migration on large table — medium/high risk, mid minimum",
+    "safetyNotes": "50M row migration needs concurrent index strategy",
+    "expectedTaskType": "database_schema_change"
+  },
+  {
+    "id": "t16",
+    "rawMessage": "Explain the difference between optimistic and pessimistic locking and when to use each",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Pure explanation — no code changes",
+    "safetyNotes": "No risk",
+    "expectedTaskType": "explanation"
+  },
+  {
+    "id": "t17",
+    "rawMessage": "Move all the API route handlers from routes.ts into separate controller files following the existing pattern",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Multi-file refactor — many files touched, cheap too risky",
+    "safetyNotes": "All routes must be preserved",
+    "expectedTaskType": "multi_file_refactor"
+  },
+  {
+    "id": "t18",
+    "rawMessage": "Add Stripe webhook handler for payment.succeeded and payment.failed events with idempotency key validation",
+    "expectedTier": "strong",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Payment webhook — financial + security critical, strong preferred",
+    "safetyNotes": "Idempotency and webhook signature validation must be correct",
+    "expectedTaskType": "security_sensitive_change"
+  },
+  {
+    "id": "t19",
+    "rawMessage": "Add a tooltip to the Delete button that shows 'This action cannot be undone'",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Trivial UI addition — zero risk",
+    "safetyNotes": "No risk",
+    "expectedTaskType": "simple_edit"
+  },
+  {
+    "id": "t20",
+    "rawMessage": "Rewrite this verbose prompt to be shorter and more direct while keeping all the requirements",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Prompt rewrite only — meta task, no code",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "prompt_rewrite_only"
+  },
+  {
+    "id": "t21",
+    "rawMessage": "Generate Zod schemas for all our existing TypeScript interfaces in the types.ts file",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Mechanical schema generation from types — low risk",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "test_generation"
+  },
+  {
+    "id": "t22",
+    "rawMessage": "Fix the N+1 query problem in the getOrdersWithItems function — it's making one DB query per item",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "DB query optimization — performance-critical, medium risk",
+    "safetyNotes": "Wrong fix could make queries slower or incorrect",
+    "expectedTaskType": "local_bug_fix"
+  },
+  {
+    "id": "t23",
+    "rawMessage": "Design the microservices split for our current monolithic Express app — identify service boundaries and data ownership",
+    "expectedTier": "strong",
+    "acceptableTiers": ["strong"],
+    "unacceptableTiers": ["cheap", "mid"],
+    "rationale": "High-complexity architecture design — strong model only",
+    "safetyNotes": "Wrong service boundaries are very expensive to fix",
+    "expectedTaskType": "architecture_design"
+  },
+  {
+    "id": "t24",
+    "rawMessage": "Add role-based access control so only admins can access the /admin routes",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Authorization change — security sensitive, mid minimum",
+    "safetyNotes": "Incorrect RBAC can expose admin functionality to users",
+    "expectedTaskType": "security_sensitive_change"
+  },
+  {
+    "id": "t25",
+    "rawMessage": "Add console.log statements to debug the order processing flow",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Debug logging addition — trivially low risk",
+    "safetyNotes": "No risk",
+    "expectedTaskType": "simple_edit"
+  },
+  {
+    "id": "t26",
+    "rawMessage": "Write a comprehensive test suite for the payment processing module including edge cases for network failures and partial refunds",
+    "expectedTier": "mid",
+    "acceptableTiers": ["cheap", "mid", "strong"],
+    "unacceptableTiers": [],
+    "rationale": "Test writing — comprehensive but still test-only, no prod code touched",
+    "safetyNotes": "Low risk",
+    "expectedTaskType": "test_generation"
+  },
+  {
+    "id": "t27",
+    "rawMessage": "Update all 50 API routes to add the new X-Request-ID header and log it",
+    "expectedTier": "mid",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "Repo-wide change across many files — cheap too risky for consistency",
+    "safetyNotes": "All routes must be updated consistently",
+    "expectedTaskType": "multi_file_refactor"
+  },
+  {
+    "id": "t28",
+    "rawMessage": "Add input sanitization to prevent XSS attacks in the user comment display component",
+    "expectedTier": "strong",
+    "acceptableTiers": ["mid", "strong"],
+    "unacceptableTiers": ["cheap"],
+    "rationale": "XSS prevention — security critical, strong preferred",
+    "safetyNotes": "Incomplete sanitization leaves XSS vulnerability",
+    "expectedTaskType": "security_sensitive_change"
+  },
+  {
+    "id": "t29",
+    "rawMessage": "Change the date format in the invoice PDF from MM/DD/YYYY to DD/MM/YYYY",
+    "expectedTier": "cheap",
+    "acceptableTiers": ["cheap", "mid"],
+    "unacceptableTiers": [],
+    "rationale": "Simple format change — one function, zero risk",
+    "safetyNotes": "No risk",
+    "expectedTaskType": "simple_edit"
+  },
+  {
+    "id": "t30",
+    "rawMessage": "Migrate the database from MongoDB to PostgreSQL including all collections, indexes, and query patterns",
+    "expectedTier": "strong",
+    "acceptableTiers": ["strong"],
+    "unacceptableTiers": ["cheap", "mid"],
+    "rationale": "Major DB migration — extremely high risk, strong model required",
+    "safetyNotes": "Data loss risk is critical; full migration requires strong model",
+    "expectedTaskType": "database_schema_change"
+  }
+]

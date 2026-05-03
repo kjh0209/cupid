@@ -1,0 +1,265 @@
+# Provider pricing manual overrides
+# Format: LiteLLM-compatible model IDs with pricing in USD per million tokens
+# Source: Official provider pricing pages (verified April 2026)
+# Update this file when providers change pricing.
+# Run `pnpm ingest` after updating.
+
+models:
+  # ── Anthropic Claude ────────────────────────────────────────
+  - id: anthropic/claude-opus-4-5
+    provider: anthropic
+    display_name: "Claude Opus 4"
+    tier: strong
+    input_price_per_million: 15.00
+    output_price_per_million: 75.00
+    cached_input_price_per_million: 1.50
+    cache_write_price_per_million: 18.75
+    context_window: 200000
+    max_output_tokens: 32000
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.727
+    general_score: 0.91
+    output_speed: 72
+    source_confidence: official
+    source_url: https://www.anthropic.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: anthropic/claude-sonnet-4-5
+    provider: anthropic
+    display_name: "Claude Sonnet 4"
+    tier: mid
+    input_price_per_million: 3.00
+    output_price_per_million: 15.00
+    cached_input_price_per_million: 0.30
+    cache_write_price_per_million: 3.75
+    context_window: 200000
+    max_output_tokens: 16000
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.623
+    general_score: 0.88
+    output_speed: 98
+    source_confidence: official
+    source_url: https://www.anthropic.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: anthropic/claude-haiku-4-5
+    provider: anthropic
+    display_name: "Claude Haiku 4"
+    tier: cheap
+    input_price_per_million: 0.80
+    output_price_per_million: 4.00
+    cached_input_price_per_million: 0.08
+    cache_write_price_per_million: 1.00
+    context_window: 200000
+    max_output_tokens: 8192
+    modality: text
+    tool_calling_support: true
+    vision_support: false
+    coding_score: 0.40
+    general_score: 0.82
+    output_speed: 150
+    source_confidence: official
+    source_url: https://www.anthropic.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: anthropic/claude-3-5-sonnet-20241022
+    provider: anthropic
+    display_name: "Claude 3.5 Sonnet (Oct 2024)"
+    tier: mid
+    input_price_per_million: 3.00
+    output_price_per_million: 15.00
+    cached_input_price_per_million: 0.30
+    cache_write_price_per_million: 3.75
+    context_window: 200000
+    max_output_tokens: 8192
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.499
+    source_confidence: official
+    source_url: https://www.anthropic.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: anthropic/claude-3-5-haiku-20241022
+    provider: anthropic
+    display_name: "Claude 3.5 Haiku (Oct 2024)"
+    tier: cheap
+    input_price_per_million: 0.80
+    output_price_per_million: 4.00
+    cached_input_price_per_million: 0.08
+    cache_write_price_per_million: 1.00
+    context_window: 200000
+    max_output_tokens: 8192
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.406
+    general_score: 0.82
+    output_speed: 145
+    source_confidence: official
+    source_url: https://www.anthropic.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  # ── OpenAI ──────────────────────────────────────────────────
+  - id: openai/gpt-4o
+    provider: openai
+    display_name: "GPT-4o"
+    tier: strong
+    input_price_per_million: 5.00
+    output_price_per_million: 15.00
+    cached_input_price_per_million: 2.50
+    context_window: 128000
+    max_output_tokens: 16384
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.464
+    general_score: 0.887
+    output_speed: 110
+    source_confidence: official
+    source_url: https://openai.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: openai/gpt-4o-mini
+    provider: openai
+    display_name: "GPT-4o mini"
+    tier: mid
+    input_price_per_million: 0.15
+    output_price_per_million: 0.60
+    cached_input_price_per_million: 0.075
+    context_window: 128000
+    max_output_tokens: 16384
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.284
+    general_score: 0.82
+    output_speed: 180
+    source_confidence: official
+    source_url: https://openai.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: openai/o3-mini
+    provider: openai
+    display_name: "o3-mini"
+    tier: mid
+    input_price_per_million: 1.10
+    output_price_per_million: 4.40
+    cached_input_price_per_million: 0.55
+    context_window: 200000
+    max_output_tokens: 100000
+    modality: text
+    tool_calling_support: true
+    vision_support: false
+    coding_score: 0.493
+    source_confidence: official
+    source_url: https://openai.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: openai/o1
+    provider: openai
+    display_name: "o1"
+    tier: strong
+    input_price_per_million: 15.00
+    output_price_per_million: 60.00
+    cached_input_price_per_million: 7.50
+    context_window: 200000
+    max_output_tokens: 100000
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.488
+    source_confidence: official
+    source_url: https://openai.com/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  # ── Google ──────────────────────────────────────────────────
+  - id: google/gemini-2.5-pro
+    provider: google
+    display_name: "Gemini 2.5 Pro"
+    tier: strong
+    input_price_per_million: 1.25
+    output_price_per_million: 10.00
+    cached_input_price_per_million: 0.31
+    context_window: 1000000
+    max_output_tokens: 65536
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.634
+    general_score: 0.90
+    output_speed: 85
+    source_confidence: official
+    source_url: https://ai.google.dev/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: google/gemini-2.0-flash
+    provider: google
+    display_name: "Gemini 2.0 Flash"
+    tier: cheap
+    input_price_per_million: 0.10
+    output_price_per_million: 0.40
+    cached_input_price_per_million: 0.025
+    context_window: 1000000
+    max_output_tokens: 8192
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    coding_score: 0.358
+    general_score: 0.85
+    output_speed: 240
+    source_confidence: official
+    source_url: https://ai.google.dev/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  - id: google/gemini-1.5-pro
+    provider: google
+    display_name: "Gemini 1.5 Pro"
+    tier: long_context
+    input_price_per_million: 1.25
+    output_price_per_million: 5.00
+    cached_input_price_per_million: 0.31
+    context_window: 2000000
+    max_output_tokens: 8192
+    modality: text
+    tool_calling_support: true
+    vision_support: true
+    general_score: 0.87
+    output_speed: 60
+    source_confidence: official
+    source_url: https://ai.google.dev/pricing
+    last_updated: "2026-04-01"
+    deprecated: false
+
+  # ── DeepSeek ────────────────────────────────────────────────
+  - id: deepseek/deepseek-chat
+    provider: deepseek
+    display_name: "DeepSeek Chat (V3)"
+    tier: cheap
+    input_price_per_million: 0.27
+    output_price_per_million: 1.10
+    cached_input_price_per_million: 0.07
+    context_window: 64000
+    max_output_tokens: 8192
+    modality: text
+    tool_calling_support: true
+    vision_support: false
+    source_confidence: official
+    source_url: https://api-docs.deepseek.com/quick_start/pricing
+    last_updated: "2026-04-01"
+    deprecated: false

@@ -1,0 +1,26 @@
+model_id,benchmark_name,score,metric_type,source_url,date_collected,notes
+anthropic/claude-opus-4-5,SWE-bench Verified,0.727,coding_quality,https://www.swebench.com/,2026-04-01,Pass@1 on 500 verified problems
+anthropic/claude-sonnet-4-5,SWE-bench Verified,0.623,coding_quality,https://www.swebench.com/,2026-04-01,Pass@1 on 500 verified problems
+anthropic/claude-3-5-sonnet-20241022,SWE-bench Verified,0.499,coding_quality,https://www.swebench.com/,2026-04-01,Claude 3.5 Sonnet Oct 2024
+anthropic/claude-3-5-haiku-20241022,SWE-bench Verified,0.406,coding_quality,https://www.swebench.com/,2026-04-01,Claude 3.5 Haiku
+openai/gpt-4o,SWE-bench Verified,0.464,coding_quality,https://www.swebench.com/,2026-04-01,GPT-4o with scaffolding
+openai/gpt-4o-mini,SWE-bench Verified,0.284,coding_quality,https://www.swebench.com/,2026-04-01,GPT-4o mini
+openai/o3-mini,SWE-bench Verified,0.493,coding_quality,https://www.swebench.com/,2026-04-01,o3-mini medium effort
+openai/o1,SWE-bench Verified,0.488,coding_quality,https://www.swebench.com/,2026-04-01,o1 high effort
+google/gemini-2.5-pro,SWE-bench Verified,0.634,coding_quality,https://www.swebench.com/,2026-04-01,Gemini 2.5 Pro
+google/gemini-2.0-flash,SWE-bench Verified,0.358,coding_quality,https://www.swebench.com/,2026-04-01,Gemini 2.0 Flash
+deepseek/deepseek-chat,SWE-bench Verified,0.380,coding_quality,https://www.swebench.com/,2026-04-01,DeepSeek V3
+anthropic/claude-opus-4-5,AA Output Speed,72,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+anthropic/claude-sonnet-4-5,AA Output Speed,98,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+anthropic/claude-3-5-haiku-20241022,AA Output Speed,145,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+openai/gpt-4o,AA Output Speed,110,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+openai/gpt-4o-mini,AA Output Speed,180,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+google/gemini-2.0-flash,AA Output Speed,240,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+google/gemini-2.5-pro,AA Output Speed,85,output_speed,https://artificialanalysis.ai/,2026-04-01,tokens/sec
+anthropic/claude-opus-4-5,MMLU General,0.910,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Approx
+anthropic/claude-sonnet-4-5,MMLU General,0.880,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Approx
+anthropic/claude-3-5-haiku-20241022,MMLU General,0.820,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Approx
+openai/gpt-4o,MMLU General,0.887,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Official benchmark
+openai/gpt-4o-mini,MMLU General,0.820,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Approx
+google/gemini-2.5-pro,MMLU General,0.900,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Approx
+google/gemini-2.0-flash,MMLU General,0.850,general_intelligence,https://artificialanalysis.ai/,2026-04-01,Approx

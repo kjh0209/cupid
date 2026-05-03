@@ -1,0 +1,78 @@
+# Model-specific prompt engineering profiles
+# Describes how to structure prompts for each model family.
+# Used by PromptTokenOptimizer and CachePolicyPlanner.
+
+profiles:
+  - model_family: anthropic
+    prefers_structured_prompt: true
+    handles_long_context_well: true
+    benefits_from_explicit_steps: true
+    output_budget_strategy: explicit_max_tokens_param
+    cache_strategy: prefix_cache_stable_content_first
+    tool_strategy: minimal_relevant_tools
+    compression_aggressiveness: medium
+    recommended_prompt_shape: structured_with_explicit_sections
+    notes:
+      - "Place stable context (system prompt, repo summary) BEFORE dynamic user message for cache hits"
+      - "Add cache_control: {type: ephemeral} to stable content blocks"
+      - "For coding: request minimal diff output to reduce output tokens"
+      - "Separate CONTEXT section from TASK section explicitly"
+      - "For high-risk tasks: list constraints before instructions"
+
+  - model_family: openai
+    prefers_structured_prompt: true
+    handles_long_context_well: true
+    benefits_from_explicit_steps: true
+    output_budget_strategy: max_tokens_parameter
+    cache_strategy: prefix_cache_stable_prefix
+    tool_strategy: json_schema_tools
+    compression_aggressiveness: medium
+    recommended_prompt_shape: concise_structured_json_output
+    notes:
+      - "Stable system prompt prefix is automatically cached for prompts >= 1024 tokens"
+      - "Use response_format: {type: json_schema} for structured outputs"
+      - "Set max_tokens explicitly to prevent over-generation"
+      - "Keep system prompt constant across requests for cache benefit"
+
+  - model_family: google
+    prefers_structured_prompt: false
+    handles_long_context_well: true
+    benefits_from_explicit_steps: false
+    output_budget_strategy: explicit_length_instruction
+    cache_strategy: context_cache_large_docs
+    tool_strategy: selective_tool_loading
+    compression_aggressiveness: low
+    recommended_prompt_shape: natural_with_explicit_task
+    notes:
+      - "Use context caching API for documents > 32k tokens"
+      - "Long context capable but still select relevant files for efficiency"
+      - "Flash models: prefer shorter, focused prompts"
+      - "Gemini 2.5 Pro: robust to complex multi-step reasoning"
+
+  - model_family: meta
+    prefers_structured_prompt: true
+    handles_long_context_well: false
+    benefits_from_explicit_steps: true
+    output_budget_strategy: explicit_length_instruction
+    cache_strategy: not_supported
+    tool_strategy: minimal_tools
+    compression_aggressiveness: low
+    recommended_prompt_shape: explicit_constrained_narrow
+    notes:
+      - "More explicit constraints needed for reliable output"
+      - "Prefer smaller, isolated tasks"
+      - "Avoid ambiguous pronouns; name files and functions explicitly"
+
+  - model_family: deepseek
+    prefers_structured_prompt: true
+    handles_long_context_well: true
+    benefits_from_explicit_steps: true
+    output_budget_strategy: explicit_length_instruction
+    cache_strategy: not_supported
+    tool_strategy: minimal_tools
+    compression_aggressiveness: medium
+    recommended_prompt_shape: structured_coding_directive
+    notes:
+      - "Excellent at structured coding directives"
+      - "Works well with diff/patch format output"
+      - "Explicit about file locations and function signatures"

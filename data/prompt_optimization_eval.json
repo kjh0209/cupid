@@ -1,0 +1,272 @@
+[
+  {
+    "id": "p01",
+    "rawMessage": "Hey can you maybe look through this route file and add some sort of rate limiting thing? Also I think we were using Zod before so maybe do that too, and try not to change too much if possible.",
+    "expectedPreservedRequirements": ["rate limiting", "Zod"],
+    "shouldRemove": ["hey can you maybe", "some sort of", "I think", "maybe", "if possible"],
+    "shouldNotRemove": ["rate limiting", "Zod", "not change too much"],
+    "taskType": "api_implementation",
+    "riskLevel": 3
+  },
+  {
+    "id": "p02",
+    "rawMessage": "I don't really understand this function, can you explain it to me in a simple way and maybe tell me if the variable names are okay?",
+    "expectedPreservedRequirements": ["explain", "variable names"],
+    "shouldRemove": ["I don't really understand", "can you", "in a simple way", "maybe"],
+    "shouldNotRemove": ["explain", "variable names"],
+    "taskType": "explanation",
+    "riskLevel": 1
+  },
+  {
+    "id": "p03",
+    "rawMessage": "Refactor our auth logic so it works better with all protected routes, but don't break the current JWT refresh flow and keep the admin guard behavior the same.",
+    "expectedPreservedRequirements": ["auth logic", "protected routes", "JWT refresh flow", "admin guard"],
+    "shouldRemove": ["so it works better with"],
+    "shouldNotRemove": ["auth logic", "JWT refresh flow", "admin guard", "don't break", "keep the same"],
+    "taskType": "security_sensitive_change",
+    "riskLevel": 5
+  },
+  {
+    "id": "p04",
+    "rawMessage": "Can you please write unit tests for the createOrder function? I need tests for the happy path, and also for when the payment fails, and maybe one more for when the inventory is empty.",
+    "expectedPreservedRequirements": ["createOrder", "happy path", "payment fails", "inventory is empty"],
+    "shouldRemove": ["can you please", "I need", "and maybe one more for"],
+    "shouldNotRemove": ["createOrder", "happy path", "payment fails", "inventory is empty"],
+    "taskType": "test_generation",
+    "riskLevel": 2
+  },
+  {
+    "id": "p05",
+    "rawMessage": "I was wondering if maybe we could change the button color to match our design system? The button in the header should be indigo-600 and have a rounded-lg border radius.",
+    "expectedPreservedRequirements": ["indigo-600", "rounded-lg", "header"],
+    "shouldRemove": ["I was wondering if maybe we could", "?"],
+    "shouldNotRemove": ["indigo-600", "rounded-lg", "header", "design system"],
+    "taskType": "ui_change",
+    "riskLevel": 1
+  },
+  {
+    "id": "p06",
+    "rawMessage": "Could you help me fix the bug where clicking the delete button sometimes doesn't actually delete the record? It seems like it might be a race condition because it only happens when you click very fast.",
+    "expectedPreservedRequirements": ["delete button", "race condition", "click very fast"],
+    "shouldRemove": ["could you help me", "it seems like it might be"],
+    "shouldNotRemove": ["delete button", "race condition", "click very fast"],
+    "taskType": "local_bug_fix",
+    "riskLevel": 2
+  },
+  {
+    "id": "p07",
+    "rawMessage": "Please add a migration to add a soft-delete column (deleted_at nullable timestamp) to the users table, and update all queries that fetch users to filter out soft-deleted records.",
+    "expectedPreservedRequirements": ["deleted_at", "nullable timestamp", "users table", "filter out soft-deleted"],
+    "shouldRemove": ["please"],
+    "shouldNotRemove": ["deleted_at", "nullable timestamp", "users table", "filter out soft-deleted", "all queries"],
+    "taskType": "database_schema_change",
+    "riskLevel": 4
+  },
+  {
+    "id": "p08",
+    "rawMessage": "I think the getUserById function might have an issue — when the user doesn't exist it returns undefined instead of throwing a proper 404 error. Can you fix it?",
+    "expectedPreservedRequirements": ["getUserById", "404 error", "undefined"],
+    "shouldRemove": ["I think", "might have an issue", "can you"],
+    "shouldNotRemove": ["getUserById", "404 error", "undefined", "throws"],
+    "taskType": "local_bug_fix",
+    "riskLevel": 2
+  },
+  {
+    "id": "p09",
+    "rawMessage": "We need to add CSRF protection to all our POST, PUT, and DELETE endpoints. Make sure it works with our existing session-based auth and doesn't break the existing API tests.",
+    "expectedPreservedRequirements": ["CSRF", "POST", "PUT", "DELETE", "session-based auth", "API tests"],
+    "shouldRemove": ["we need to"],
+    "shouldNotRemove": ["CSRF", "POST", "PUT", "DELETE", "session-based auth", "API tests", "doesn't break"],
+    "taskType": "security_sensitive_change",
+    "riskLevel": 5
+  },
+  {
+    "id": "p10",
+    "rawMessage": "Can you add some comments to this complex algorithm? Just basic documentation explaining what each step does so it's easier to understand.",
+    "expectedPreservedRequirements": ["comments", "documentation", "each step"],
+    "shouldRemove": ["can you", "just basic", "so it's easier to understand"],
+    "shouldNotRemove": ["comments", "documentation", "each step"],
+    "taskType": "simple_edit",
+    "riskLevel": 1
+  },
+  {
+    "id": "p11",
+    "rawMessage": "Hey, I need to implement file upload functionality for user profile pictures. It should accept PNG and JPEG only, max 5MB, store to S3, and return the CDN URL. Oh and also validate that it's actually an image and not just a renamed file.",
+    "expectedPreservedRequirements": ["PNG", "JPEG", "5MB", "S3", "CDN URL", "validate", "image"],
+    "shouldRemove": ["hey", "oh and also"],
+    "shouldNotRemove": ["PNG", "JPEG", "5MB", "S3", "CDN URL", "validate", "image", "renamed file"],
+    "taskType": "api_implementation",
+    "riskLevel": 3
+  },
+  {
+    "id": "p12",
+    "rawMessage": "Basically I want to refactor the entire authentication system to use OAuth 2.0 with PKCE instead of our current custom JWT implementation. The admin panel still needs to work and we can't break any existing user sessions during the migration.",
+    "expectedPreservedRequirements": ["OAuth 2.0", "PKCE", "JWT", "admin panel", "existing user sessions"],
+    "shouldRemove": ["basically"],
+    "shouldNotRemove": ["OAuth 2.0", "PKCE", "JWT", "admin panel", "existing user sessions", "migration"],
+    "taskType": "security_sensitive_change",
+    "riskLevel": 5
+  },
+  {
+    "id": "p13",
+    "rawMessage": "Write a test for the calculateShipping function. Test that it returns the correct amount for standard (under 2kg, domestic), express (any weight, domestic), and international (any weight).",
+    "expectedPreservedRequirements": ["calculateShipping", "2kg", "standard", "express", "international"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["calculateShipping", "2kg", "standard", "express", "international"],
+    "taskType": "test_generation",
+    "riskLevel": 2
+  },
+  {
+    "id": "p14",
+    "rawMessage": "Could you rename the file utils/helpers.ts to utils/stringUtils.ts and update all the imports throughout the project?",
+    "expectedPreservedRequirements": ["utils/helpers.ts", "utils/stringUtils.ts", "imports"],
+    "shouldRemove": ["could you"],
+    "shouldNotRemove": ["utils/helpers.ts", "utils/stringUtils.ts", "imports", "throughout the project"],
+    "taskType": "multi_file_refactor",
+    "riskLevel": 3
+  },
+  {
+    "id": "p15",
+    "rawMessage": "I'm not sure if this is the right approach, but I was thinking maybe we could add rate limiting to the login endpoint to prevent brute force attacks? Like maybe 5 attempts per IP per minute or something like that?",
+    "expectedPreservedRequirements": ["rate limiting", "login", "brute force", "5 attempts", "per minute"],
+    "shouldRemove": ["I'm not sure if this is the right approach", "but I was thinking maybe we could", "or something like that"],
+    "shouldNotRemove": ["rate limiting", "login", "brute force", "5 attempts", "per minute", "per IP"],
+    "taskType": "security_sensitive_change",
+    "riskLevel": 4
+  },
+  {
+    "id": "p16",
+    "rawMessage": "Add a dark mode toggle to the settings page that persists the user's preference in localStorage",
+    "expectedPreservedRequirements": ["dark mode", "settings page", "localStorage"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["dark mode", "settings page", "localStorage"],
+    "taskType": "ui_change",
+    "riskLevel": 1
+  },
+  {
+    "id": "p17",
+    "rawMessage": "Fix the memory leak in the WebSocket connection handler — it seems like event listeners aren't being cleaned up when the connection closes.",
+    "expectedPreservedRequirements": ["WebSocket", "event listeners", "connection closes"],
+    "shouldRemove": ["it seems like"],
+    "shouldNotRemove": ["WebSocket", "event listeners", "connection closes", "memory leak"],
+    "taskType": "local_bug_fix",
+    "riskLevel": 3
+  },
+  {
+    "id": "p18",
+    "rawMessage": "Can you maybe help me understand how the middleware pipeline works in this Express app? I'm confused about the order things execute and when errors get caught.",
+    "expectedPreservedRequirements": ["middleware pipeline", "Express", "order", "errors"],
+    "shouldRemove": ["can you maybe help me", "I'm confused about"],
+    "shouldNotRemove": ["middleware pipeline", "Express", "order", "errors get caught"],
+    "taskType": "explanation",
+    "riskLevel": 1
+  },
+  {
+    "id": "p19",
+    "rawMessage": "Please implement pagination for the GET /api/products endpoint using cursor-based pagination. The cursor should be the product ID, default page size 20, max 100. Include next_cursor and has_more in the response.",
+    "expectedPreservedRequirements": ["cursor-based", "GET /api/products", "product ID", "20", "100", "next_cursor", "has_more"],
+    "shouldRemove": ["please"],
+    "shouldNotRemove": ["cursor-based", "GET /api/products", "product ID", "20", "100", "next_cursor", "has_more"],
+    "taskType": "api_implementation",
+    "riskLevel": 3
+  },
+  {
+    "id": "p20",
+    "rawMessage": "I want to add email verification to the registration flow. When a user registers, send them a verification email with a token that expires in 24 hours. They can't log in until they verify.",
+    "expectedPreservedRequirements": ["email verification", "registration", "24 hours", "can't log in"],
+    "shouldRemove": ["I want to"],
+    "shouldNotRemove": ["email verification", "registration", "24 hours", "can't log in", "token"],
+    "taskType": "api_implementation",
+    "riskLevel": 4
+  },
+  {
+    "id": "p21",
+    "rawMessage": "Generate TypeScript types from this JSON response: {\"id\": 1, \"name\": \"John\", \"email\": \"john@example.com\", \"created_at\": \"2024-01-01\"}",
+    "expectedPreservedRequirements": ["id", "name", "email", "created_at"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["id", "name", "email", "created_at"],
+    "taskType": "simple_edit",
+    "riskLevel": 1
+  },
+  {
+    "id": "p22",
+    "rawMessage": "I've been having trouble with this for a while but I think the issue is that the getUser function in userService.ts is not properly handling the case where the database connection times out. It just hangs forever instead of throwing an error after 5 seconds.",
+    "expectedPreservedRequirements": ["getUser", "userService.ts", "database connection", "timeout", "5 seconds"],
+    "shouldRemove": ["I've been having trouble with this for a while but I think the issue is that"],
+    "shouldNotRemove": ["getUser", "userService.ts", "database connection", "timeout", "5 seconds", "hangs forever"],
+    "taskType": "local_bug_fix",
+    "riskLevel": 3
+  },
+  {
+    "id": "p23",
+    "rawMessage": "Can you add a Prisma migration that adds foreign key constraints between orders and users, and between order_items and products? Make sure to add indexes on the foreign key columns too.",
+    "expectedPreservedRequirements": ["Prisma", "orders", "users", "order_items", "products", "foreign key", "indexes"],
+    "shouldRemove": ["can you"],
+    "shouldNotRemove": ["Prisma", "orders", "users", "order_items", "products", "foreign key", "indexes"],
+    "taskType": "database_schema_change",
+    "riskLevel": 4
+  },
+  {
+    "id": "p24",
+    "rawMessage": "Make this component more responsive — it should stack vertically on mobile (< 640px) and show side-by-side on tablet and desktop",
+    "expectedPreservedRequirements": ["responsive", "640px", "stack vertically", "side-by-side"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["responsive", "640px", "stack vertically", "side-by-side", "mobile", "tablet", "desktop"],
+    "taskType": "ui_change",
+    "riskLevel": 1
+  },
+  {
+    "id": "p25",
+    "rawMessage": "Set up environment variable validation using Zod at app startup so the app fails fast if required env vars are missing instead of crashing later with confusing errors",
+    "expectedPreservedRequirements": ["Zod", "startup", "fails fast", "env vars"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["Zod", "startup", "fails fast", "env vars", "confusing errors"],
+    "taskType": "api_implementation",
+    "riskLevel": 2
+  },
+  {
+    "id": "p26",
+    "rawMessage": "I need you to help me write comprehensive error handling for the entire API — basically every route should return consistent JSON error responses with a code, message, and optional details field",
+    "expectedPreservedRequirements": ["error handling", "JSON", "code", "message", "details"],
+    "shouldRemove": ["I need you to help me", "basically"],
+    "shouldNotRemove": ["error handling", "JSON", "code", "message", "details", "consistent", "every route"],
+    "taskType": "multi_file_refactor",
+    "riskLevel": 3
+  },
+  {
+    "id": "p27",
+    "rawMessage": "Add SQL injection protection to the raw query in the searchProducts function. Right now it's using string interpolation directly which is unsafe.",
+    "expectedPreservedRequirements": ["SQL injection", "searchProducts", "string interpolation"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["SQL injection", "searchProducts", "string interpolation", "unsafe"],
+    "taskType": "security_sensitive_change",
+    "riskLevel": 5
+  },
+  {
+    "id": "p28",
+    "rawMessage": "Create a custom React hook called useDebounce that takes a value and delay parameter and returns the debounced value",
+    "expectedPreservedRequirements": ["useDebounce", "value", "delay", "debounced"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["useDebounce", "value", "delay", "debounced"],
+    "taskType": "simple_edit",
+    "riskLevel": 1
+  },
+  {
+    "id": "p29",
+    "rawMessage": "Explain what the Repository pattern is and show me how it's currently implemented in this codebase, and whether it's being used consistently",
+    "expectedPreservedRequirements": ["Repository pattern", "codebase", "consistently"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["Repository pattern", "codebase", "consistently"],
+    "taskType": "explanation",
+    "riskLevel": 1
+  },
+  {
+    "id": "p30",
+    "rawMessage": "Implement audit logging so every time a user updates their profile or changes their password, we log who changed what and when to the audit_logs table. Make sure failed attempts are also logged.",
+    "expectedPreservedRequirements": ["audit logging", "profile", "password", "audit_logs", "failed attempts"],
+    "shouldRemove": [],
+    "shouldNotRemove": ["audit logging", "profile", "password", "audit_logs", "failed attempts", "who changed what"],
+    "taskType": "api_implementation",
+    "riskLevel": 4
+  }
+]

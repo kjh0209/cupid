@@ -1,0 +1,84 @@
+{
+  "tasks": [
+    {
+      "id": "task-001",
+      "repo": "sample-next-api",
+      "title": "Add Zod validation to POST /api/users",
+      "message": "Add Zod schema validation to the POST /api/users endpoint. Validate email format, name is non-empty string, role is optional enum of 'user' | 'admin'. Return 400 with validation errors on failure.",
+      "activeFilePath": "src/app/api/users/route.ts",
+      "expectedTaskType": "api_implementation",
+      "expectedTier": "mid",
+      "difficulty": 2
+    },
+    {
+      "id": "task-002",
+      "repo": "sample-next-api",
+      "title": "Add rate limiting middleware",
+      "message": "Add simple in-memory rate limiting to the Next.js middleware. Limit each IP to 100 requests per minute. Return 429 Too Many Requests when exceeded.",
+      "activeFilePath": "src/middleware.ts",
+      "expectedTaskType": "security_sensitive_change",
+      "expectedTier": "mid",
+      "difficulty": 3
+    },
+    {
+      "id": "task-003",
+      "repo": "sample-next-api",
+      "title": "Add unit test for isValidEmail",
+      "message": "Write unit tests for the isValidEmail function in src/lib/validation.ts. Cover valid emails, invalid formats, edge cases like empty string and unicode.",
+      "activeFilePath": "src/lib/validation.ts",
+      "expectedTaskType": "test_generation",
+      "expectedTier": "cheap",
+      "difficulty": 1
+    },
+    {
+      "id": "task-004",
+      "repo": "sample-next-api",
+      "title": "Refactor duplicated error helpers",
+      "message": "The error helper functions in src/lib/errors.ts return plain objects but the routes use NextResponse. Refactor to return NextResponse objects directly and update all usages in route files.",
+      "activeFilePath": "src/lib/errors.ts",
+      "expectedTaskType": "multi_file_refactor",
+      "expectedTier": "mid",
+      "difficulty": 3
+    },
+    {
+      "id": "task-005",
+      "repo": "sample-express-api",
+      "title": "Fix null check in GET /api/users/:id",
+      "message": "Fix the missing null check in GET /api/users/:id. If the user is not found, return 404 with a proper error message instead of returning undefined.",
+      "activeFilePath": "src/routes/users.ts",
+      "expectedTaskType": "local_bug_fix",
+      "expectedTier": "cheap",
+      "difficulty": 1
+    },
+    {
+      "id": "task-006",
+      "repo": "sample-express-api",
+      "title": "Add Zod validation to POST /api/users",
+      "message": "Add Zod validation to the POST /api/users route. Validate name (string, min 2 chars), email (valid email format), age (optional, positive integer). Return 422 with field errors.",
+      "activeFilePath": "src/routes/users.ts",
+      "expectedTaskType": "api_implementation",
+      "expectedTier": "mid",
+      "difficulty": 2
+    },
+    {
+      "id": "task-007",
+      "repo": "sample-express-api",
+      "title": "Add unit tests for helpers",
+      "message": "Write Jest unit tests for all functions in src/utils/helpers.ts: formatCurrency, paginate, isValidEmail, slugify. Include edge cases.",
+      "activeFilePath": "src/utils/helpers.ts",
+      "expectedTaskType": "test_generation",
+      "expectedTier": "cheap",
+      "difficulty": 1
+    },
+    {
+      "id": "task-008",
+      "repo": "sample-express-api",
+      "title": "Add structured request logging",
+      "message": "Improve the requestLogger middleware in src/middleware/requestLogger.ts. Add request ID, user agent, and log as structured JSON. Include response time in milliseconds.",
+      "activeFilePath": "src/middleware/requestLogger.ts",
+      "expectedTaskType": "simple_edit",
+      "expectedTier": "cheap",
+      "difficulty": 1
+    }
+  ]
+}

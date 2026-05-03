@@ -1,0 +1,248 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-gray-950 text-gray-100 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+@layer components {
+  /* Cards */
+  .card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl;
+  }
+  .card-sm {
+    @apply bg-gray-900/60 border border-gray-800/60 rounded-lg p-3;
+  }
+  .glass {
+    @apply bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+  .btn-primary {
+    @apply btn bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/30 active:scale-95;
+  }
+  .btn-secondary {
+    @apply btn bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 active:scale-95;
+  }
+  .btn-success {
+    @apply btn bg-emerald-700 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-900/30 active:scale-95;
+  }
+  .btn-danger {
+    @apply btn bg-red-700 hover:bg-red-600 text-white active:scale-95;
+  }
+  .btn-ghost {
+    @apply btn hover:bg-gray-800 text-gray-400 hover:text-gray-200 active:scale-95;
+  }
+  .btn-icon {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150 hover:bg-gray-800 text-gray-400 hover:text-gray-200 active:scale-95;
+  }
+  .btn-run {
+    @apply btn bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-900/40 active:scale-95 font-semibold;
+  }
+
+  /* Labels & Values */
+  .label {
+    @apply text-xs font-semibold text-gray-500 uppercase tracking-widest;
+  }
+  .label-sm {
+    @apply text-xs font-medium text-gray-400;
+  }
+  .value {
+    @apply text-sm text-gray-100;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold;
+  }
+  .badge-green {
+    @apply badge bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20;
+  }
+  .badge-red {
+    @apply badge bg-red-500/15 text-red-400 ring-1 ring-red-500/20;
+  }
+  .badge-yellow {
+    @apply badge bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20;
+  }
+  .badge-blue {
+    @apply badge bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/20;
+  }
+  .badge-purple {
+    @apply badge bg-violet-500/15 text-violet-400 ring-1 ring-violet-500/20;
+  }
+  .badge-gray {
+    @apply badge bg-gray-700/60 text-gray-400;
+  }
+  .badge-indigo {
+    @apply badge bg-indigo-500/15 text-indigo-400 ring-1 ring-indigo-500/20;
+  }
+
+  /* Inputs */
+  .input {
+    @apply bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500
+           focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all duration-150;
+  }
+  .textarea {
+    @apply input resize-none;
+  }
+  .select {
+    @apply input appearance-none cursor-pointer;
+  }
+
+  /* Diff */
+  .diff-add {
+    @apply bg-emerald-500/10 text-emerald-300;
+  }
+  .diff-remove {
+    @apply bg-red-500/10 text-red-300;
+  }
+  .diff-context {
+    @apply text-gray-500;
+  }
+  .diff-hunk {
+    @apply text-cyan-500/70 bg-cyan-500/5;
+  }
+
+  /* Stat cards */
+  .stat-card {
+    @apply card p-4 flex flex-col gap-1;
+  }
+  .stat-value {
+    @apply text-2xl font-bold text-gray-100;
+  }
+  .stat-label {
+    @apply text-xs text-gray-500 font-medium;
+  }
+  .stat-delta-green {
+    @apply text-xs font-semibold text-emerald-400;
+  }
+  .stat-delta-red {
+    @apply text-xs font-semibold text-red-400;
+  }
+
+  /* Sections */
+  .section-title {
+    @apply text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2;
+  }
+  .divider {
+    @apply border-t border-gray-800 my-4;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    @apply flex gap-1 border-b border-gray-800 mb-4;
+  }
+  .tab {
+    @apply px-3 py-2 text-sm font-medium rounded-t transition-colors cursor-pointer;
+  }
+  .tab-active {
+    @apply tab text-indigo-300 border-b-2 border-indigo-500 -mb-px;
+  }
+  .tab-inactive {
+    @apply tab text-gray-500 hover:text-gray-300;
+  }
+
+  /* Timeline */
+  .timeline-step {
+    @apply flex items-start gap-3 relative;
+  }
+  .timeline-dot {
+    @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5;
+  }
+  .timeline-dot-pending {
+    @apply timeline-dot bg-gray-800 text-gray-500 ring-1 ring-gray-700;
+  }
+  .timeline-dot-running {
+    @apply timeline-dot bg-indigo-600 text-white ring-2 ring-indigo-400/30;
+  }
+  .timeline-dot-done {
+    @apply timeline-dot bg-emerald-700 text-white;
+  }
+  .timeline-dot-failed {
+    @apply timeline-dot bg-red-700 text-white;
+  }
+
+  /* Code viewer */
+  .code-block {
+    @apply bg-gray-950 border border-gray-800 rounded-lg p-3 overflow-x-auto text-xs font-mono;
+  }
+  .code-block pre {
+    @apply m-0 whitespace-pre;
+  }
+
+  /* Shimmer loading */
+  .shimmer {
+    @apply bg-gray-800 rounded animate-pulse;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent;
+  }
+  .glow-indigo {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  }
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+.animate-slide-in {
+  animation: slideIn 0.2s ease-out;
+}
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}

@@ -1,0 +1,61 @@
+
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>CUPID Orchestrator</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background-color: #0d1117; color: #c9d1d9; padding: 40px; }
+      .dashboard { max-width: 900px; margin: 0 auto; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+      h2 { border-bottom: 1px solid #30363d; padding-bottom: 12px; color: #58a6ff; font-weight: 500; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+      th, td { padding: 12px 16px; border-bottom: 1px solid #21262d; }
+      th { background-color: #21262d; font-size: 14px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+      .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #238636; color: #ffffff; }
+      .metric { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; color: #79c0ff; }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <h2>CUPID Telemetry UI</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>User Prompt</th>
+            <th>Rule Triggered</th>
+            <th>Routed Model</th>
+            <th>Tokens Pruned</th>
+            <th>Money Saved</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td>Change the button color to red</td>
+              <td style="color: #8b949e;">Rule 7: Safe/Light Boilerplate</td>
+              <td><span class="badge">claude-4.5-haiku</span></td>
+              <td class="metric">6,000</td>
+              <td class="metric">$0.1792</td>
+            </tr>
+          
+            <tr>
+              <td>Write a commit message for this</td>
+              <td style="color: #8b949e;">Rule 1: Git Diff Pruning</td>
+              <td><span class="badge">gpt-5.4-mini</span></td>
+              <td class="metric">11,987</td>
+              <td class="metric">$0.1801</td>
+            </tr>
+          
+            <tr>
+              <td>Fix the race condition in the database schema</td>
+              <td style="color: #8b949e;">Rule 3: IDE Diagnostics Error</td>
+              <td><span class="badge">claude-4.6-sonnet</span></td>
+              <td class="metric">0</td>
+              <td class="metric">$0.1441</td>
+            </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </body>
+  </html>
+  

@@ -1,0 +1,37 @@
+# Prompt optimization rules (manual overrides)
+# These supplement the built-in rules in promptOptimizationCollector.ts
+# Add project-specific or environment-specific rules here.
+
+rules:
+  - id: cupid-ide-diff-format
+    title: Use Cupid IDE diff format for code changes
+    description: When making code changes in Cupid IDE, request output in the format expected by the IDE diff viewer. This reduces re-rendering and token waste from unnecessary context.
+    rule_type: output_limiting
+    applies_to_models:
+      - all
+    applies_to_task_types:
+      - simple_edit
+      - local_bug_fix
+      - api_implementation
+      - ui_change
+    expected_benefit: 30-50% output token reduction for editing tasks
+    risk_level: low
+    source_url: internal
+    source_confidence: internal
+    last_updated: "2026-04-01"
+
+  - id: reference-repo-patterns
+    title: Reference existing patterns by name instead of re-pasting
+    description: When asking to follow an existing pattern, use a short reference like "follow the validation pattern in authRoute.ts" rather than pasting the full pattern. The context planner will include the referenced file.
+    rule_type: context_selection
+    applies_to_models:
+      - all
+    applies_to_task_types:
+      - api_implementation
+      - multi_file_refactor
+      - local_bug_fix
+    expected_benefit: 30-60% reduction in context tokens for pattern-following tasks
+    risk_level: low
+    source_url: internal
+    source_confidence: internal
+    last_updated: "2026-04-01"
