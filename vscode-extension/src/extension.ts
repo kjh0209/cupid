@@ -1,10 +1,16 @@
 import * as vscode from "vscode";
 import { CupidChatViewProvider } from "./chatView.js";
 import { getWorkspaceSessionKey } from "./sessionKey.js";
+import { analyticsStore } from "./analytics.js";
+import { AnalyticsPanel } from "./analyticsPanel.js";
 
 let chatProvider: CupidChatViewProvider | undefined;
+let statusBar: vscode.StatusBarItem | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
+  // Init analytics store first so chatView can use it
+  analyticsStore.init(context);
+
   chatProvider = new CupidChatViewProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(CupidChatViewProvider.viewType, chatProvider, {
@@ -14,7 +20,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("cupid.openChat", async () => {
-      // Reveal the sidebar view and focus the chat input
       await vscode.commands.executeCommand("workbench.view.extension.cupid-sidebar");
       chatProvider?.focus();
     }),
@@ -26,18 +31,36 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("cupid.resetSession", () => resetSession()),
     vscode.commands.registerCommand("cupid.configureEndpoint", () => configureEndpoint()),
     vscode.commands.registerCommand("cupid.moveToRight", () => moveChatToRight()),
+    vscode.commands.registerCommand("cupid.openAnalytics", () => {
+      AnalyticsPanel.createOrShow(context.extensionUri);
+    }),
   );
 
   // First-time auto-move to right Secondary Side Bar (Cursor-style)
   void maybeAutoMove(context);
 
-  // Status bar item
-  const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBar.text = "$(robot) Cupid";
-  statusBar.tooltip = "Open Cupid chat";
+  // Status bar
+  statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  updateStatusBar();
   statusBar.command = "cupid.openChat";
   statusBar.show();
   context.subscriptions.push(statusBar);
+
+  // Refresh status bar to show savings every 30 seconds
+  const timer = setInterval(() => updateStatusBar(), 30_000);
+  context.subscriptions.push({ dispose: () => clearInterval(timer) });
+}
+
+function updateStatusBar() {
+  if (!statusBar) return;
+  const summary = analyticsStore.getSummary();
+  if (summary.totalSaved > 0.0001) {
+    statusBar.text = `$(robot) Cupid · $${summary.totalSaved.toFixed(4)} saved`;
+    statusBar.tooltip = `CUPID Arbitrage: ${summary.avgSavedPct.toFixed(0)}% avg savings vs Opus · ${summary.totalRequests} requests`;
+  } else {
+    statusBar.text = "$(robot) Cupid";
+    statusBar.tooltip = "Open Cupid chat";
+  }
 }
 
 async function showStats() {
@@ -48,13 +71,20 @@ async function showStats() {
     const res = await fetch(`${backendUrl}/api/cpl/stats?sessionKey=${encodeURIComponent(sessionKey)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const stats = await res.json() as { entryCount: number; historyCount: number; totalCostUsd: number; modelsUsed: string[] };
+    const localSummary = analyticsStore.getSummary();
     const msg = [
       `Session: ${sessionKey}`,
       `Memory entries: ${stats.entryCount}  |  Tasks logged: ${stats.historyCount}`,
       `Total cost (estimated): $${(stats.totalCostUsd ?? 0).toFixed(6)}`,
       `Models used: ${(stats.modelsUsed ?? []).join(", ") || "—"}`,
+      ``,
+      `Local analytics: ${localSummary.totalRequests} requests · $${localSummary.totalSaved.toFixed(4)} saved (${localSummary.avgSavedPct.toFixed(0)}% vs Opus)`,
     ].join("\n");
-    vscode.window.showInformationMessage(msg, { modal: true });
+    vscode.window.showInformationMessage(msg, { modal: true }, "Open Dashboard").then((action) => {
+      if (action === "Open Dashboard") {
+        void vscode.commands.executeCommand("cupid.openAnalytics");
+      }
+    });
   } catch (err) {
     vscode.window.showErrorMessage(`Cupid stats: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -97,16 +127,13 @@ async function configureEndpoint() {
 
 async function moveChatToRight() {
   try {
-    // Focus the view first so the command knows what to move
     await vscode.commands.executeCommand("cupid.chatView.focus");
     await new Promise((r) => setTimeout(r, 100));
-    // Move the focused view to the auxiliary (secondary side) bar
     await vscode.commands.executeCommand("workbench.action.moveView", {
       viewId: "cupid.chatView",
       destinationId: "workbench.parts.auxiliarybar",
     } as unknown as never);
   } catch {
-    // Fallback: open the auxiliary bar so user knows it exists
     try {
       await vscode.commands.executeCommand("workbench.action.toggleAuxiliaryBar");
     } catch { /* ignore */ }
@@ -121,7 +148,6 @@ async function maybeAutoMove(context: vscode.ExtensionContext) {
   if (!config.get<boolean>("autoMoveToRight")) return;
   const key = "cupid.didAutoMove";
   if (context.globalState.get<boolean>(key)) return;
-  // Wait a moment for views to finish registering
   await new Promise((r) => setTimeout(r, 600));
   await moveChatToRight();
   await context.globalState.update(key, true);
