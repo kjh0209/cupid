@@ -104,6 +104,110 @@ const SCENARIOS: Scenario[] = [
 
   // ── Edge: ambiguous ─────────────────────────────────────────
   { id: "edge-1", category: "local_bug_fix", prompt: "Why is my code slow?", rawCode: "const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));\nfor (const u of sortedUsers) console.log(u);" },
+
+  // ── Explanation (expanded) ──────────────────────────────────
+  { id: "exp-4", category: "explanation", prompt: "What is the difference between `null` and `undefined` in JavaScript? When should I use each?" },
+  { id: "exp-5", category: "explanation", prompt: "Explain what a closure is in JavaScript with a real-world example.", userMode: "cost_saving" },
+  { id: "exp-6", category: "explanation", prompt: "What does this React hook pattern do?", rawCode: "function useDebounce<T>(value: T, delay: number): T {\n  const [debounced, setDebounced] = useState<T>(value);\n  useEffect(() => {\n    const t = setTimeout(() => setDebounced(value), delay);\n    return () => clearTimeout(t);\n  }, [value, delay]);\n  return debounced;\n}" },
+  { id: "exp-7", category: "explanation", prompt: "What are the main differences between SQL and NoSQL databases? When would you pick each?" },
+
+  // ── Simple edit (expanded) ──────────────────────────────────
+  { id: "edit-4", category: "simple_edit", prompt: "Add TypeScript types to this function.", rawCode: "function groupBy(arr, key) {\n  return arr.reduce((acc, item) => {\n    const k = item[key];\n    (acc[k] = acc[k] || []).push(item);\n    return acc;\n  }, {});\n}" },
+  { id: "edit-5", category: "simple_edit", prompt: "Replace this callback-style code with async/await.", rawCode: "function loadUser(id, callback) {\n  db.findUser(id, (err, user) => {\n    if (err) return callback(err);\n    callback(null, user);\n  });\n}" },
+  { id: "edit-6", category: "simple_edit", prompt: "Extract this repeated error-handling pattern into a helper function.", rawCode: "try { const a = await opA(); } catch(e) { logger.error('opA failed', e); throw e; }\ntry { const b = await opB(); } catch(e) { logger.error('opB failed', e); throw e; }" },
+
+  // ── UI change (expanded) ────────────────────────────────────
+  { id: "ui-4", category: "ui_change", prompt: "Convert this CSS module to Tailwind classes.", rawCode: ".card { border-radius: 8px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: white; }" },
+  { id: "ui-5", category: "ui_change", prompt: "Add a loading skeleton placeholder for this card component using Tailwind.", rawCode: "<div className='card'><h3>{title}</h3><p>{description}</p><img src={imageUrl} /></div>" },
+  { id: "ui-6", category: "ui_change", prompt: "Make this form accessible: add proper labels, aria attributes, and error announcements.", rawCode: "<form><input type='email' placeholder='Email' /><input type='password' placeholder='Password' /><button>Login</button></form>" },
+
+  // ── Test generation (expanded) ──────────────────────────────
+  { id: "test-4", category: "test_generation", prompt: "Write vitest tests for this express middleware that validates API keys.", rawCode: "export function requireApiKey(req, res, next) {\n  const key = req.headers['x-api-key'];\n  if (!key || key !== process.env.API_KEY) return res.status(401).json({ error: 'unauthorized' });\n  next();\n}" },
+  { id: "test-5", category: "test_generation", prompt: "Write tests for this pagination utility covering edge cases (empty, single page, last page, invalid params).", rawCode: "export function paginate<T>(items: T[], page: number, pageSize: number) {\n  if (page < 1 || pageSize < 1) throw new Error('Invalid params');\n  const start = (page - 1) * pageSize;\n  return { items: items.slice(start, start + pageSize), total: items.length, page, pages: Math.ceil(items.length / pageSize) };\n}" },
+  { id: "test-6", category: "test_generation", prompt: "Write integration tests for a user registration endpoint that validates uniqueness, sends welcome email, and returns JWT." },
+  { id: "test-7", category: "test_generation", prompt: "Write property-based tests (using fast-check) for this sort function to verify it handles all array types correctly.", rawCode: "function sortBy<T>(arr: T[], key: keyof T): T[] {\n  return [...arr].sort((a, b) => {\n    if (a[key] < b[key]) return -1;\n    if (a[key] > b[key]) return 1;\n    return 0;\n  });\n}" },
+
+  // ── Local bug fix (expanded) ────────────────────────────────
+  { id: "bug-5", category: "local_bug_fix", prompt: "This Prisma query returns users regardless of the active filter. Fix it.", rawCode: "const users = await prisma.user.findMany({\n  where: { active: false }\n});\n// Expected: only inactive users, but returns all users" },
+  { id: "bug-6", category: "local_bug_fix", prompt: "Memory usage keeps growing. Find and fix the leak.", rawCode: "const cache = new Map();\nsetInterval(async () => {\n  const data = await fetchData();\n  cache.set(Date.now(), data);\n}, 1000);" },
+  { id: "bug-7", category: "local_bug_fix", prompt: "This async function swallows errors silently. Fix it to propagate errors properly.", rawCode: "async function processItems(items) {\n  items.forEach(async (item) => {\n    await processOne(item);\n  });\n}" },
+  { id: "bug-8", category: "local_bug_fix", prompt: "The z-index on this modal isn't working even though it's set very high. Why and how to fix?", rawCode: ".parent { transform: translateX(0); }\n.modal { position: fixed; z-index: 9999; }" },
+  { id: "bug-9", category: "local_bug_fix", prompt: "This date comparison fails near midnight. Find the bug.", rawCode: "function isToday(date: Date): boolean {\n  const today = new Date();\n  return date.getDate() === today.getDate() &&\n    date.getMonth() === today.getMonth() &&\n    date.getFullYear() === today.getFullYear();\n}" },
+
+  // ── API implementation (expanded) ───────────────────────────
+  { id: "api-4", category: "api_implementation", prompt: "Write a paginated GET /posts endpoint that filters by author, status, and tag. Include proper query parameter validation with Zod." },
+  { id: "api-5", category: "api_implementation", prompt: "Implement a file upload endpoint that accepts images (max 5MB, JPEG/PNG only), saves to S3, and returns the public URL." },
+  { id: "api-6", category: "api_implementation", prompt: "Build a webhook endpoint that validates HMAC signatures, logs the event, and queues it for async processing." },
+
+  // ── Security (expanded) ─────────────────────────────────────
+  { id: "sec-5", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement rate limiting for login attempts: max 5 per IP per 15 minutes, with exponential backoff on repeated failures." },
+  { id: "sec-6", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement row-level security so users can only read/write their own records. Use Prisma + middleware." },
+  { id: "sec-7", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Add PKCE to this OAuth2 authorization code flow to prevent authorization code interception attacks." },
+  { id: "sec-8", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement secure file upload validation: check MIME type by content (not extension), scan for malware hooks, enforce size limits, randomize stored filename." },
+
+  // ── Database (expanded) ─────────────────────────────────────
+  { id: "db-4", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Add soft-delete to the 'products' table: add deleted_at timestamp, update all queries to filter deleted=null, add restore endpoint." },
+  { id: "db-5", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Partition the 'events' table by month (PostgreSQL range partitioning). Write the migration including index recreation." },
+  { id: "db-6", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Implement optimistic locking on the 'inventory' table: add version column, update all write queries to check+increment version, handle conflicts." },
+
+  // ── Multi-file refactor (expanded) ──────────────────────────
+  { id: "ref-3", category: "multi_file_refactor", prompt: "Replace all occurrences of axios with fetch across the project. Show the before/after for each file type." },
+  { id: "ref-4", category: "multi_file_refactor", prompt: "Extract hardcoded magic numbers (timeouts, retry counts, limits) into a central config.ts file. Show the refactored files." },
+  { id: "ref-5", category: "multi_file_refactor", prompt: "Migrate from callbacks to async/await across this Express app. Show the routes/users.ts and middleware/error.ts files." },
+
+  // ── Architecture design (expanded) ──────────────────────────
+  { id: "arch-3", category: "architecture_design", prompt: "Design a multi-tenant SaaS database schema where each tenant's data must be completely isolated. Compare row-level, schema-level, and database-level isolation." },
+  { id: "arch-4", category: "architecture_design", prompt: "We need to add real-time features (live updates, notifications) to a REST API. Compare WebSockets, SSE, and polling. Recommend for a 10k concurrent users scenario." },
+
+  // ── Prompt rewrite (expanded) ───────────────────────────────
+  { id: "rewrite-2", category: "prompt_rewrite_only", prompt: "Can you please help me if possible to maybe write some kind of function that would potentially check if an email address is valid and return true or false depending on whether it is valid or not, I hope that makes sense" },
+  { id: "rewrite-3", category: "prompt_rewrite_only", prompt: "I was wondering if you could maybe help me understand kind of sort of what the difference is between process.env and dotenv and when I should use each one in my Node.js project" },
+
+  // ── Performance optimization (new task type) ─────────────────
+  { id: "perf-1", category: "performance_optimization", prompt: "This API endpoint takes 3 seconds. Profile and fix the N+1 query.", rawCode: "app.get('/users', async (req, res) => {\n  const users = await db.users.findAll();\n  for (const u of users) {\n    u.postCount = await db.posts.count({ userId: u.id });\n  }\n  res.json(users);\n});" },
+  { id: "perf-2", category: "performance_optimization", prompt: "This React component re-renders on every keystroke even when props haven't changed. Fix it.", rawCode: "function UserList({ users, onSelect }) {\n  const sorted = users.sort((a, b) => a.name.localeCompare(b.name));\n  return sorted.map(u => <UserRow key={u.id} user={u} onSelect={onSelect} />);\n}" },
+  { id: "perf-3", category: "performance_optimization", prompt: "The home page bundle is 4.2MB. Identify and implement code splitting for the charting library and admin panel routes." },
+  { id: "perf-4", category: "performance_optimization", prompt: "This PostgreSQL query scans 50M rows for a simple lookup. Add the right index and explain why it works.", rawCode: "SELECT * FROM orders WHERE customer_email = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 10;" },
+  { id: "perf-5", category: "performance_optimization", prompt: "Optimize this data transformation that processes 100k items and causes OOM on production.", rawCode: "async function processAll(ids: string[]) {\n  const items = await db.items.findMany({ where: { id: { in: ids } }, include: { tags: true, metadata: true } });\n  return items.map(transformItem);\n}" },
+  { id: "perf-6", category: "performance_optimization", prompt: "Why is this function causing memory leaks in a Node.js server? Fix it.", rawCode: "const listeners = [];\nfunction addListener(fn) {\n  listeners.push(fn);\n  emitter.on('event', fn);\n}\n// Called hundreds of times per request" },
+
+  // ── DevOps config (new task type) ───────────────────────────
+  { id: "devops-1", category: "devops_config", prompt: "Write a production-ready Dockerfile for a Node.js/TypeScript app: multi-stage build, non-root user, health check, pinned versions." },
+  { id: "devops-2", category: "devops_config", prompt: "Write a GitHub Actions workflow that runs tests, builds a Docker image, and deploys to AWS ECS on push to main." },
+  { id: "devops-3", category: "devops_config", prompt: "Write a docker-compose.yml for a Next.js app + PostgreSQL + Redis stack with health checks and proper networking." },
+  { id: "devops-4", category: "devops_config", prompt: "Write a Kubernetes deployment YAML for a Node.js API with 3 replicas, liveness/readiness probes, resource limits, and a HorizontalPodAutoscaler." },
+  { id: "devops-5", category: "devops_config", prompt: "Create a GitHub Actions workflow with caching for pnpm dependencies, parallel test/lint jobs, and a deploy gate that requires all checks to pass." },
+
+  // ── Documentation write (new task type) ─────────────────────
+  { id: "docs-1", category: "documentation_write", prompt: "Write JSDoc for this function with parameter types, return type, throws, and usage examples.", rawCode: "export async function fetchWithRetry(url, options = {}, retries = 3, backoff = 300) {\n  for (let i = 0; i < retries; i++) {\n    try { return await fetch(url, options); }\n    catch (e) { if (i === retries - 1) throw e; await new Promise(r => setTimeout(r, backoff * 2 ** i)); }\n  }\n}" },
+  { id: "docs-2", category: "documentation_write", prompt: "Write a README section for this authentication module: purpose, setup, API reference, and security notes.", rawCode: "// auth module: handles JWT issuance, refresh, and verification\nexport { issueTokens, refreshTokens, verifyToken, revokeToken }" },
+  { id: "docs-3", category: "documentation_write", prompt: "Write an ADR (Architecture Decision Record) for choosing Drizzle over Prisma for a new TypeScript project." },
+  { id: "docs-4", category: "documentation_write", prompt: "Document this REST API endpoint including request/response schemas, error codes, rate limiting, and authentication requirements.", rawCode: "// POST /api/v1/payments/charge\n// Creates a payment charge for the authenticated user" },
+
+  // ── Dependency update (new task type) ───────────────────────
+  { id: "dep-1", category: "dependency_update", prompt: "Upgrade express from v4 to v5. List all breaking changes and update the router and middleware usage in this file.", rawCode: "import express from 'express';\nconst app = express();\napp.use(express.json());\napp.use(express.urlencoded({ extended: true }));" },
+  { id: "dep-2", category: "dependency_update", prompt: "Update jest from v28 to v29. Handle the breaking change where jest.fn() typing changed and update the test config." },
+  { id: "dep-3", category: "dependency_update", prompt: "Migrate from node-fetch v2 to v3 (ESM-only). Update all imports and handle the breaking changes." },
+  { id: "dep-4", category: "dependency_update", prompt: "Upgrade Next.js from 13 to 14 App Router. Identify which pages use the deprecated getServerSideProps and migrate them to server components." },
+
+  // ── Code review (new task type) ─────────────────────────────
+  { id: "review-1", category: "code_review", prompt: "Review this authentication middleware for security issues.", rawCode: "export function authMiddleware(req, res, next) {\n  const token = req.headers.authorization;\n  if (!token) return res.json({ error: 'no token' });\n  const decoded = jwt.decode(token); // not verifying\n  req.user = decoded;\n  next();\n}" },
+  { id: "review-2", category: "code_review", prompt: "Review this database query for correctness, performance, and SQL injection risks.", rawCode: "app.get('/search', async (req, res) => {\n  const { q, limit } = req.query;\n  const sql = `SELECT * FROM products WHERE name LIKE '%${q}%' LIMIT ${limit}`;\n  const results = await db.raw(sql);\n  res.json(results);\n});" },
+  { id: "review-3", category: "code_review", prompt: "Review this React component for performance issues and anti-patterns.", rawCode: "function ProductPage({ id }) {\n  const [product, setProduct] = useState(null);\n  const [loading, setLoading] = useState(false);\n  fetch(`/api/products/${id}`).then(r => r.json()).then(d => setProduct(d));\n  if (loading) return <div>Loading...</div>;\n  return <div>{product?.name}</div>;\n}" },
+
+  // ── Edge cases (expanded) ───────────────────────────────────
+  { id: "edge-2", category: "local_bug_fix", prompt: "Something feels wrong with my test setup, but I can't figure out what.", rawCode: "beforeEach(() => {\n  db.connect();\n});\ntest('creates user', () => {\n  const u = db.users.create({ name: 'Alice' });\n  expect(u.id).toBeDefined();\n});" },
+  { id: "edge-3", category: "explanation", prompt: "can u explain wat async await is", userMode: "cost_saving" },
+  { id: "edge-4", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "make it more secure", rawCode: "app.post('/login', async (req, res) => {\n  const user = await User.findOne({ email: req.body.email });\n  if (user && user.password === req.body.password) {\n    res.json({ token: user.id });\n  } else {\n    res.status(401).json({ error: 'bad credentials' });\n  }\n});" },
+
+  // ── Additional coverage ─────────────────────────────────────
+  { id: "perf-7", category: "performance_optimization", prompt: "This Redis cache layer is adding 200ms overhead instead of reducing latency. Diagnose and fix.", rawCode: "async function getCachedUser(id: string) {\n  const cached = await redis.get(`user:${id}`);\n  if (cached) return JSON.parse(cached);\n  const user = await db.users.findById(id);\n  await redis.set(`user:${id}`, JSON.stringify(user)); // no TTL\n  return user;\n}" },
+  { id: "devops-6", category: "devops_config", prompt: "Write a Terraform configuration for a scalable Node.js backend on AWS: ALB, ECS Fargate, RDS PostgreSQL, ElastiCache Redis." },
+  { id: "docs-5", category: "documentation_write", prompt: "Write OpenAPI 3.0 YAML spec for a user authentication API (register, login, refresh token, logout endpoints)." },
+  { id: "dep-5", category: "dependency_update", prompt: "Upgrade React from 17 to 18. Handle the breaking changes around createRoot, StrictMode double-render, and automatic batching." },
+  { id: "review-4", category: "code_review", prompt: "Review this Node.js service for error handling, resource leaks, and concurrency issues.", rawCode: "class DataProcessor {\n  private conn = db.connect();\n  async process(id: string) {\n    const data = await this.conn.query(`SELECT * FROM data WHERE id = '${id}'`);\n    const result = heavyComputation(data);\n    return result;\n  }\n}" },
+  { id: "test-8", category: "test_generation", prompt: "Write end-to-end tests with Playwright for a login flow: navigate, fill credentials, submit, verify redirect to dashboard, check authenticated state." },
+  { id: "sec-9", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement secure session management: server-side sessions with Redis, httpOnly+Secure+SameSite cookies, automatic expiry, session fixation protection on login." },
 ];
 
 interface RunResult {
@@ -123,7 +227,7 @@ interface RunResult {
 
 async function runScenario(baseUrl: string, scenario: Scenario): Promise<RunResult> {
   // Heavy tasks need more output headroom — eval shows refactor/arch get cut off at 1024
-  const heavyTasks = ["multi_file_refactor", "architecture_design", "database_schema_change", "security_sensitive_change", "api_implementation"];
+  const heavyTasks = ["multi_file_refactor", "architecture_design", "database_schema_change", "security_sensitive_change", "api_implementation", "devops_config", "performance_optimization", "code_review", "dependency_update"];
   const maxTokens = heavyTasks.includes(scenario.category) ? 3000 : 1500;
   const body = {
     prompt: scenario.prompt,
