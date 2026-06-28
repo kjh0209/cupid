@@ -104,6 +104,108 @@ const SCENARIOS: Scenario[] = [
 
   // ── Edge: ambiguous ─────────────────────────────────────────
   { id: "edge-1", category: "local_bug_fix", prompt: "Why is my code slow?", rawCode: "const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));\nfor (const u of sortedUsers) console.log(u);" },
+
+  // ══════════════════════════════════════════════════════════
+  // EXTENDED SCENARIOS (v6) — 68 additional to reach 100 total
+  // ══════════════════════════════════════════════════════════
+
+  // ── Explanation (5 more → 8 total) ─────────────────────────
+  { id: "exp-4", category: "explanation", prompt: "Explain the difference between shallow and deep equality in JavaScript.", userMode: "cost_saving" },
+  { id: "exp-5", category: "explanation", prompt: "What is the event loop in Node.js and why does it matter for async code?" },
+  { id: "exp-6", category: "explanation", prompt: "Explain what this Prisma schema does.", rawCode: "model Post {\n  id        Int      @id @default(autoincrement())\n  title     String\n  author    User     @relation(fields: [authorId], references: [id])\n  authorId  Int\n  createdAt DateTime @default(now())\n}" },
+  { id: "exp-7", category: "explanation", prompt: "What is tree-shaking in modern bundlers and which conditions enable it?" },
+  { id: "exp-8", category: "explanation", prompt: "Explain the difference between 'undefined' and 'null' in TypeScript, and when to use each.", userMode: "cost_saving" },
+
+  // ── Simple edit (4 more → 7 total) ────────────────────────
+  { id: "edit-4", category: "simple_edit", prompt: "Add TypeScript type annotations to all function parameters and return types.", rawCode: "function getUser(id) {\n  return fetch('/users/' + id).then(r => r.json());\n}" },
+  { id: "edit-5", category: "simple_edit", prompt: "Extract the magic number 86400 into a named constant.", rawCode: "function isExpired(createdAt) {\n  return Date.now() - createdAt > 86400 * 1000;\n}" },
+  { id: "edit-6", category: "simple_edit", prompt: "Convert this callback-style function to async/await.", rawCode: "function readFile(path, cb) {\n  fs.readFile(path, 'utf8', (err, data) => {\n    if (err) return cb(err);\n    cb(null, data);\n  });\n}" },
+  { id: "edit-7", category: "simple_edit", prompt: "Add null check before accessing property and return null if missing.", rawCode: "function getName(user) {\n  return user.profile.name;\n}" },
+
+  // ── UI change (4 more → 7 total) ──────────────────────────
+  { id: "ui-4", category: "ui_change", prompt: "Build a Modal component with a close button, backdrop click to dismiss, and ESC key handler. Use Tailwind." },
+  { id: "ui-5", category: "ui_change", prompt: "Add a loading skeleton placeholder for this user card while data loads.", rawCode: "<div className='p-4 rounded shadow'><h2>{user.name}</h2><p>{user.email}</p></div>" },
+  { id: "ui-6", category: "ui_change", prompt: "Convert this list to a virtualized list using @tanstack/virtual for 10,000 items." },
+  { id: "ui-7", category: "ui_change", prompt: "Add dark mode support to this component using Tailwind's dark: variant.", rawCode: "<div className='bg-white text-gray-900 p-4'><h1 className='text-xl font-bold'>Dashboard</h1></div>" },
+
+  // ── Test generation (5 more → 8 total) ────────────────────
+  { id: "test-4", category: "test_generation", prompt: "Write vitest unit tests for a useLocalStorage hook. Cover initial value, set, get, and cross-tab sync." },
+  { id: "test-5", category: "test_generation", prompt: "Generate jest tests for this Express middleware.", rawCode: "function requireAuth(req, res, next) {\n  if (!req.headers.authorization?.startsWith('Bearer ')) {\n    return res.status(401).json({ error: 'Unauthorized' });\n  }\n  next();\n}" },
+  { id: "test-6", category: "test_generation", prompt: "Write integration tests for a login flow: POST /auth/login → success (200+token), wrong password (401), missing fields (400)." },
+  { id: "test-7", category: "test_generation", prompt: "Generate property-based tests (fast-check) for a pure sort function.", rawCode: "function sortByScore(items) {\n  return [...items].sort((a, b) => b.score - a.score);\n}" },
+  { id: "test-8", category: "test_generation", prompt: "Write snapshot tests for this React component using vitest and @testing-library/react.", rawCode: "export function Badge({ label, color = 'blue' }) {\n  return <span className={`bg-${color}-100 text-${color}-800 px-2 py-1 rounded`}>{label}</span>;\n}" },
+
+  // ── Local bug fix (6 more → 10 total) ─────────────────────
+  { id: "bug-5", category: "local_bug_fix", prompt: "Memory leak: this component attaches an event listener but never removes it. Fix.", rawCode: "function App() {\n  useEffect(() => {\n    window.addEventListener('resize', handleResize);\n  }, []);\n  return <div />;\n}" },
+  { id: "bug-6", category: "local_bug_fix", prompt: "This Promise chain silently swallows errors. Make all errors surfaced.", rawCode: "fetchData()\n  .then(processData)\n  .then(saveResult)\n  .catch(console.log);" },
+  { id: "bug-7", category: "local_bug_fix", prompt: "SQL query returns wrong rows. Find and fix the join condition.", rawCode: "SELECT u.*, o.* FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'active' AND u.id = o.id;" },
+  { id: "bug-8", category: "local_bug_fix", prompt: "TypeScript generics aren't being inferred correctly. Fix the type signature.", rawCode: "function identity(value) {\n  return value;\n}\nconst s = identity('hello'); // s is inferred as 'unknown'" },
+  { id: "bug-9", category: "local_bug_fix", prompt: "This pagination returns duplicate items on page boundary. Identify root cause and fix.", rawCode: "async function getPage(cursor) {\n  return db.query(`SELECT * FROM items WHERE id >= ${cursor} LIMIT 10`);\n}" },
+  { id: "bug-10", category: "local_bug_fix", prompt: "Next.js build fails with 'Cannot find module'. Explain likely causes and fix steps.", rawCode: "import { helper } from '../utils/helper';\n// Error: Cannot find module '../utils/helper'" },
+
+  // ── API implementation (5 more → 8 total) ─────────────────
+  { id: "api-4", category: "api_implementation", prompt: "Write a Next.js App Router route handler for GET /api/products that accepts ?category= and ?page= query params. Return paginated results from Prisma." },
+  { id: "api-5", category: "api_implementation", prompt: "Implement a webhook handler that verifies Stripe signature and processes payment_intent.succeeded events." },
+  { id: "api-6", category: "api_implementation", prompt: "Add rate limiting middleware to this Express app: 100 req/15min per IP, return 429 with Retry-After header." },
+  { id: "api-7", category: "api_implementation", prompt: "Implement file upload endpoint using multipart/form-data. Validate: max 5MB, images only (jpg/png/webp). Save to S3." },
+  { id: "api-8", category: "api_implementation", prompt: "Write a GraphQL resolver for a User type that resolves posts lazily (N+1 safe with DataLoader)." },
+
+  // ── Security-sensitive (6 more → 10 total) ────────────────
+  { id: "sec-5", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement OAuth2 authorization code flow (PKCE variant) for a Next.js app. Handle state, code_verifier, and token exchange." },
+  { id: "sec-6", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Add row-level security (RLS) policies in PostgreSQL to ensure users can only read their own data." },
+  { id: "sec-7", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement secure session management: generate session token, store in Redis with TTL, validate on each request, invalidate on logout." },
+  { id: "sec-8", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Fix this SQL injection vulnerability.", rawCode: "const user = await db.query(`SELECT * FROM users WHERE email = '${email}'`);" },
+  { id: "sec-9", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Add Content-Security-Policy headers to block XSS in this Express app. Cover script-src, style-src, img-src." },
+  { id: "sec-10", category: "security_sensitive_change", forbiddenTier: "cheap", prompt: "Implement API key rotation: generate new key, make both old and new keys valid for 24h, then expire old key. Atomic operation." },
+
+  // ── Database schema change (5 more → 8 total) ─────────────
+  { id: "db-4", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Add soft-delete to the 'articles' table: add deleted_at column, update queries to exclude soft-deleted rows, add restore endpoint." },
+  { id: "db-5", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Migrate from INT to UUID primary keys on the 'users' table. Include foreign key updates and rollback plan." },
+  { id: "db-6", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Partition the 'events' table by month for a PostgreSQL table with 200M rows. Zero-downtime strategy." },
+  { id: "db-7", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Add full-text search to the 'products' table using PostgreSQL tsvector. Include trigger to keep the column updated." },
+  { id: "db-8", category: "database_schema_change", forbiddenTier: "cheap", prompt: "Extract the 'address' JSON column on 'users' into a normalized 'addresses' table with a one-to-many relation. Reversible migration." },
+
+  // ── Multi-file refactor (6 more → 8 total) ─────────────────
+  { id: "ref-3", category: "multi_file_refactor", prompt: "Extract a shared usePagination hook used by UserList.tsx, ProductList.tsx, and OrderList.tsx — all have identical pagination logic. Show the hook and all 3 updated files." },
+  { id: "ref-4", category: "multi_file_refactor", prompt: "Move from class-based service to functional module pattern: convert UserService class to exported functions. Update all callers." },
+  { id: "ref-5", category: "multi_file_refactor", prompt: "Replace all direct process.env accesses with a typed config module that validates on startup.", rawCode: "// Scattered across 5+ files: process.env.DATABASE_URL, process.env.JWT_SECRET, process.env.PORT" },
+  { id: "ref-6", category: "multi_file_refactor", prompt: "Split this 800-line monolithic API route file into separate route modules by resource (users, products, orders).", rawCode: "// routes/api.ts — users CRUD, products CRUD, orders CRUD all in one file" },
+  { id: "ref-7", category: "multi_file_refactor", prompt: "Convert this JavaScript project to TypeScript. Add tsconfig.json, rename files to .ts/.tsx, add type annotations to public APIs." },
+  { id: "ref-8", category: "multi_file_refactor", prompt: "Introduce dependency injection: replace hard-coded singleton imports with constructor-injected interfaces across the service layer." },
+
+  // ── Architecture design (6 more → 8 total) ─────────────────
+  { id: "arch-3", category: "architecture_design", prompt: "Design a real-time collaboration system (like Google Docs) for a small team. Constraints: WebSocket, conflict resolution, offline support." },
+  { id: "arch-4", category: "architecture_design", prompt: "We need to add a job queue for background tasks (email sending, PDF generation). Design the worker architecture for a Next.js + PostgreSQL stack." },
+  { id: "arch-5", category: "architecture_design", prompt: "Design a feature-flag system with: per-user rollout percentage, environment-scoped flags, and zero-latency reads on the critical path." },
+  { id: "arch-6", category: "architecture_design", prompt: "Propose a caching strategy for a product catalog API that gets 10K req/s but updates rarely. Consider CDN, Redis, and in-process caches." },
+  { id: "arch-7", category: "architecture_design", prompt: "We're hitting database connection pool exhaustion under load. Diagnose likely causes and design a remediation plan." },
+  { id: "arch-8", category: "architecture_design", prompt: "Design the data model for a multi-tenant SaaS product where each tenant has isolated data. Compare row-level isolation vs separate schemas vs separate databases." },
+
+  // ── Prompt rewrite (3 more → 4 total) ─────────────────────
+  { id: "rewrite-2", category: "prompt_rewrite_only", prompt: "혹시 가능하다면 이 코드 좀 최적화해 주실 수 있을까요 부탁드립니다", userMode: "cost_saving" },
+  { id: "rewrite-3", category: "prompt_rewrite_only", prompt: "I was thinking maybe we could possibly kind of refactor this code a little bit if that's okay with you and not too much trouble" },
+  { id: "rewrite-4", category: "prompt_rewrite_only", prompt: "could you look at this and maybe help me figure out what's going wrong with it? it's the authentication thing and it's been a bit broken for a while" },
+
+  // ── Performance optimization (4 new) ──────────────────────
+  { id: "perf-1", category: "performance_optimization", prompt: "This API endpoint takes 3s to respond. Profile it and optimize.", rawCode: "app.get('/dashboard', async (req, res) => {\n  const users = await db.users.findMany();\n  const orders = await db.orders.findMany();\n  const stats = users.map(u => ({ ...u, orderCount: orders.filter(o => o.userId === u.id).length }));\n  res.json(stats);\n});" },
+  { id: "perf-2", category: "performance_optimization", prompt: "This React component re-renders on every parent update. Optimize it with memoization.", rawCode: "function ExpensiveList({ items, filter }) {\n  const filtered = items.filter(i => i.category === filter);\n  return <ul>{filtered.map(i => <li key={i.id}>{i.name}</li>)}</ul>;\n}" },
+  { id: "perf-3", category: "performance_optimization", prompt: "Optimize this database query that's causing table scans on a 10M row table.", rawCode: "SELECT * FROM orders WHERE JSON_EXTRACT(metadata, '$.region') = 'EU' AND created_at > NOW() - INTERVAL 30 DAY;" },
+  { id: "perf-4", category: "performance_optimization", prompt: "This Next.js page has a 4MB JavaScript bundle. Identify likely causes and suggest specific optimizations to reduce it below 200KB." },
+
+  // ── DevOps / config (4 new) ────────────────────────────────
+  { id: "devops-1", category: "devops_config", prompt: "Write a GitHub Actions CI pipeline for a Node.js TypeScript project: lint, test, build, and deploy to Railway on push to main." },
+  { id: "devops-2", category: "devops_config", prompt: "Create a production-ready Dockerfile for a Node.js app with multi-stage build, non-root user, and health check." },
+  { id: "devops-3", category: "devops_config", prompt: "Write a docker-compose.yml for local development: Node.js app, PostgreSQL, Redis. Include volume mounts and environment variables." },
+  { id: "devops-4", category: "devops_config", prompt: "Set up a Kubernetes deployment manifest for this API with: 3 replicas, readiness probe, liveness probe, horizontal pod autoscaling on CPU>70%." },
+
+  // ── Documentation write (3 new) ───────────────────────────
+  { id: "doc-1", category: "documentation_write", prompt: "Write a README for this Express API project including: setup, environment variables, available endpoints, and how to run tests." },
+  { id: "doc-2", category: "documentation_write", prompt: "Add JSDoc documentation to all exported functions in this module.", rawCode: "export function paginate(items, page, size) {\n  const start = (page - 1) * size;\n  return { items: items.slice(start, start + size), total: items.length, page, size };\n}\nexport function sortBy(items, key, dir = 'asc') {\n  return [...items].sort((a, b) => dir === 'asc' ? (a[key] > b[key] ? 1 : -1) : (a[key] < b[key] ? 1 : -1));\n}" },
+  { id: "doc-3", category: "documentation_write", prompt: "Write an ADR (Architecture Decision Record) for choosing Zod over yup for runtime validation in a TypeScript project." },
+
+  // ── Additional edge cases (2 more → 3 total) ──────────────
+  { id: "edge-2", category: "local_bug_fix", prompt: "Fix this TypeScript code", rawCode: "const data = JSON.parse(response);\nconsole.log(data.user.name.toUpperCase());" },
+  { id: "edge-3", category: "explanation", prompt: "review my code", rawCode: "async function getData() { return await fetch('/api').then(r => r.json()); }", userMode: "cost_saving" },
 ];
 
 interface RunResult {

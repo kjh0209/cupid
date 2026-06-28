@@ -9,7 +9,7 @@ export function buildClassificationPrompt(
 
 Return ONLY valid JSON matching this schema:
 {
-  "task_type": one of: explanation|simple_edit|test_generation|local_bug_fix|ui_change|api_implementation|multi_file_refactor|database_schema_change|security_sensitive_change|architecture_design|prompt_rewrite_only|unknown,
+  "task_type": one of: explanation|simple_edit|test_generation|local_bug_fix|ui_change|api_implementation|multi_file_refactor|database_schema_change|security_sensitive_change|architecture_design|prompt_rewrite_only|performance_optimization|devops_config|documentation_write|dependency_update|code_review|unknown,
   "difficulty": integer 1-5,
   "risk_level": integer 1-5,
   "context_need": one of: small|medium|large|huge,

@@ -1,0 +1,118 @@
+{
+  "name": "cupid-router",
+  "displayName": "Cupid — Smart LLM Router",
+  "description": "Routes your coding request to the optimal LLM automatically. Save 50–93% on AI costs while maintaining quality.",
+  "version": "0.1.0",
+  "publisher": "cupid-ai",
+  "icon": "media/cupid-icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["AI", "Other"],
+  "keywords": ["llm", "ai", "routing", "claude", "gpt", "gemini", "cost-saving"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cupid.ask",
+        "title": "Cupid: Ask (route to best model)",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "cupid.askWithSelection",
+        "title": "Cupid: Ask with Selected Code",
+        "icon": "$(code)"
+      },
+      {
+        "command": "cupid.showStats",
+        "title": "Cupid: Show Session Stats"
+      },
+      {
+        "command": "cupid.resetSession",
+        "title": "Cupid: Reset Session Context"
+      },
+      {
+        "command": "cupid.configureEndpoint",
+        "title": "Cupid: Configure Server Endpoint"
+      }
+    ],
+    "configuration": {
+      "title": "Cupid LLM Router",
+      "properties": {
+        "cupid.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3300",
+          "description": "URL of the Cupid backend server"
+        },
+        "cupid.userMode": {
+          "type": "string",
+          "enum": ["cost_saving", "balanced", "max_quality"],
+          "default": "balanced",
+          "description": "Default routing mode. cost_saving: minimize cost, balanced: cost+quality balance, max_quality: best model always"
+        },
+        "cupid.enableCpl": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Context Preservation Layer: session memory survives model switches"
+        },
+        "cupid.enableSelfRevise": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force self-revision pass on all responses (auto-enabled for risk≥4 tasks)"
+        },
+        "cupid.routingMode": {
+          "type": "string",
+          "enum": ["rule_based", "llm_assisted"],
+          "default": "rule_based",
+          "description": "Task classification strategy"
+        },
+        "cupid.showRoutingDetails": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show which model was selected and why in the status bar"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "cupid.askWithSelection",
+          "when": "editorHasSelection",
+          "group": "z_cupid@1"
+        },
+        {
+          "command": "cupid.ask",
+          "group": "z_cupid@2"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "cupid.ask",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cupid.askWithSelection",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l",
+        "when": "editorHasSelection"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.0",
+    "@vscode/vsce": "^2.24.0"
+  }
+}

@@ -11,6 +11,7 @@ import type { ModelRecord, ModelTier, UserMode, TaskClassification } from "../ty
 import { logger } from "../utils/logger.js";
 import { sessionContextStore } from "../cpl/sessionContextStore.js";
 import { extractAndStore } from "../cpl/contextExtractor.js";
+import { injectRepoFileTree } from "../cpl/repoFileTree.js";
 
 const BENCHMARK_MODEL_ID = "anthropic/claude-opus-4-5";
 
@@ -102,7 +103,8 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const optimizePrompt = body.optimizePrompt ?? true;
     const routingMode: RoutingMode = body.routingMode ?? "rule_based";
     const enhancedPrompts = body.enhancedPrompts ?? true;
-    const selfRevise = body.selfRevise ?? false;
+    // selfRevise will be finalized after classification (auto-ON for risk≥4)
+    const selfReviseOverride = body.selfRevise;
     const sessionKey = body.sessionKey ?? "";
     const useCpl = (body.useCpl ?? true) && !!sessionKey;
     const extractCpl = (body.extractCpl ?? true) && !!sessionKey;
@@ -160,6 +162,25 @@ export async function registerCompareRoutes(app: FastifyInstance) {
         selectedCode: body.rawCode,
         activeFilePath: body.fileName,
       });
+    }
+
+    // Auto-enable self-revision for high-risk tasks (riskLevel≥4) when the
+    // caller hasn't explicitly opted out. This closes the quality gap on
+    // security/db/refactor/architecture tasks where a second-pass review
+    // catches common mistakes without user intervention.
+    const selfRevise =
+      selfReviseOverride !== undefined
+        ? selfReviseOverride
+        : classification.riskLevel >= 4;
+
+    // Task 2: inject repo file tree for refactor/architecture tasks so the
+    // routed model can reason about the full file structure.
+    if (sessionKey && useCpl) {
+      injectRepoFileTree({
+        sessionKey,
+        taskType: classification.taskType,
+        sourceModel: "system",
+      }).catch((err) => logger.warn("repoFileTree injection failed", err));
     }
 
     const promptOpt = optimizePrompt
@@ -387,6 +408,7 @@ export async function registerCompareRoutes(app: FastifyInstance) {
             cplOriginalChars: routerBuild.cpl?.originalChars ?? 0,
             cplCompressedChars: routerBuild.cpl?.compressedChars ?? 0,
             selfReviseRequested: selfRevise,
+            selfReviseAutoTriggered: selfReviseOverride === undefined && classification.riskLevel >= 4,
             selfReviseApplied: finalRouterExec.revisionApplied ?? false,
           }
         : null,

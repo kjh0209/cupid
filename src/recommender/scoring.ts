@@ -152,7 +152,11 @@ export function scoreModel(
   const isHighRiskTask =
     classification.taskType === "security_sensitive_change" ||
     classification.taskType === "database_schema_change";
-  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 0.5 : 0;
+  // Doubled from 0.5 to 1.0 — sec-2/3/4 were still occasionally routing to
+  // Gemini 2.5 Pro (affinity 0.70) over Sonnet (affinity 0.97). Full-strength
+  // penalty ensures the 5-point affinity gap translates to a scoring gap large
+  // enough to overcome any cost/latency advantage Gemini might have.
+  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 1.0 : 0;
 
   const score =
     (forbidden ? -10 : 0) +

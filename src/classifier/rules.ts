@@ -326,6 +326,11 @@ function gatherSignals(text: string): ClassificationSignals {
     security_sensitive_change: 0,
     architecture_design: 0,
     prompt_rewrite_only: 0,
+    performance_optimization: 0,
+    devops_config: 0,
+    documentation_write: 0,
+    dependency_update: 0,
+    code_review: 0,
     unknown: 0,
   };
 
@@ -357,6 +362,41 @@ function gatherSignals(text: string): ClassificationSignals {
   // recommender step because root-cause reasoning over vague signals is hard
   if (/\bwhy.?is.?my.?code.?slow|why.?is.?this.?slow|why.?doesn.?t.?(?:this|it).?work\b|something.?feels?.?(off|wrong)/i.test(text)) {
     scores.local_bug_fix += 1.0;
+  }
+
+  // Performance optimization detection
+  if (/\b(optimize|optimization|performance|bottleneck|slow|speed\s+up|memory.?leak|profil|n\+1|bundle.?size|latency|throughput)/i.test(text)) {
+    scores.performance_optimization += 1.5;
+  }
+  if (/\b(memoize|debounce|throttle|lazy.?load|code.?split|cache.?strategy|pagination|virtuali[sz])/i.test(text)) {
+    scores.performance_optimization += 1.0;
+  }
+
+  // DevOps / config detection
+  if (/\b(dockerfile|docker.?compose|github.?actions|ci\/cd|pipeline|kubernetes|k8s|helm|nginx|terraform|ansible|deploy)/i.test(text)) {
+    scores.devops_config += 2.0;
+  }
+  if (/\b(healthcheck|health.?check|liveness|readiness|probe|graceful.?shutdown|rolling.?deploy)/i.test(text)) {
+    scores.devops_config += 1.0;
+  }
+
+  // Documentation detection
+  if (/\b(readme|jsdoc|tsdoc|docstring|document.?this|add.?comments?|api.?docs?|openapi|swagger|adr|architecture.?decision)/i.test(text)) {
+    scores.documentation_write += 2.0;
+  }
+
+  // Dependency update detection
+  if (/\b(upgrade|update|bump|migrate).+(?:version|v\d|package|library|dependency|dep)/i.test(text)) {
+    scores.dependency_update += 2.0;
+  }
+  if (/\b(breaking.?change|changelog|peer.?dep|npm.?install|pnpm.?add)/i.test(text)) {
+    scores.dependency_update += 1.0;
+  }
+
+  // Code review detection (question without implementation verb)
+  if (/\b(review|audit|look.?at|check.?this|is.?this.?correct|any.?issues?|feedback.?on|what.?do.?you.?think)/i.test(text) &&
+      !/\b(write|implement|add|create|build|generate|fix|refactor)\b/i.test(text)) {
+    scores.code_review += 2.0;
   }
 
   return { scores, topHits: hits };
@@ -413,6 +453,11 @@ export function detectRiskLevel(
     security_sensitive_change: 5,
     architecture_design: 4,
     prompt_rewrite_only: 1,
+    performance_optimization: 3,
+    devops_config: 4,
+    documentation_write: 1,
+    dependency_update: 3,
+    code_review: 1,
     unknown: 2,
   };
 
