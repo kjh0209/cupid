@@ -11,6 +11,7 @@ import type { ModelRecord, ModelTier, UserMode, TaskClassification } from "../ty
 import { logger } from "../utils/logger.js";
 import { sessionContextStore } from "../cpl/sessionContextStore.js";
 import { extractAndStore } from "../cpl/contextExtractor.js";
+import { injectRepoFileTree } from "../cpl/repoFileTree.js";
 
 const BENCHMARK_MODEL_ID = "anthropic/claude-opus-4-5";
 
@@ -102,7 +103,8 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const optimizePrompt = body.optimizePrompt ?? true;
     const routingMode: RoutingMode = body.routingMode ?? "rule_based";
     const enhancedPrompts = body.enhancedPrompts ?? true;
-    const selfRevise = body.selfRevise ?? false;
+    // selfRevise defaults to auto-trigger based on risk level after classification
+    const selfReviseExplicit = body.selfRevise;
     const sessionKey = body.sessionKey ?? "";
     const useCpl = (body.useCpl ?? true) && !!sessionKey;
     const extractCpl = (body.extractCpl ?? true) && !!sessionKey;
@@ -162,6 +164,10 @@ export async function registerCompareRoutes(app: FastifyInstance) {
       });
     }
 
+    // Auto-trigger self-revise for high-risk tasks unless caller explicitly disabled it
+    const selfRevise = selfReviseExplicit ?? (classification.riskLevel >= 4);
+    const selfReviseAutoTriggered = selfReviseExplicit === undefined && classification.riskLevel >= 4;
+
     const promptOpt = optimizePrompt
       ? promptTokenOptimizer.optimize({
           rawMessage: prompt,
@@ -194,6 +200,14 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const sameModel = routerModel.id === benchmarkModel.id;
 
     logger.info(`Compare: router=${routerModel.id} vs benchmark=${benchmarkModel.id}`);
+
+    // ── Inject repo file tree into CPL for architecture/refactor tasks ──
+    if (useCpl) {
+      await injectRepoFileTree({
+        sessionKey,
+        taskType: classification.taskType,
+      }).catch(() => {/* non-fatal */});
+    }
 
     // ── Build CPL preamble (model-agnostic session memory) ──────
     let cplPreamble = "";
@@ -388,6 +402,7 @@ export async function registerCompareRoutes(app: FastifyInstance) {
             cplCompressedChars: routerBuild.cpl?.compressedChars ?? 0,
             selfReviseRequested: selfRevise,
             selfReviseApplied: finalRouterExec.revisionApplied ?? false,
+            selfReviseAutoTriggered,
           }
         : null,
       cpl: cplDebug ? {

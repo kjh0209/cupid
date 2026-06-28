@@ -196,6 +196,16 @@ export const PROMPT_REWRITE_KEYWORDS = [
   "verbose.prompt", "shorter.prompt", "trim.this",
 ];
 
+export const PERFORMANCE_KEYWORDS = [
+  "optimize", "optimise", "performance", "slow", "fast", "speed",
+  "bottleneck", "profil", "benchmark", "latency", "throughput",
+  "n+1", "n.plus.1", "query.optimization", "missing.index",
+  "memoize", "memoization", "debounce", "throttle", "cache",
+  "lazy.load", "lazy.loading", "code.split", "tree.shake", "bundle.size",
+  "memory.leak", "memory.usage", "heap", "gc", "garbage.collection",
+  "re.render", "unnecessary.render", "rerender", "usememo", "usecallback",
+];
+
 export const LONG_CONTEXT_TRIGGERS = [
   "entire.codebase", "full.repo", "all.files", "whole.project", "the.whole.project",
   "throughout.the.project", "across.the.entire", "every.module", "every.file",
@@ -326,6 +336,11 @@ function gatherSignals(text: string): ClassificationSignals {
     security_sensitive_change: 0,
     architecture_design: 0,
     prompt_rewrite_only: 0,
+    performance_optimization: 0,
+    devops_config: 0,
+    documentation_write: 0,
+    dependency_update: 0,
+    code_review: 0,
     unknown: 0,
   };
 
@@ -357,6 +372,38 @@ function gatherSignals(text: string): ClassificationSignals {
   // recommender step because root-cause reasoning over vague signals is hard
   if (/\bwhy.?is.?my.?code.?slow|why.?is.?this.?slow|why.?doesn.?t.?(?:this|it).?work\b|something.?feels?.?(off|wrong)/i.test(text)) {
     scores.local_bug_fix += 1.0;
+  }
+
+  // Performance optimization detection
+  if (/\b(optimi[sz]e|performance|bottleneck|slow|n\+1|memoize|lazy.?load|bundle.?si[yz]e|profil|cache.?hit|memory.?leak)\b/i.test(text)) {
+    scores.performance_optimization += 2.0;
+  }
+  if (countKeywordHits(text, PERFORMANCE_KEYWORDS) >= 2) {
+    scores.performance_optimization += 1.5;
+  }
+
+  // DevOps config detection
+  if (/\b(dockerfile|docker.?compose|ci\/cd|github.?actions|kubernetes|k8s|nginx\.conf|terraform|helm|circleci|pipeline|workflow\.yml)\b/i.test(text)) {
+    scores.devops_config += 3.0;
+  }
+
+  // Documentation write detection
+  if (/\b(readme|jsdoc|add.?comments|documentation|docstring|api.?docs|write.?docs|document.?this|explain.?in.?docs)\b/i.test(text)) {
+    scores.documentation_write += 2.5;
+  }
+
+  // Dependency update detection
+  if (/\b(upgrade|update|bump)\s+[\w@/-]+(\s+to\s+v?[\d.]+)?/i.test(text)) {
+    scores.dependency_update += 3.0;
+  }
+  if (/\b(breaking.?change|migration.?guide|changelog|peer.?dep|deprecated.?api)\b/i.test(text)) {
+    scores.dependency_update += 1.5;
+  }
+
+  // Code review detection
+  if (/\b(review|audit|any.?issues|look.?at.?this|feedback.?on|is.?this.?correct|code.?quality|LGTM)\b/i.test(text) &&
+      !/\b(write|implement|add|create|fix|build)\b/i.test(text)) {
+    scores.code_review += 2.5;
   }
 
   return { scores, topHits: hits };
@@ -413,6 +460,11 @@ export function detectRiskLevel(
     security_sensitive_change: 5,
     architecture_design: 4,
     prompt_rewrite_only: 1,
+    performance_optimization: 3,
+    devops_config: 4,
+    documentation_write: 1,
+    dependency_update: 3,
+    code_review: 1,
     unknown: 2,
   };
 
@@ -458,6 +510,11 @@ export function detectDifficulty(message: string, taskType: TaskType): number {
     security_sensitive_change: 4,
     architecture_design: 5,
     prompt_rewrite_only: 1,
+    performance_optimization: 3,
+    devops_config: 3,
+    documentation_write: 1,
+    dependency_update: 2,
+    code_review: 2,
     unknown: 2,
   };
 
@@ -491,6 +548,11 @@ export function detectContextNeed(message: string, taskType: TaskType): ContextN
     security_sensitive_change: "medium",
     architecture_design: "large",
     prompt_rewrite_only: "small",
+    performance_optimization: "medium",
+    devops_config: "medium",
+    documentation_write: "medium",
+    dependency_update: "small",
+    code_review: "large",
     unknown: "medium",
   };
 
@@ -521,6 +583,11 @@ export function detectChangeScope(taskType: TaskType, message: string): ChangeSc
     security_sensitive_change: "multi_file",
     architecture_design: "repo_wide",
     prompt_rewrite_only: "none",
+    performance_optimization: "single_file",
+    devops_config: "multi_file",
+    documentation_write: "single_file",
+    dependency_update: "multi_file",
+    code_review: "none",
     unknown: "single_file",
   };
 
@@ -545,6 +612,9 @@ export function detectCompressionSensitivity(
   if (riskLevel >= 4) return "high";
   if (riskLevel === 3) return "medium";
   if (taskType === "security_sensitive_change" || taskType === "database_schema_change") return "high";
+  if (taskType === "devops_config") return "high";  // config files need exact content
   if (taskType === "architecture_design" || taskType === "multi_file_refactor") return "medium";
+  if (taskType === "performance_optimization" || taskType === "dependency_update") return "medium";
+  if (taskType === "code_review") return "low";  // reviewer only reads, doesn't compress
   return "low";
 }

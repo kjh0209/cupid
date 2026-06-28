@@ -15,7 +15,9 @@ const TASK_TYPES: TaskType[] = [
   "explanation", "simple_edit", "test_generation", "local_bug_fix",
   "ui_change", "api_implementation", "multi_file_refactor",
   "database_schema_change", "security_sensitive_change",
-  "architecture_design", "prompt_rewrite_only", "unknown",
+  "architecture_design", "prompt_rewrite_only",
+  "performance_optimization", "devops_config", "documentation_write",
+  "dependency_update", "code_review", "unknown",
 ];
 const CONTEXT_NEEDS: ContextNeed[] = ["small", "medium", "large", "huge"];
 const CHANGE_SCOPES: ChangeScope[] = ["none", "single_file", "multi_file", "repo_wide"];
@@ -26,7 +28,7 @@ const SYSTEM_PROMPT = `You are a task classifier for a code-assistant routing sy
 Read the user's prompt + file context, then output STRICT JSON (no markdown fences, no commentary):
 
 {
-  "task_type": "<one of: explanation|simple_edit|test_generation|local_bug_fix|ui_change|api_implementation|multi_file_refactor|database_schema_change|security_sensitive_change|architecture_design|prompt_rewrite_only|unknown>",
+  "task_type": "<one of: explanation|simple_edit|test_generation|local_bug_fix|ui_change|api_implementation|multi_file_refactor|database_schema_change|security_sensitive_change|architecture_design|prompt_rewrite_only|performance_optimization|devops_config|documentation_write|dependency_update|code_review|unknown>",
   "difficulty": <integer 1..5>,
   "risk_level": <integer 0..5>,
   "context_need": "<small|medium|large|huge>",
@@ -50,6 +52,11 @@ CRITICAL classification rules (these override surface keywords):
 9. Rename, fix typo, add comment, add log, format → simple_edit. risk_level = 1, difficulty = 1.
 10. "There's a bug", "X doesn't work", "throws error", stack trace → local_bug_fix. Estimate difficulty from the bug description.
 11. VAGUE bug-fix prompts ("why is my code slow?", "this doesn't feel right", "something's off") with no concrete error/symptom → local_bug_fix BUT difficulty >= 3 because root-cause diagnosis from vague signals is harder than fixing a concrete error. Don't route to cheap tier.
+12. Dockerfile, docker-compose, GitHub Actions, CI/CD pipeline, k8s/Kubernetes config, nginx.conf, Terraform → devops_config. risk_level >= 4.
+13. "Optimize X", "X is slow", "N+1 query", "improve performance", "lazy load", "bundle size", "memoize", "profiling" → performance_optimization. risk_level = 3.
+14. "Write docs", "add JSDoc", "update README", "document this function/class/API" → documentation_write. risk_level = 1.
+15. "Upgrade X to vY", "update dependency", "bump package", "migrate from vX to vY" → dependency_update. risk_level = 3.
+16. "Review this code", "any issues", "is this correct", "LGTM?", "feedback on" (without a write/implement/create/fix ask) → code_review. risk_level = 1.
 
 Difficulty scale:
 1 = trivial (rename, format, typo)

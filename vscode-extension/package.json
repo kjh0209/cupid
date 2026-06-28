@@ -1,0 +1,94 @@
+{
+  "name": "cupid-vscode",
+  "displayName": "Cupid — Smart AI Router",
+  "description": "Automatically picks the right AI model for every coding task. Save 50–93% on AI costs without sacrificing quality.",
+  "version": "0.1.0",
+  "publisher": "cupid-ai",
+  "repository": "https://github.com/kjh0209/cupid",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["AI", "Other"],
+  "keywords": ["ai", "llm", "routing", "cost", "claude", "gpt", "gemini"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cupid.ask",
+        "title": "Cupid: Ask AI (auto-route)"
+      },
+      {
+        "command": "cupid.askWithSelection",
+        "title": "Cupid: Ask AI with selected code"
+      },
+      {
+        "command": "cupid.showStats",
+        "title": "Cupid: Show session stats"
+      },
+      {
+        "command": "cupid.resetSession",
+        "title": "Cupid: Reset session memory"
+      },
+      {
+        "command": "cupid.configureEndpoint",
+        "title": "Cupid: Configure server endpoint"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "cupid.ask",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cupid.askWithSelection",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l",
+        "when": "editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "Cupid",
+      "properties": {
+        "cupid.serverEndpoint": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Cupid backend server URL"
+        },
+        "cupid.userMode": {
+          "type": "string",
+          "enum": ["cost_saving", "balanced", "max_quality"],
+          "default": "balanced",
+          "description": "Routing mode — cost_saving saves most, max_quality always picks best"
+        },
+        "cupid.routingMode": {
+          "type": "string",
+          "enum": ["rule_based", "llm_assisted"],
+          "default": "rule_based",
+          "description": "Classification method — llm_assisted is more accurate but adds ~50ms"
+        },
+        "cupid.useCpl": {
+          "type": "boolean",
+          "default": true,
+          "description": "Inject session memory (context preservation layer) into prompts"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./tsconfig.json",
+    "watch": "tsc -watch -p ./tsconfig.json",
+    "package": "vsce package",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5",
+    "@vscode/vsce": "^2.26.0"
+  }
+}

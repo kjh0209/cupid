@@ -200,6 +200,11 @@ const STRATEGY_BY_TASK: Record<TaskType, string[]> = {
   security_sensitive_change: ["strip-whitespace"], // preserve everything for safety
   architecture_design:    ["dedupe-imports", "strip-comments", "strip-whitespace", "extract-signatures"],
   prompt_rewrite_only:    [],
+  performance_optimization: ["dedupe-imports", "strip-whitespace", "relevant-region"],
+  devops_config:          ["strip-whitespace"],  // preserve everything — configs need exact content
+  documentation_write:    ["dedupe-imports", "strip-comments", "strip-whitespace", "extract-signatures"],
+  dependency_update:      ["dedupe-imports", "strip-whitespace"],
+  code_review:            ["dedupe-imports", "strip-whitespace"],
   unknown:                ["dedupe-imports", "strip-whitespace"],
 };
 

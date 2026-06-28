@@ -152,7 +152,7 @@ export function scoreModel(
   const isHighRiskTask =
     classification.taskType === "security_sensitive_change" ||
     classification.taskType === "database_schema_change";
-  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 0.5 : 0;
+  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 1.0 : 0;
 
   const score =
     (forbidden ? -10 : 0) +
