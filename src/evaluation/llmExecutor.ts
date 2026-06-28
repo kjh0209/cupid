@@ -36,6 +36,23 @@ export interface CodeGenerationResult {
   parseStatus: "success" | "json_repair" | "code_block" | "failed";
 }
 
+const OPENROUTER_SLUG_OVERRIDES: Record<string, string> = {
+  "anthropic/claude-opus-4-5": "anthropic/claude-opus-4.5",
+  "anthropic/claude-sonnet-4-5": "anthropic/claude-sonnet-4.5",
+  "anthropic/claude-haiku-4-5": "anthropic/claude-haiku-4.5",
+  "anthropic/claude-opus-4-7": "anthropic/claude-opus-4.7",
+  "anthropic/claude-sonnet-4-6": "anthropic/claude-sonnet-4.6",
+  // Gemini 2.0 Flash retired on OpenRouter → route to 2.5 Flash Lite (same tier, same price)
+  "google/gemini-2.0-flash": "google/gemini-2.5-flash-lite",
+  "google/gemini-2.0-flash-001": "google/gemini-2.5-flash-lite",
+  "google/gemini-3.5-flash": "google/gemini-3.5-flash",
+  "google/gemini-3.1-flash-lite": "google/gemini-3.1-flash-lite",
+};
+
+function toOpenRouterSlug(modelId: string): string {
+  return OPENROUTER_SLUG_OVERRIDES[modelId] ?? modelId;
+}
+
 function resolveEndpoint(modelId: string): { baseUrl: string; apiKey: string } {
   const provider = modelId.split("/")[0];
 
@@ -79,11 +96,31 @@ export async function callLLM(
   // Normalize model ID: OpenRouter/LiteLLM keep "provider/model", direct providers use "model" only
   const isOpenRouter = baseUrl.includes("openrouter.ai");
   const isLiteLLM = baseUrl === process.env["LITELLM_BASE_URL"];
-  const normalizedModel = (isOpenRouter || isLiteLLM) ? modelId : modelId.split("/").slice(1).join("/") || modelId;
+  const normalizedModel = isOpenRouter
+    ? toOpenRouterSlug(modelId)
+    : isLiteLLM
+      ? modelId
+      : modelId.split("/").slice(1).join("/") || modelId;
+
+  // Some Gemini models on OpenRouter occasionally return empty responses when
+  // system messages are too long. Fold the system message into the first user
+  // turn for Gemini routes to stabilize responses.
+  let finalMessages = messages;
+  if (normalizedModel.toLowerCase().includes("gemini")) {
+    const sysParts = messages.filter((m) => m.role === "system").map((m) => m.content);
+    const nonSys = messages.filter((m) => m.role !== "system");
+    if (sysParts.length > 0 && nonSys.length > 0) {
+      const sysText = sysParts.join("\n\n");
+      finalMessages = [
+        { role: nonSys[0]!.role, content: `[System instructions]\n${sysText}\n\n[User]\n${nonSys[0]!.content}` },
+        ...nonSys.slice(1),
+      ];
+    }
+  }
 
   const body = {
     model: normalizedModel,
-    messages,
+    messages: finalMessages,
     temperature,
     max_tokens: maxTokens,
   };

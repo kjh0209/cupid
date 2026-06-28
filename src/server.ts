@@ -2,6 +2,12 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { registerRoutes } from "./api/routes.js";
 import { registerEvalRoutes } from "./api/evalRoutes.js";
+import { registerCompareRoutes } from "./api/compareRoutes.js";
+import { registerCupidRoutes } from "./api/cupidRoutes.js";
+import { registerAuthRoutes } from "./api/authRoutes.js";
+import { registerWorkspaceRoutes } from "./api/workspaceRoutes.js";
+import { registerChatRoutes } from "./api/chatRoutes.js";
+import { registerCplRoutes } from "./api/cplRoutes.js";
 import { initDb } from "./db/database.js";
 import { logger } from "./utils/logger.js";
 
@@ -13,7 +19,8 @@ export async function createServer() {
 
   await app.register(cors, {
     origin: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   });
 
   app.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, done) => {
@@ -26,6 +33,12 @@ export async function createServer() {
 
   await registerRoutes(app);
   await registerEvalRoutes(app);
+  await registerCompareRoutes(app);
+  await registerCupidRoutes(app);
+  await registerAuthRoutes(app);
+  await registerWorkspaceRoutes(app);
+  await registerChatRoutes(app);
+  await registerCplRoutes(app);
 
   return app;
 }

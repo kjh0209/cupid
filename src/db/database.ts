@@ -233,6 +233,94 @@ function runMigrations(sqlite: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_eval_candidates_label ON eval_candidates(label);
     CREATE INDEX IF NOT EXISTS idx_eval_metrics_run ON eval_metrics(eval_run_id);
     CREATE INDEX IF NOT EXISTS idx_human_ratings_run ON human_ratings(eval_run_id);
+
+    -- ── IDE: Users + sessions ────────────────────────────────
+    CREATE TABLE IF NOT EXISTS ide_users (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      password_salt TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ide_users_email ON ide_users(email);
+
+    CREATE TABLE IF NOT EXISTS ide_sessions (
+      token TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES ide_users(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL,
+      last_seen_at TEXT NOT NULL,
+      user_agent TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_ide_sessions_user ON ide_sessions(user_id);
+
+    -- ── IDE: Workspaces + files ──────────────────────────────
+    CREATE TABLE IF NOT EXISTS ide_workspaces (
+      id TEXT PRIMARY KEY,
+      owner_id TEXT NOT NULL REFERENCES ide_users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ide_workspaces_owner ON ide_workspaces(owner_id);
+
+    CREATE TABLE IF NOT EXISTS ide_workspace_files (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL REFERENCES ide_workspaces(id) ON DELETE CASCADE,
+      path TEXT NOT NULL,
+      content TEXT NOT NULL DEFAULT '',
+      updated_at TEXT NOT NULL,
+      UNIQUE(workspace_id, path)
+    );
+    CREATE INDEX IF NOT EXISTS idx_ide_files_workspace ON ide_workspace_files(workspace_id);
+
+    -- ── CPL: Session-scoped Context Preservation Layer ─────
+    -- Stores semantic facts about a session/repository so that
+    -- when the user switches models within the same session, the
+    -- new model receives the same accumulated knowledge.
+    --
+    -- Kind taxonomy:
+    --   repo_summary       — generated overview of the codebase
+    --   convention         — coding style/architecture choice
+    --   decision           — explicit design/api decision
+    --   task_history       — past prompt + model + outcome
+    --   file_summary       — semantic summary of a single file
+    --   architecture_log   — adr-style entries
+    --   user_preference    — explicit user-stated preference
+    --   symbol_map         — list of important identifiers + their kind
+    CREATE TABLE IF NOT EXISTS cpl_context_entries (
+      id TEXT PRIMARY KEY,
+      session_key TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      embedding TEXT,
+      tokens INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      last_used_at TEXT NOT NULL,
+      use_count INTEGER NOT NULL DEFAULT 0,
+      pinned INTEGER NOT NULL DEFAULT 0,
+      source_model TEXT,
+      metadata_json TEXT NOT NULL DEFAULT '{}'
+    );
+    CREATE INDEX IF NOT EXISTS idx_cpl_session ON cpl_context_entries(session_key);
+    CREATE INDEX IF NOT EXISTS idx_cpl_session_kind ON cpl_context_entries(session_key, kind);
+    CREATE INDEX IF NOT EXISTS idx_cpl_last_used ON cpl_context_entries(last_used_at);
+
+    -- Per-session task history (compact, append-only)
+    CREATE TABLE IF NOT EXISTS cpl_task_history (
+      id TEXT PRIMARY KEY,
+      session_key TEXT NOT NULL,
+      prompt_summary TEXT NOT NULL,
+      task_type TEXT NOT NULL,
+      routed_model TEXT NOT NULL,
+      response_summary TEXT NOT NULL DEFAULT '',
+      tokens_in INTEGER NOT NULL DEFAULT 0,
+      tokens_out INTEGER NOT NULL DEFAULT 0,
+      cost_usd REAL NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      metadata_json TEXT NOT NULL DEFAULT '{}'
+    );
+    CREATE INDEX IF NOT EXISTS idx_cpl_hist_session ON cpl_task_history(session_key, created_at);
   `);
 }
 

@@ -1,0 +1,534 @@
+4  GRAVITY 2026
+
+() :              CUPID ()
+:     2026. 06. 10.
+:
+                   ()
+
+ 
+1.  A4 3  
+2.      ,     ()
+
+              
+3.   `    ' ,    
+4.     ,       
+5.           
+4  GRAVITY 2026
+
+        []                [()] 
+        []                [()] 
+(  O )
+
+                CUPID
+
+              AI   
+()                                             AI  
+
+
+                 / 
+
+                           AI/
+(
+         //   (,   )
+   )
+         /         (, )
+
+         /(, ,   )
+
+          (  )
+
+()                        CUPID
+                          
+        
+                            010-8630-8016
+ (·)
+                                     kjh0209@kaist.ac.kr
+
+     ()                              KAIST
+
+     //             &  /  / 
+
+            ()
+
+         1                                  2
+
+                                                    
+                 010-7616-7143                 010-2086-3006
+         daniel20061208@kaist.ac.kr         rogymo@kaist.ac.kr
+                                      
+
+     ()     KAIST                    ()                   KAIST
+
+     // // // //
+
+     CUPID      , KAIST NAVER     
+        . GRAVITY 2026    (1) KAIST Global
+     Entrepreneurship Summer School(GESS) 2026  , (2) NAVER D2SF ·  
+       .
+
+     (1) GESS KAIST (KGEP)     , 
+     · Impact MBA  ·· ·· 5   25
+         . CUPID GESS 2026    
+     .    2 KAIST      
+     ··   ,   CUPID "AI   ··
+     "     .     2026 6 28 ~ 7 8,
+     CUPID     . Meta·NVIDIA    , 
+       ,   VC       . 
+     GRAVITY 2026         ·· 
+           .  4     
+           .
+
+     (2) NAVER D2SF(D2 Startup Factory) NAVER 2015  corporate venture arm,
+     ~A    100+  .     NAVER 
+     ··      VC  . CUPID 
+     NAVER D2SF  ·   ,  (a) NAVER Cloud·HyperCLOVA X 
+     · , (b) D2SF ·     , (c) NAVER  
+      collaboration agenda . CUPID     "   
+     · ".     task( ···  )  
+             ,  NAVER· AI
+      · ·     .
+       CUPID KAIST AI  , AI      , 
+    Toss          . 
+     (a)       $300+   , (b) 
+    ·      , (c)  ·     
+    ,  Toss  " IDE      
+    "   .
+
+     GRAVITY 2026  CUPID (a)   task-level  , (b)   task
+    benchmark(SWE-bench·  task) , (c) VS Code extension   MVP , (d)
+     token/cost tracking  , (e)    beta test 
+    .  KPI  .  "       AI 
+     "     .
+
+                                    3  
+
+    CUPID   AI coding tool      ,  "  
+        "  AI-native  .  Cursor, Claude Code,
+    GitHub Copilot, Windsurf, Replit   AI coding tool     ,
+       ,   context,   agent ,      
+      .    workflow     frontier-level
+    reasoning   .   ,   ,   ,  
+    ,   refactor          . 
+    authentication logic ,   ,   ,  multi-file refactor,
+             context  .
+
+           ,   AI  
+     .          ,  "
+     Claude   , GPT   , Gemini  "  
+           .    
+      ,  token  .  AI coding tool   
+      ,         
+    . CUPID     .
+
+    CUPID     prompt  IDE context  ,     
+    AI       . CUPID     AI
+       ,  , , ,  context ,  ,
+     ,  latency   .      
+          .  CUPID   AI    ,
+       "AI    "  .
+                                                                                                                        CUPID  
+     . , Prompt Optimizer    
+,  ,          .
+  input token  ,       
+. , Task Classification Engine    simple edit, code , test
+generation, local bug fix, API , database/schema , security-sensitive change, multi-file
+refactor,    . , Model Router     
+  cheap, mid, strong, long-context, local/private model tier    .
+, Context Preservation Layer   ,  , coding convention,  , 
+, architecture decision log     ,    
+ .
+
+CUPID      . ,  . CUPID  prompt pruning, history
+summarization, semantic code mapping, dynamic routing    token  ,
+   ,       AI  
+. ,  . CUPID       . ,
+, , multi-file reasoning      strong model floor 
+    .        
+ . ,  .  AI coding tool      
+   , CUPID  repo memory  decision memory    
+    .
+
+ CUPID    AI     , ·· 
+ AI      . CUPID    ,  ,
+ , baseline  ,  token, test/lint/typecheck   . 
+   CSS   CUPID   fast model  ,  
+       reasoning model  .   
+   ,         .
+  subscription  AI Credits   . Free plan    ,
+Pro plan($16)   full routing  repo memory  , Max plan($69) heavy
+AI coder    repo memory, advanced analytics,  AI Credit  . AI
+Credits   token bundle   CUPID     provider token pricing  
+    wallet .    credit   ,
+frontier model     credit  .      
+        AI coding tool   .
+
+ B2C    AI-heavy developer   ,  B2B
+   .      AI coding  ,
+    AI  ,   ,   , private
+deployment, SSO/RBAC, audit log     .    
+     , AI     enterprise platform
+   .
+
+ CUPID  "  AI coding tool"  "AI      
+". AI coding          ,
+       . CUPID     
+,  ,  ,     ,   
+AI coding       .
+     <>
+      AI   IDE  CUPID  CEO ,     
+      AI            
+     .   , , AI ,      
+              .
+       KAIST   KE,  101,  <KAIST  > 
+      ,   , ,  ,  , BM      .
+     2026  E*5 KAIST   VC      
+      ,  KAIST GESS     ,  ,
+     CUPID     .
+     AI    KAKAO AI      ·
+         ·,     A/B  
+      .    AI      
+     3  , STDev 2026          Mathle 
+     3       AI      .
+       Google I/O 2026 Student      
+     Google I/O  ,      ,   
+         .      
+      AI·      .
+        KAIST   SPARCS  ·   OTL 
+          ,  ,  ,   .
+      CUPID  CEO    CS·AI     ,
+     ,  ,       .   CUPID 
+      AI ,  ,       .
+
+     <>
+      AI   IDE  CUPID  CTO ,     
+      AI            
+      .  ,   AI ,      
+       ,          .
+          KAIST ' 101'    ,   ,
+              .    
+         'V CAST'     
+       , KAIST PDSP(Problem Definition to Solution Program)  AI 
+      ·          
+       .     GESS     
+          CUPID     .
+     AI       (Cellular Automata)  
+             ,    KAIST
+     AI  Include           AI
+       .  CAMEL(Computer Architecture & Memory Systems) 
+             , CUPID   
+             .
+                  
+         , KAIST  AI     
+        .  (GT)      
+                .
+                          CUPID  CTO     CS·AI ,    
+                              ,   ,   
+                            .   CUPID   AI ,  , 
+                               .
+
+                        <>
+
+                        CUPID  CPO/COO      ,      
+                          .  KAIST    GESS    CUPID 
+                           ,       
+                               .
+                               ·   
+                         ·   Science Fair   ,   AR
+                        Glasses     .     
+                         Smart Mirror   ,      
+                         , ,       
+                        .     MUN       
+                          ,       .
+                         KAIST  THRUST  Avionics Team   , GNC  Kalman Filter 
+                          .       RCS 
+                        ,     .  NURA    
+                                  .
+
+                        CUPID  "AI     IDE"  "AI      IDE"
+                         . UI/UX   chat window  ,  ·· 
+                         decision-aware interface .
+
+                   (A)    (Final design vision)
+
+                         IDE    .  code editor   VS Code  ,  file
+                        explorer  routing   ,  CUPID Copilot panel   prompt 
+                        'Model: Auto' badge   entry point  .
+
+
+  
+
+                          CUPID Arbitrage   ·router cost·latency delta   
+                        , "AI    "  chat    
+.  Send   4   (Prompt Optimizer  Auto-selection Cupid
+Engine  Context Preservation Layer  Model Execution)     .
+      .  "summarize the current code" 
+   ·token      , 'Model: Auto' badge 
+   .
+
+  ROUTING ENGINE   "Detected: Explanation task. Routing to GPT-4o for
+clarity & documentation."  · ·   .  
+      CUPID   ·     .
+
+   CUPID       ·baseline(Claude Opus) 
+saving·input/output token     .
+(B)  MVP (Working codebase)
+
+ MVP   4   backend   , UI   (Compare /
+Pipeline)          . (B)  
+      .
+Routing console   prompt ·Mode(cost-saving / balanced / max-quality) ·'LLM
+ROUTING: Claude Haiku 4.5 (recommended)'     entry point  
+.  "I want to make a simple brick out game, make the game as a web game for me."
+ 'Model: Auto'  UX   .
+
+Run comparison    router  Claude Opus 4   ,  
+prompt          .     " 
+ "     .
+   KPI  Cost savings·Router cost·Benchmark cost·Latency delta  
+.  brick-out    Cupid  cheap-tier   Router $0.0154 vs
+Benchmark(Opus) $0.2806,    94.5%($0.2652)  ,  Classification/LLM
+Classifier/Routing reasoning    (LLM-assisted, api_implementation, risk 2,
+difficulty 1, small context )  .
+
+Pipeline console   trace , User Prompt  Cupid Engine  Prompt Optimizer 
+Context Storage  Model Execution 6-  SSE     
+'ROUTING ENGINE   '  trace  .
+(C)    & 
+
+   .  brick-out     
+  Gemini  Claude Opus  94.5%   ,  100 
+   CUPID     best model   
+.
+
+ "Don't code stupid. Use Cupid.". CUPID      
+ .   IDE   ,    , 
+  , AI   .
+
+                                 ()
+     CUPID  1   AI coding tool       , 
+       Claude, Cursor, GitHub Copilot, ChatGPT, Gemini   AI    AI-
+     heavy developer .   AI       , 
+     ····  AI   .   
+      API   , token limit      , 
+          . CUPID  AI     
+      ,  AI           
+      .
+
+           . ,    .  ,
+     , ,    AI coding tool    
+      ,        . CUPID  
+           ,     AI 
+         . ,   1  .   
+       ,   AI   API   . CUPID 
+     production-level  workflow    AI      .
+
+     , AI coding     .    AI plan   ,
+      "AI    " "    "  .
+      CUPID        ,   
+     workflow     orchestration layer    . ,  B2B
+       .      AI   ,   AI
+      , ,  , audit log, private deployment   . CUPID   
+     ··task type  AI       AI coding
+     governance    .
+
+         CUPID     "  AI coding"  " 
+      AI orchestration"  . Cursor, Windsurf, Replit, GitHub Copilot  
+      AI     ,      agent,  
+     autocomplete,   context,      .  CUPID   
+     ,          .  CUPID  
+     AI coding layer  cost intelligence layer  .
+
+        context preservation . AI coding     
+     .        ,  , coding convention,
+        ,     . CUPID  repo memory, task memory,
+     decision memory    , Claude  GPT , GPT  Gemini  
+         .      cost saving  
+     .      input token  ,    
+     rework  .
+
+        transparent cost analytics . CUPID      ,
+      baseline   ,   ,   . 
+          ,   AI  governance 
+     .      , , task type  AI  ,
+        model tier    ,   local/private model 
+         .
+       . CUPID  subscription fee  AI Credit  .
+   subscription  IDE intelligence layer,  model routing, prompt optimization, context preservation,
+   cost analytics, evaluation workbench   , AI Credit     provider
+   token cost   .  "        
+   "    .  CUPID    API key   BYOK
+    CUPID managed credit     ,      
+      .
+
+          . CUPID    
+       ,     ,  context  
+   rework       .     Model
+   Router      .     AI   
+     , AI     workflow    
+      .
+
+    CUPID    "  " , AI    
+    AI       . CUPID     AI
+      ,  AI    ,   ,
+        AI   .  CUPID   AI coding
+   assistant     .
+
+   1  ­    MVP 
+
+         Model Router, Prompt Optimizer, Context Preservation Layer, Repo Memory, Verification
+
+                Runner, Telemetry     .
+
+          CLI  VSCode Extension  MVP     
+
+                .
+
+            ,  ,  ,     
+
+                    .
+
+             ,   ,  ,  , 
+
+                   CUPID     .
+
+   2  ­ B2C  
+
+         CUPID  VS Code    IDE    .  
+
+                       .
+
+            Free (), Pro ( $16), Max ( $69) 3  , 
+
+                      Cupid Credits   B2C  .
+
+                (  ,    ,   , Model Routing ,
+                 AI Credit   )
+                (Cupid Credits    AI  API     )
+
+   3  ­ CUPID IDE   B2B 
+
+             , CUPID      
+
+                CUPID IDE  .
+
+            , AI   ,  ,    
+
+                      .
+              ,    ,   , AI
+
+                  ,          .
+
+              Pilot     
+
+                ,   AI   ,       
+                .
+
+         B2B     ,   AI     
+
+                Enterprise  .
+
+   4  - AI        
+
+         Cupid   AI  , , ,      
+
+                   .
+
+               ,  AI  
+
+                         AI Coding
+                 .
+
+                AI   (OpenAI,
+
+                Google, Anthropic ) ,  LLM      B2B
+                 .
+
+          AI      API  ,   ,
+
+                CUPID         .
+
+      
+
+             AI  API ,    , MVP 
+
+                 ,       ,     
+                 .
+
+             ,        
+
+                        .
+
+   AI ,     
+
+   2025    84%   AI   ,   51%
+    AI    AI          
+    .
+
+    Uber  2026  AI      4    
+   , Microsoft      Claude Code    
+    AI      .
+
+   , AI   ,        
+   .       2024   415TWh  2030  
+   945TWh       .
+
+   CUPID        ,    
+        AI   .   
+         .       
+              ,  
+        .
+   ,  AI  
+        ,   AI     
+    . CUPID  API  AI    /  
+          ,       
+       . , CUPID    AI   , 
+     .    ,       
+                . AI 
+           AI   ,  
+         AI       
+    .
+
+             ,
+4   GRAVITY 2026 
+
+                          .
+
+                           2026 6 10
+
+             : () (  )
+             
+
+4   GRAVITY 2026   , 
+         .
+1.    : 4 (KAIST, GIST, DGIST, UNIST)
+2.   :    ,   
+3.    
+-  : , (, ),  
+-  : , , ,  
+4.       :    
+
+              .
+,          
+
+            .
+
+         ()               
+
+                 &             ()
+
+         KAIST       /
+         KAIST
+         KAIST   / 
+
+                 /             ()
+
+                
+
+                 /             ()
+
+                
+
+                    2026 6 10
+
+                4  
+

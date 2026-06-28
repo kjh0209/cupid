@@ -2,6 +2,7 @@ import { indexDocument } from "./indexer.js";
 import { getDb } from "../db/database.js";
 import { models, benchmarks, promptOptimizationRules } from "../db/schema.js";
 import { logger } from "../utils/logger.js";
+import { KNOWLEDGE_DOCS } from "./knowledgeBase.js";
 
 // Builds RAG documents from the database content.
 
@@ -219,6 +220,20 @@ Data updated regularly; treat as directional, not exact.`,
   let count = 0;
   for (const doc of knowledgeDocs) {
     await indexDocument(doc as any);
+    count++;
+  }
+
+  // Also index the comprehensive KB (model playbooks, routing playbooks,
+  // coding practices, failure modes, prompt patterns, compression strategies)
+  for (const doc of KNOWLEDGE_DOCS) {
+    await indexDocument({
+      title: doc.title,
+      sourceName: doc.sourceName,
+      sourceUrl: doc.sourceUrl,
+      content: doc.content,
+      metadataJson: JSON.stringify({ source: doc.sourceName }),
+      sourceConfidence: doc.sourceConfidence,
+    });
     count++;
   }
 

@@ -9,6 +9,13 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:3000",
         changeOrigin: true,
+        // Critical for SSE: disable proxy response buffering
+        configure: (proxy) => {
+          proxy.on("proxyRes", (proxyRes) => {
+            // Prevent http-proxy from chunking SSE responses
+            proxyRes.headers["x-accel-buffering"] = "no";
+          });
+        },
       },
     },
   },

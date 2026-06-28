@@ -14,6 +14,7 @@ import {
 } from "./promptCompressionRules.js";
 import { assessSemanticRisk, checkHighRiskCompression } from "./semanticSafetyChecker.js";
 import { getModelProfile } from "./modelSpecificPromptProfiles.js";
+import { applySemanticCodeMapping } from "./semanticCodeMapping.js";
 
 export interface PromptOptimizerInput {
   rawMessage: string;
@@ -35,6 +36,7 @@ export class PromptTokenOptimizer {
       userMode,
       recentDecisions,
       activeFilePath,
+      selectedCode,
     } = input;
 
     const profile = getModelProfile(selectedModel);
@@ -44,24 +46,36 @@ export class PromptTokenOptimizer {
     const removedContentSummary: string[] = [];
     const modelSpecificNotes: string[] = [...profile.notes];
 
+    // Step 0: Semantic code mapping — dedupe pasted code, compress location refs
+    // Skip on high-sensitivity to avoid touching exact identifiers
+    let preCompressed = rawMessage;
+    if (compressionSensitivity !== "high") {
+      const semantic = applySemanticCodeMapping(rawMessage, selectedCode, activeFilePath);
+      preCompressed = semantic.text;
+      if (semantic.mappings.length > 0) {
+        appliedRules.push("semantic-code-mapping");
+        removedContentSummary.push(...semantic.mappings.map((m) => `${m.kind}: ${m.original.slice(0, 50)}`));
+      }
+    }
+
     // Step 1: Apply compression based on sensitivity
     let optimized: string;
     let compressionRuleNames: string[] = [];
     let removedItems: string[] = [];
 
     if (compressionSensitivity === "high") {
-      const result = applyConservativeCompression(rawMessage, "high");
+      const result = applyConservativeCompression(preCompressed, "high");
       optimized = result.text;
       compressionRuleNames = result.appliedRules;
       removedItems = result.removedItems;
       appliedRules.push("no-overcompress-security");
     } else if (compressionSensitivity === "medium") {
-      const result = applyConservativeCompression(rawMessage, "medium");
+      const result = applyConservativeCompression(preCompressed, "medium");
       optimized = result.text;
       compressionRuleNames = result.appliedRules;
       removedItems = result.removedItems;
     } else {
-      const result = applyFillerRemoval(rawMessage);
+      const result = applyFillerRemoval(preCompressed);
       optimized = result.text;
       compressionRuleNames = result.appliedRules;
       removedItems = result.removedItems;

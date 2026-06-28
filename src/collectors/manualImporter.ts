@@ -69,6 +69,7 @@ export async function importManualPricing(): Promise<number> {
             contextWindow: Number(m["context_window"] ?? 4096),
             maxOutputTokens: Number(m["max_output_tokens"] ?? 4096),
             lastUpdated: String(m["last_updated"] ?? todayIso()),
+            deprecated: Boolean(m["deprecated"] ?? false),
           },
         });
       count++;

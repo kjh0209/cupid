@@ -1,0 +1,104 @@
+PROBLEM STATEMENT (Gina) 
+
+How much are you spending on AI? 
+```
+when I first began using AI, it was only about a quarter of a dollar
+then I started developing like crazy and found out it was like 20 dollars in 3 days
+```
+Perhaps you're paying $20 a month, OR you’re on a free plan like me :)
+-----------------------------------
+But, the number is WAY worse for developers, as they can spend $392 per month!
+------------------------------------
+And we actually tested this.
+62.1% of Coders  think AI is too expensive.
+This is because when we’re coding something important—
+We want the best model available.
+------------------------------------
+But the truth is,
+Not every coding task needs the best model.
+------------------------------------
+For example,if you wanna add a simple button to your website, rather than spending $110 for an advanced model, you could’ve paid $20 and still get a sufficiently good result.
+It’s like using a nuclear power plant to toast a slice of bread.
+------------------------------------
+We interviewed a backend engineer in Toss, and we realized that developers are actually aware of this problem. The issue is there is just no available solution.
+------------------------------------ 
+-  -------------- ---------------------
+
+
+
+
+
+
+
+
+
+
+
+
+CUPID INTRODUCTION (지혁)
+
+Currently,  AI is expensive, mostly because we’re using the wrong model.
+So, what if there was a product that could effectively choose the right AI?
+
+So we introduce Cupid.
+Cupid is a developing environment that automatically picks the right AI for the job, ensuring you get the best results without overpaying for power you don’t need. 
+So, this is how Cupid works.
+When you type a prompt, cupid analyzes the complexity and nature of the task. Then, it automatically decides the most COST-EFFICIENT, and OPTIMAL AI model for this specific job. 
+
+<demo>
+Let’s say I want to make a simple breakout game. Our CUPID engine selected the gemini as the most cost efficient model, and compared to the claude opus, I managed to save 94.5%!
+and these are the results.
+Will you pay almost 20 times more to just make this better? No, right?
+
+Internal blind tests also showed that the qualities of CUPID and the best model are almost similar.
+
+Here’s what users think.
+Most of them agreed that CUPID will definitely solve the cost problem and they were looking forward to using it.
+
+
+
+
+
+
+TECHNOLOGY (형준)
+
+When a developer hits send, the Prompt Optimizer immediately cleans and formats the prompt, removing unnecessary phrases so the instruction is clear and concise.
+Next, our auto-selection engine takes over. In under 150 milliseconds, it uses offline rules and a small custom LLM to identify the task and instantly choose the perfect model for the job.
+Finally, the Context Preservation Layer steps in. Instead of blindly sending massive codebases to the AI, it summarizes past chats and extracts only the essential project context.
+
+
+MARKET ANALYSIS, PRICING (Sahan)
+
+Now talking about the Market,
+“Since Cupid is an AI-native developing environment, our market is naturally global.
+We approximated our TAM to be about 110 billion dollars.
+
+Further, we targeted developers who rely on AI heavily for our SOM and it amounted to 600 million dollars.
+Moving on to pricing, we follow a subscription based model. We have 3 tiers, the free, pro and the max, each increasing in price respectively.
+The Big bold price, pays for our end of the AI.
+Additionally, We also provide CUPID Credits. Higher the tier, higher the Cupid Credits. 
+If you are wondering what Cupid Credits are , they are basically an universal AI wallet. Your Cupid can buy any model it needs using the credits.  
+If it runs out, you can always buy more
+
+COMPETITORS, IMPLEMENTATION (경모)
+
+Let’s now talk about how we win. 
+ 
+While companies like Cursor and Replit provide great tools, they all prioritize raw performance. This makes Cupid the only platform that brings cost efficiency, saving users 50 to 99% in costs. 
+ 
+ 
+Next, here’s how we scale. 
+ 
+We begin B2C as a lightweight extension to acquire developers and test our model. Then, we launch our dedicated developing environment and start monetizing our most valuable asset – data. Finally, we will secure partnerships with frontier AI labs for deeper integration.  
+ 
+In fact, we are currently in active talks with NAVER for investment and infrastructure support. 
+ 
+We project that by the middle of year 2, we would reach our break-even point, and by year 4, over 1 billion dollars in revenue with a net income of 267 million. 
+
+So, in the 5 minutes that we’ve been presenting, developers have wasted over $250,000 on inefficient AI.
+ 
+But, with CUPID, this stops now. 
+ 
+Our team of great engineers, designers, and strategists will ensure that you never lose money, context, and focus. 
+ 
+So, from now on: Don’t code stupid. Use Cupid. 

@@ -1,0 +1,62 @@
+[아이디어의 디자인] — CUPID, AI-native Development Operating Layer
+
+CUPID 디자인은 "AI를 많이 쓰게 하는 IDE"가 아니라 "AI를 가장 합리적으로 쓰게 하는 IDE"라는 원칙에서 출발한다.
+
+UI/UX의 중심은 chat window가 아니라, 개발자가 비용·품질·문맥을 한눈에 통제하는 decision-aware interface다.
+
+본 문서의 도판은 두 층위로 구분된다 — (A) 최종 지향점 디자인(Final vision)은 데모 영상에서 추출한 mock-up frame이고, (B) 현재 MVP(Working codebase)는 실제 구동 중인 코드베이스(localhost:5173)에서 캡쳐한 라이브 UI다. 동일한 디자인 원칙을 서로 다른 완성도로 보여준다.
+
+— (A) 최종 지향점 디자인 (Final design vision) —
+
+최종 IDE는 세 영역으로 구성된다. 중앙의 code editor는 기존 VS Code 경험을 유지하고, 좌측 file explorer는 routing 대상 파일을 보여주며, 우측 CUPID Copilot panel은 자연어 prompt 입력창과 'Model: Auto' badge를 단일 entry point로 제공한다. [그림 A1]
+
+화면 우상단의 CUPID Arbitrage 패널은 누적 절감액·router cost·latency delta를 실시간 그래프로 노출하여, "AI 비용이 어디로 새는지 모른다"는 기존 chat 도구의 한계를 첫인상에서 정면으로 해결한다.
+
+사용자가 Send를 누르면 4단계 파이프라인 (Prompt Optimizer → Auto-selection Cupid Engine → Context Preservation Layer → Model Execution)이 보이지 않는 곳에서 순차 실행된다.
+
+사용자 입장에서는 자연어 한 문장만 입력하면 된다. 예시 "summarize the current code"를 치는 순간 어떤 모델을 호출할지·token이 얼마나 들지 고민할 필요가 없으며, 'Model: Auto' badge가 모델 선택권 위임을 명시한다. [그림 A2]
+
+입력 직후 ROUTING ENGINE 패널이 펼쳐지며 "Detected: Explanation task. Routing to GPT-4o for clarity & documentation."처럼 작업 분류·선택 이유·라우팅 결과를 자연어로 노출한다. 모델 선택을 절대 숨기지 않는 이 디자인은 사용자가 CUPID의 판단을 검증·신뢰할 수 있게 하는 핵심 장치다. [그림 A3]
+
+응답 종료 후 CUPID Arbitrage 대시보드가 즉시 갱신되어 이번 요청의 절감 비용·baseline 대비 saving·input/output token을 한 행에 요약하고, Context Storage panel은 repo summary·relevant files·previous decisions를 시각화한다. [그림 A4]
+
+— (B) 현재 MVP (Working codebase) —
+
+현재 MVP는 위 4단계 파이프라인을 backend로 완전히 구현했으며, UI는 두 콘솔(Compare / Pipeline)로 분리하여 라우팅 결정과 실행 흐름을 각각 검증할 수 있게 했다. (B)의 모든 이미지는 실제로 실행 중인 코드베이스를 직접 캡처한 것이다.
+
+Routing console은 자연어 prompt 입력창·Mode(cost-saving / balanced / max-quality) 토글·'LLM ROUTING: Claude Haiku 4.5 (recommended)' 배지로 최종 디자인의 단일 entry point 컨셉을 그대로 구현했다. 데모로 "I want to make a simple brick out game, make the game as a web game for me."를 입력하면 'Model: Auto' 위임 UX가 그대로 동작한다. [그림 B1]
+
+Run comparison을 누르는 순간 router 모델과 Claude Opus 4가 병렬로 호출되어, 사용자는 같은 prompt에 대한 두 모델의 응답을 동일 조건에서 비교할 수 있다. 이 병렬 실행 자체가 "왜 이 모델로 라우팅했는가"를 사후가 아니라 사전에 증명하는 장치다. [그림 B2]
+
+응답이 도착하면 상단 KPI 카드가 Cost savings·Router cost·Benchmark cost·Latency delta를 즉시 노출한다. 위 brick-out 게임 요청의 경우 Cupid는 cheap-tier로 라우팅하여 Router $0.0154 vs Benchmark(Opus) $0.2806, 단일 요청 당 94.5%·$0.2652 절감을 기록했고, 하단 Classification·LLM Classifier·Routing reasoning 패널이 이 결정의 근거(LLM-assisted, api_implementation, risk 2, difficulty 1, small context 등)를 그대로 노출한다. [그림 B3]
+
+Pipeline console은 별도 trace 화면으로, User Prompt → Cupid Engine → Prompt Optimizer → Context Storage → Model Execution 6-노드 그래프를 SSE로 실시간 점등하여 최종 디자인의 'ROUTING ENGINE 자연어 결정 패널'을 시각적 trace 형태로 선구현한다. [그림 B4]
+
+— (C) 디자인 가치 증명 & 정체성 —
+
+디자인의 가치는 결과로 증명된다. 동일한 brick-out 게임 요청을 베이스라인 비교 도구에서 측정했을 때 Gemini 라우팅으로 Claude Opus 대비 94.5% 비용 절감을 재현했고, 내부 100건 블라인드 테스트에서 약 절반은 "best model과 결과가 유사", 약 1/4은 "CUPID가 더 우수"로 평가했다. [그림 C1]
+
+시각적 정체성은 "낭비되는 AI 비용을 빨아들이는 black hole"이며, 보라색 원형 로고는 분산된 모델 사용을 하나의 intelligent routing layer로 모으는 portal을 상징한다. 슬로건 "Don't code stupid. Use Cupid."이 제품 철학을 지속적으로 환기한다.
+
+결과적으로 개발자는 IDE를 떠나지 않고, 모델을 직접 고르지 않으며, 같은 설명을 반복하지 않고, AI 비용을 추측하지 않는다.
+
+CUPID는 작업을 이해하고, 문맥을 가져오고, 모델을 고르고, 비용과 품질을 검증하며, 그 모든 결정을 투명하게 보여주는 AI-native development operating layer다. — (A) 영상 mock-up이 그리는 최종 청사진과 (B) 코드베이스가 이미 실행하고 있는 MVP는 같은 결정구조를 향한 두 시점의 스냅샷이다.
+
+총 18줄
+
+----------------------------------------------------------------
+[이미지 배치 가이드]
+(A) 최종 지향점 디자인 — 데모 영상(원본 mock-up)에서 추출한 frame
+[그림 A1] frame1_ide_three_panels.png       — t=0.00s, 메인 3영역 IDE 레이아웃 (Editor / Copilot / Arbitrage)
+[그림 A2] frame2_prompt_model_auto.png      — t=2.67s, 자연어 입력 + 'Model: Auto' badge
+[그림 A3] frame3_routing_engine_decision.png — t=5.33s, ROUTING ENGINE 자연어 결정 패널
+[그림 A4] frame4_response_with_cost.png     — t=8.00s, 응답 완료 후 갱신된 CUPID Arbitrage 비용 대시보드
+
+(B) 현재 MVP — 실제 구동 중인 코드베이스(localhost:5173) 라이브 캡처. brick-out 게임 데모를 통해 의미 있는 절감(94.5%)을 입증한다.
+[그림 B1] live/brickout1_input_prompt.png    — Routing console에 brick-out 게임 prompt가 입력된 순간 (Balanced 모드, Claude Haiku 4.5 라우팅 후보)
+[그림 B2] live/brickout2_running_parallel.png — Run comparison 직후 'Calling router model and Claude Opus in parallel…' 병렬 실행 상태
+[그림 B3] live/brickout3_result_94p5.png      — 응답 완료 후 Cost savings 94.5%, Router $0.0154 vs Benchmark $0.2806, Routing reasoning 패널까지 한 화면 요약
+[그림 B4] live/shot5_pipeline_midrun.png      — 별도 Pipeline 콘솔에서 6-노드 그래프가 SSE로 점등되는 라이브 trace
+
+(C) 가치 증명
+[그림 C1] img4_demo_breakout_compare.png    — 피치덱 p12, Gemini vs Claude 데모 결과 + 94.5% 절감 + 블라인드 테스트

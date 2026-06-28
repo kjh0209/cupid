@@ -1,6 +1,7 @@
 import type { ModelRecord, TaskClassification, UserMode, ScoringWeights, ModelCandidate, RagResult } from "../types.js";
 import { estimateQuality, estimateLatencyScore, estimateFailureRisk } from "./qualityEstimator.js";
 import { estimateCost, estimateTokens } from "./costEstimator.js";
+import { getTaskAffinity, isForbidden } from "./taskModelAffinities.js";
 
 const WEIGHTS: Record<UserMode, ScoringWeights> = {
   cost_saving: {
@@ -135,8 +136,28 @@ export function scoreModel(
   // RAG hint bonus: retrieved knowledge validates or boosts this model
   const { bonus: ragBonus, reason: ragReason } = computeRagBonus(model, ragHints ?? []);
 
+  // Task-specific affinity from benchmarks/playbooks
+  const taskAffinity = getTaskAffinity(model.id, classification.taskType);
+  const forbidden = isForbidden(model.id, classification.taskType);
+
+  // Affinity-weighted quality: task affinity dominates when it's a clear signal.
+  // Generic quality contributes 25%, task affinity contributes 75% — this aligns
+  // routing with the specific task the user is doing rather than overall model
+  // capability, which is critical for security/db where Sonnet > Gemini despite
+  // similar SWE-bench scores.
+  const qualityWithAffinity = 0.25 * qualityScore + 0.75 * taskAffinity;
+
+  // For high-risk tasks, also apply a hard affinity floor: models with affinity
+  // below 0.75 on security/db get penalized further, regardless of generic score
+  const isHighRiskTask =
+    classification.taskType === "security_sensitive_change" ||
+    classification.taskType === "database_schema_change";
+  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 0.5 : 0;
+
   const score =
-    w.alpha * qualityScore -
+    (forbidden ? -10 : 0) +
+    w.alpha * qualityWithAffinity -
+    affinityFloorPenalty -
     w.beta * normalizedCost -
     w.gamma * (1 - latencyScore) -
     w.delta * failureRisk +
@@ -145,6 +166,10 @@ export function scoreModel(
     w.iota * ragBonus;
 
   const reasons: string[] = [];
+  if (forbidden) reasons.push(`⛔ Model forbidden for ${classification.taskType} — affinity too low`);
+  if (taskAffinity >= 0.9) reasons.push(`Strong task affinity (${(taskAffinity * 100).toFixed(0)}%) — benchmarks show top performance on this task type`);
+  else if (taskAffinity >= 0.75) reasons.push(`Good task affinity (${(taskAffinity * 100).toFixed(0)}%)`);
+  else if (taskAffinity < 0.5) reasons.push(`Weak task affinity (${(taskAffinity * 100).toFixed(0)}%) — consider a stronger model`);
 
   if (qualityScore >= 0.65) reasons.push(`High coding quality (${(qualityScore * 100).toFixed(0)}%)`);
   else if (qualityScore >= 0.45) reasons.push(`Moderate coding quality (${(qualityScore * 100).toFixed(0)}%)`);
