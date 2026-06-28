@@ -24,6 +24,11 @@ export type TaskType =
   | "security_sensitive_change"
   | "architecture_design"
   | "prompt_rewrite_only"
+  | "performance_optimization"
+  | "devops_config"
+  | "documentation_write"
+  | "dependency_update"
+  | "code_review"
   | "unknown";
 
 // ── Context Need ─────────────────────────────────────────────

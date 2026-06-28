@@ -151,8 +151,9 @@ export function scoreModel(
   // below 0.75 on security/db get penalized further, regardless of generic score
   const isHighRiskTask =
     classification.taskType === "security_sensitive_change" ||
-    classification.taskType === "database_schema_change";
-  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 0.5 : 0;
+    classification.taskType === "database_schema_change" ||
+    classification.taskType === "devops_config";
+  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 1.0 : 0;
 
   const score =
     (forbidden ? -10 : 0) +
