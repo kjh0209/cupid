@@ -2,342 +2,1380 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <style>
-  :root {
-    --bg: var(--vscode-sideBar-background);
-    --fg: var(--vscode-foreground);
-    --border: var(--vscode-panel-border);
-    --input-bg: var(--vscode-input-background);
-    --input-fg: var(--vscode-input-foreground);
-    --input-border: var(--vscode-input-border, transparent);
-    --btn-bg: var(--vscode-button-background);
-    --btn-fg: var(--vscode-button-foreground);
-    --btn-hover: var(--vscode-button-hoverBackground);
-    --muted: var(--vscode-descriptionForeground);
-    --link: var(--vscode-textLink-foreground);
-    --user-bubble: var(--vscode-editor-inactiveSelectionBackground);
-    --code-bg: var(--vscode-textCodeBlock-background);
-    --badge-bg: var(--vscode-badge-background);
-    --badge-fg: var(--vscode-badge-foreground);
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--fg); background: var(--bg); }
-  body { display: flex; flex-direction: column; }
-  #toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 11px; }
-  #toolbar .spacer { flex: 1; }
-  .icon-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 3px; font-size: 12px; }
-  .icon-btn:hover { background: var(--btn-hover); color: var(--fg); }
-  #messages { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 10px; }
-  .msg { font-size: 12.5px; line-height: 1.5; }
-  .msg.user { background: var(--user-bubble); padding: 8px 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
-  .msg.assistant { padding: 4px 2px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; font-size: 10.5px; }
-  .badge { background: var(--badge-bg); color: var(--badge-fg); padding: 2px 6px; border-radius: 8px; }
-  .badge.savings { background: #1a7f37; color: white; }
-  .badge.muted { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .reasons { color: var(--muted); font-size: 10.5px; margin: 4px 0 8px; padding-left: 12px; }
-  .reasons li { margin: 1px 0; }
-  .content { white-space: pre-wrap; word-wrap: break-word; }
-  .content pre { background: var(--code-bg); padding: 8px 10px; border-radius: 4px; overflow-x: auto; margin: 6px 0; font-family: var(--vscode-editor-font-family); font-size: 12px; white-space: pre; position: relative; }
-  .content pre .lang-tag { position: absolute; top: 4px; right: 6px; font-size: 9px; color: var(--muted); }
-  .content code { font-family: var(--vscode-editor-font-family); font-size: 12px; }
-  .content :not(pre) > code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
-  .actions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-  .actions button { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; font-size: 11px; cursor: pointer; border-radius: 3px; }
-  .actions button:hover { background: var(--btn-hover); color: var(--fg); }
-  .actions button.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
-  .actions button.primary:hover { background: var(--btn-hover); }
-  #empty { color: var(--muted); font-size: 11px; padding: 16px; text-align: center; }
-  #empty kbd { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-family: var(--vscode-editor-font-family); font-size: 10px; }
-  #composer { border-top: 1px solid var(--border); padding: 8px; }
-  #composer .row { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
-  #composer label { font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 4px; cursor: pointer; }
-  #composer label input { margin: 0; }
-  #input-wrap { display: flex; gap: 4px; }
-  #input { flex: 1; background: var(--input-bg); color: var(--input-fg); border: 1px solid var(--input-border); border-radius: 4px; padding: 6px 8px; font-family: var(--vscode-font-family); font-size: 12.5px; resize: none; min-height: 32px; max-height: 200px; outline: none; }
-  #input:focus { border-color: var(--vscode-focusBorder); }
-  #send-btn { background: var(--btn-bg); color: var(--btn-fg); border: none; padding: 0 14px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-  #send-btn:hover { background: var(--btn-hover); }
-  #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .typing::after { content: "▍"; animation: blink 1s steps(2) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .err { color: var(--vscode-errorForeground); font-size: 11px; padding: 6px; border-left: 2px solid var(--vscode-errorForeground); background: var(--code-bg); }
+/* ── Design tokens ── */
+:root {
+  --bg:           var(--vscode-sideBar-background, #1e1e1e);
+  --bg-elevated:  var(--vscode-input-background, #2d2d2d);
+  --fg:           var(--vscode-foreground, #cccccc);
+  --fg-muted:     var(--vscode-descriptionForeground, #888);
+  --border:       var(--vscode-panel-border, #3c3c3c);
+  --input-bg:     var(--vscode-input-background, #3c3c3c);
+  --input-fg:     var(--vscode-input-foreground, #cccccc);
+  --input-border: var(--vscode-input-border, transparent);
+  --btn-bg:       var(--vscode-button-background, #0e639c);
+  --btn-fg:       var(--vscode-button-foreground, #ffffff);
+  --btn-hover:    var(--vscode-button-hoverBackground, #1177bb);
+  --code-bg:      var(--vscode-textCodeBlock-background, #1e1e1e);
+  --code-fg:      var(--vscode-editor-foreground, #d4d4d4);
+  --code-font:    var(--vscode-editor-font-family, 'Cascadia Code', 'Fira Code', 'Consolas', monospace);
+  --code-size:    var(--vscode-editor-font-size, 13px);
+  --ui-font:      var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --ui-size:      var(--vscode-font-size, 13px);
+  --badge-bg:     var(--vscode-badge-background, #4d4d4d);
+  --badge-fg:     var(--vscode-badge-foreground, #cccccc);
+  --user-bg:      var(--vscode-editor-inactiveSelectionBackground, #3a3d41);
+  --accent:       var(--vscode-focusBorder, #007acc);
+  --add-color:    rgba(46, 160, 67, 0.2);
+  --err-color:    var(--vscode-errorForeground, #f48771);
+  --link:         var(--vscode-textLink-foreground, #4ec9b0);
+  --hover-bg:     var(--vscode-list-hoverBackground, rgba(255,255,255,0.05));
+  --r:            6px;
+  --gap:          16px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--ui-font);
+  font-size: var(--ui-size);
+  color: var(--fg);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  user-select: text;
+}
+
+/* ── Toolbar ── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 36px;
+}
+#toolbar .title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  flex: 1;
+}
+#active-badge {
+  display: none;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.tb-btn {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 120ms ease, color 120ms ease;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.tb-btn:hover { background: var(--hover-bg); color: var(--fg); }
+.tb-btn .codicon { font-size: 14px; }
+
+/* ── Status dot ── */
+#status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+  flex-shrink: 0;
+  transition: background 300ms ease;
+}
+#status-dot.online  { background: #3fb950; }
+#status-dot.offline { background: #f85149; }
+
+/* ── Messages area ── */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  scroll-behavior: smooth;
+}
+#messages::-webkit-scrollbar { width: 5px; }
+#messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Empty state ── */
+#empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+  gap: 12px;
+  text-align: center;
+  color: var(--fg-muted);
+}
+#empty .logo { font-size: 32px; margin-bottom: 4px; opacity: 0.6; }
+#empty h3 { font-size: 14px; font-weight: 600; color: var(--fg); }
+#empty p { font-size: 12px; line-height: 1.5; max-width: 260px; }
+#empty .chips { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 280px; }
+.example-chip {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--fg);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.example-chip:hover { border-color: var(--accent); background: var(--hover-bg); }
+
+/* ── Backend status ── */
+#backend-banner {
+  display: none;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: var(--r);
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--err-color);
+  margin: 0 0 8px;
+}
+
+/* ── Message groups ── */
+.msg-group { display: flex; flex-direction: column; gap: 4px; }
+
+.msg-user {
+  background: var(--user-bg);
+  padding: 10px 12px;
+  border-radius: var(--r);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg-user .attachments { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.attach-chip {
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: var(--code-font);
+}
+.msg-user .active-file-hint { font-size: 10px; color: var(--fg-muted); margin-top: 4px; }
+
+.msg-assistant { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Routing badges ── */
+.routing-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  animation: fadeInDown 200ms ease;
+}
+@keyframes fadeInDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.badge.model    { background: #264f78; color: #9cdcfe; }
+.badge.task     { background: #3c3c00; color: #dcdcaa; }
+.badge.savings  { background: #1a4731; color: #3fb950; }
+.badge.cost     { background: transparent; color: var(--fg-muted); border: 1px solid var(--border); }
+.badge.muted    { background: transparent; color: var(--fg-muted); border: 1px solid var(--border); }
+.badge.cpl      { background: #1e2a3a; color: #4fc1ff; }
+
+/* ── Routing reasons ── */
+.reasons {
+  font-size: 11px;
+  color: var(--fg-muted);
+  padding: 0 4px;
+}
+.reasons li { margin-left: 14px; line-height: 1.6; }
+
+/* ── Streaming indicator ── */
+.streaming-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  padding: 4px 2px;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+.streaming-dots span {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.streaming-dots span:nth-child(2) { animation-delay: 0.2s; }
+.streaming-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,80%,100% { transform:scale(0.6); opacity:0.4; } 40% { transform:scale(1); opacity:1; } }
+
+/* ── Markdown content ── */
+.md-content { font-size: 13px; line-height: 1.6; word-break: break-word; }
+.md-content h1 { font-size: 18px; font-weight: 700; margin: 12px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.md-content h2 { font-size: 15px; font-weight: 700; margin: 10px 0 5px; }
+.md-content h3 { font-size: 13px; font-weight: 700; margin: 8px 0 4px; }
+.md-content p { margin: 4px 0 8px; }
+.md-content ul, .md-content ol { padding-left: 20px; margin: 4px 0 8px; }
+.md-content li { margin: 2px 0; line-height: 1.5; }
+.md-content blockquote { border-left: 3px solid var(--accent); margin: 6px 0; padding: 4px 12px; color: var(--fg-muted); }
+.md-content a { color: var(--link); text-decoration: none; }
+.md-content a:hover { text-decoration: underline; }
+.md-content code { font-family: var(--code-font); font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+.md-content strong { font-weight: 700; }
+.md-content em { font-style: italic; }
+.md-content hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+/* ── Code blocks ── */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin: 6px 0;
+  overflow: hidden;
+  position: relative;
+}
+.code-block:hover .code-actions { opacity: 1; }
+
+.code-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+  font-size: 11px;
+  font-family: var(--code-font);
+}
+.code-header .lang-tag { color: var(--fg-muted); }
+.code-header .path-tag { color: var(--link); flex: 1; }
+.code-header .mode-tag {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+}
+.code-header .mode-tag.replace { background: rgba(46,160,67,0.2); color: #3fb950; }
+.code-header .mode-tag.patch   { background: rgba(255,165,0,0.15); color: #d29922; }
+.code-header .line-count { color: var(--fg-muted); font-size: 10px; margin-left: auto; }
+
+.code-actions {
+  opacity: 0;
+  transition: opacity 120ms ease;
+  display: flex;
+  gap: 2px;
+  position: absolute;
+  top: 4px;
+  right: 8px;
+}
+.code-actions button {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.code-actions button:hover { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.code-actions button.apply-btn { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.code-actions button.apply-btn:hover { background: var(--btn-hover); }
+
+.code-body {
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--code-font);
+  font-size: var(--code-size);
+  line-height: 1.5;
+  white-space: pre;
+  color: var(--code-fg);
+}
+.code-body::-webkit-scrollbar { height: 4px; }
+.code-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Syntax highlight colors (VS Code Dark+ inspired) */
+.hl-keyword  { color: #569cd6; }
+.hl-string   { color: #ce9178; }
+.hl-comment  { color: #6a9955; font-style: italic; }
+.hl-number   { color: #b5cea8; }
+.hl-func     { color: #dcdcaa; }
+.hl-type     { color: #4ec9b0; }
+.hl-punct    { color: #d4d4d4; }
+
+/* ── Message actions ── */
+.msg-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+.msg-actions button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  transition: all 120ms ease;
+}
+.msg-actions button:hover { background: var(--hover-bg); color: var(--fg); border-color: var(--fg-muted); }
+.msg-actions button.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.msg-actions button.primary:hover { background: var(--btn-hover); }
+.msg-actions button.stop-btn { color: var(--err-color); border-color: rgba(248,81,73,0.4); }
+.msg-actions button.stop-btn:hover { background: rgba(248,81,73,0.1); border-color: var(--err-color); color: var(--err-color); }
+
+/* ── Error block ── */
+.err-block {
+  color: var(--err-color);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--err-color);
+  background: rgba(248, 81, 73, 0.07);
+  border-radius: 0 var(--r) var(--r) 0;
+  white-space: pre-wrap;
+  font-family: var(--code-font);
+}
+
+/* ── Composer ── */
+#composer {
+  border-top: 1px solid var(--border);
+  padding: 8px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#attachments-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 0;
+}
+#attachments-row.empty { display: none; }
+.att-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: var(--code-font);
+  animation: chipIn 120ms ease;
+}
+@keyframes chipIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+.att-chip .remove-chip {
+  cursor: pointer;
+  opacity: 0.6;
+  font-size: 12px;
+  line-height: 1;
+}
+.att-chip .remove-chip:hover { opacity: 1; }
+
+.input-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+#input {
+  flex: 1;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r);
+  padding: 7px 10px;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  resize: none;
+  min-height: 36px;
+  max-height: 180px;
+  outline: none;
+  line-height: 1.45;
+  transition: border-color 120ms ease;
+}
+#input:focus { border-color: var(--accent); }
+#input::placeholder { color: var(--fg-muted); }
+
+.composer-btns { display: flex; gap: 4px; }
+#send-btn {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: none;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 120ms ease;
+  white-space: nowrap;
+}
+#send-btn:hover { background: var(--btn-hover); }
+#send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.composer-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--fg-muted);
+}
+.composer-meta .spacer { flex: 1; }
+.meta-btn {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  transition: all 120ms ease;
+}
+.meta-btn:hover { background: var(--hover-bg); color: var(--fg); }
+kbd {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--code-font);
+  font-size: 10px;
+  border: 1px solid var(--border);
+}
+
+/* ── @ mention dropdown ── */
+#mention-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--vscode-dropdown-background, #2d2d2d);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  z-index: 100;
+  margin-bottom: 4px;
+}
+#mention-dropdown.show { display: block; }
+.mention-item {
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-family: var(--code-font);
+  cursor: pointer;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 80ms ease;
+}
+.mention-item:hover, .mention-item.selected { background: var(--hover-bg); }
+.mention-item .file-icon { opacity: 0.6; margin-right: 4px; }
+
+/* ── Composer wrapper (relative for dropdown) ── */
+.composer-inner { position: relative; }
 </style>
 </head>
 <body>
-  <div id="toolbar">
-    <span style="font-weight: 600;">Cupid</span>
+<div id="toolbar">
+  <span class="title">Cupid AI</span>
+  <span id="active-badge">0 active</span>
+  <div id="status-dot" title="Backend status"></div>
+  <button class="tb-btn" id="tb-stop" title="Stop all (Ctrl+Shift+.)" style="display:none">⏹</button>
+  <button class="tb-btn" id="tb-inline" title="Inline edit (Ctrl+K)">✏</button>
+  <button class="tb-btn" id="tb-reset" title="Reset session memory">↻</button>
+  <button class="tb-btn" id="tb-settings" title="Settings">⚙</button>
+</div>
+
+<div id="messages">
+  <div id="backend-banner">
+    ⚠ Backend offline — start with <code>pnpm dev</code> in the cupid folder
+  </div>
+  <div id="empty">
+    <div class="logo">🤖</div>
+    <h3>Cupid AI Router</h3>
+    <p>Smart routing picks the best model for every task — saving 90%+ vs. always using GPT-4o or Claude Opus.</p>
+    <div class="chips">
+      <button class="example-chip" data-prompt="Explain how this function works">💡 Explain how this function works</button>
+      <button class="example-chip" data-prompt="Fix the bug in the current file">🐛 Fix the bug in the current file</button>
+      <button class="example-chip" data-prompt="Refactor this code to be cleaner and add error handling">✨ Refactor &amp; add error handling</button>
+    </div>
+    <p style="margin-top:8px; font-size:10.5px;">
+      <kbd>Enter</kbd> send &nbsp;
+      <kbd>Shift+Enter</kbd> newline &nbsp;
+      <kbd>Ctrl+K</kbd> inline edit &nbsp;
+      <kbd>@</kbd> attach file
+    </p>
+  </div>
+</div>
+
+<div id="composer">
+  <div id="attachments-row" class="empty"></div>
+  <div class="composer-inner">
+    <div id="mention-dropdown"></div>
+    <div class="input-row">
+      <textarea id="input" rows="1" placeholder="Ask Cupid — type @ to attach a file…"></textarea>
+      <div class="composer-btns">
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+  </div>
+  <div class="composer-meta">
+    <span id="status-text" style="font-size:10.5px;color:var(--fg-muted);"></span>
     <span class="spacer"></span>
-    <button class="icon-btn" id="reset-btn" title="Reset session memory">↻ Session</button>
-    <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+    <kbd>Enter</kbd> send &nbsp; <kbd>@</kbd> file
   </div>
-  <div id="messages">
-    <div id="empty">
-      Type a question below. <kbd>Enter</kbd> sends, <kbd>Shift+Enter</kbd> newline.<br>
-      Check the box to include current file as context.
-    </div>
-  </div>
-  <div id="composer">
-    <div class="row">
-      <label><input type="checkbox" id="include-sel"> include current file</label>
-      <span class="spacer" style="flex:1"></span>
-      <span id="status" style="font-size: 10.5px; color: var(--muted);"></span>
-    </div>
-    <div id="input-wrap">
-      <textarea id="input" rows="1" placeholder="Ask Cupid — it routes to the best model for your task..."></textarea>
-      <button id="send-btn">Send</button>
-    </div>
-  </div>
+</div>
+
 <script>
-(function() {
-  const vscode = acquireVsCodeApi();
-  const messagesEl = document.getElementById("messages");
-  const emptyEl = document.getElementById("empty");
-  const input = document.getElementById("input");
-  const sendBtn = document.getElementById("send-btn");
-  const includeSel = document.getElementById("include-sel");
-  const statusEl = document.getElementById("status");
+(function () {
+'use strict';
 
-  const msgState = new Map();
+const vscode = acquireVsCodeApi();
 
-  function autoSize() {
-    input.style.height = "auto";
-    input.style.height = Math.min(input.scrollHeight, 200) + "px";
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const messagesEl  = document.getElementById('messages');
+const emptyEl     = document.getElementById('empty');
+const backendBanner = document.getElementById('backend-banner');
+const inputEl     = document.getElementById('input');
+const sendBtn     = document.getElementById('send-btn');
+const statusTxt   = document.getElementById('status-text');
+const attRow      = document.getElementById('attachments-row');
+const dropdown    = document.getElementById('mention-dropdown');
+const activeBadge = document.getElementById('active-badge');
+const statusDot   = document.getElementById('status-dot');
+const tbStop      = document.getElementById('tb-stop');
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const msgState = new Map(); // id → { wrap, raw, hasCode, routingInfo }
+let allFiles   = [];
+let attachments = []; // { path, content }
+let mentionStart = -1;
+let mentionQuery = '';
+let selectedMentionIdx = 0;
+let activeCount = 0;
+let sessionKey = '';
+
+// ── Session persistence ───────────────────────────────────────────────────────
+const HISTORY_KEY = 'cupid_history_v2';
+const MAX_HISTORY = 60;
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch { return []; }
+}
+
+function saveHistory(entries) {
+  try {
+    const trimmed = entries.slice(-MAX_HISTORY);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+  } catch { /* storage full — ignore */ }
+}
+
+function getHistoryKey() {
+  return sessionKey ? `cupid_history_${sessionKey}` : HISTORY_KEY;
+}
+
+// ── Auto-resize textarea ──────────────────────────────────────────────────────
+function autoSize() {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + 'px';
+}
+inputEl.addEventListener('input', autoSize);
+
+// ── Status ────────────────────────────────────────────────────────────────────
+function setStatus(s) { statusTxt.textContent = s || ''; }
+
+function updateActiveUI(n) {
+  activeCount = n;
+  if (n > 0) {
+    activeBadge.textContent = n + ' active';
+    activeBadge.style.display = 'inline-block';
+    tbStop.style.display = 'inline-flex';
+    sendBtn.textContent = n > 0 ? 'Send (+)' : 'Send';
+    sendBtn.disabled = false; // allow background tasks
+  } else {
+    activeBadge.style.display = 'none';
+    tbStop.style.display = 'none';
+    sendBtn.textContent = 'Send';
+    sendBtn.disabled = false;
+    setStatus('');
   }
-  input.addEventListener("input", autoSize);
+}
 
-  function setStatus(s) { statusEl.textContent = s || ""; }
+// ── File list & @ mention ─────────────────────────────────────────────────────
+function requestFileList() {
+  vscode.postMessage({ type: 'getFileList' });
+}
 
-  function send() {
-    const text = input.value.trim();
-    if (!text) return;
-    vscode.postMessage({ type: "send", text: text, includeSelection: includeSel.checked });
-    input.value = "";
-    autoSize();
-    sendBtn.disabled = true;
-  }
+function showMentionDropdown(query) {
+  const filtered = allFiles.filter(f =>
+    f.toLowerCase().includes(query.toLowerCase())
+  ).slice(0, 20);
 
-  sendBtn.addEventListener("click", send);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  });
-  document.getElementById("reset-btn").addEventListener("click", () => vscode.postMessage({ type: "resetSession" }));
-  document.getElementById("settings-btn").addEventListener("click", () => vscode.postMessage({ type: "openSettings" }));
+  if (filtered.length === 0) { hideMentionDropdown(); return; }
 
-  function clearEmpty() { if (emptyEl) emptyEl.style.display = "none"; }
+  dropdown.innerHTML = filtered.map((f, i) =>
+    `<div class="mention-item${i === 0 ? ' selected' : ''}" data-path="${esc(f)}">
+      <span class="file-icon">📄</span>${esc(f)}
+    </div>`
+  ).join('');
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, function(c) {
-      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+  selectedMentionIdx = 0;
+  dropdown.classList.add('show');
+
+  dropdown.querySelectorAll('.mention-item').forEach((item, i) => {
+    item.addEventListener('click', () => selectMention(filtered[i]));
+    item.addEventListener('mouseenter', () => {
+      dropdown.querySelectorAll('.mention-item').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+      selectedMentionIdx = i;
     });
-  }
-
-  const FENCE = String.fromCharCode(96,96,96);
-  function renderContent(raw) {
-    const re = new RegExp("(" + FENCE + "[\\s\\S]*?" + FENCE + ")", "g");
-    const parts = raw.split(re);
-    return parts.map(function(p) {
-      if (p.indexOf(FENCE) === 0) {
-        const inner = p.slice(3, -3);
-        const nlIdx = inner.indexOf("\n");
-        const lang = nlIdx >= 0 ? inner.slice(0, nlIdx).trim() : "";
-        const code = nlIdx >= 0 ? inner.slice(nlIdx + 1) : inner;
-        return '<pre><span class="lang-tag">' + escapeHtml(lang) + '</span><code>' + escapeHtml(code) + '</code></pre>';
-      }
-      return escapeHtml(p)
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/\n/g, "<br>");
-    }).join("");
-  }
-
-  function makeBadge(text, cls) {
-    const s = document.createElement("span");
-    s.className = "badge" + (cls ? " " + cls : "");
-    s.textContent = text;
-    return s;
-  }
-
-  window.addEventListener("message", function(ev) {
-    const m = ev.data;
-    switch (m.type) {
-      case "focusInput":
-        if (m.prefill) input.value = m.prefill;
-        autoSize();
-        input.focus();
-        break;
-      case "userMsg": {
-        clearEmpty();
-        const div = document.createElement("div");
-        div.className = "msg user";
-        div.textContent = m.text;
-        messagesEl.appendChild(div);
-        scrollToBottom();
-        break;
-      }
-      case "assistantStart": {
-        const wrap = document.createElement("div");
-        wrap.className = "msg assistant";
-        const badges = document.createElement("div");
-        badges.className = "badges";
-        badges.appendChild(makeBadge("routing…", "muted"));
-        const content = document.createElement("div");
-        content.className = "content typing";
-        content.setAttribute("data-role", "content");
-        wrap.appendChild(badges);
-        wrap.appendChild(content);
-        messagesEl.appendChild(wrap);
-        msgState.set(m.id, { wrap: wrap, raw: "" });
-        setStatus("routing…");
-        scrollToBottom();
-        break;
-      }
-      case "stream": {
-        const st = msgState.get(m.id); if (!st) break;
-        if (m.event === "routing") {
-          const badges = st.wrap.querySelector(".badges");
-          badges.innerHTML = "";
-          const r = m.data.routing;
-          const c = m.data.classification;
-          const ll = m.data.llmRouting;
-          // Classification mode badge (first, most visible)
-          if (ll) {
-            badges.appendChild(makeBadge(ll.fellBackToRules ? "rules (LLM fellback)" : "LLM-assisted", "muted"));
-          } else {
-            badges.appendChild(makeBadge("rule-based", "muted"));
-          }
-          badges.appendChild(makeBadge(r.displayName));
-          badges.appendChild(makeBadge(r.tier, "muted"));
-          badges.appendChild(makeBadge(c.taskType, "muted"));
-          if (r.reasons && r.reasons.length) {
-            const ul = document.createElement("ul");
-            ul.className = "reasons";
-            for (const reason of r.reasons.slice(0, 4)) {
-              const li = document.createElement("li");
-              li.textContent = reason;
-              ul.appendChild(li);
-            }
-            badges.after(ul);
-          }
-          setStatus("generating…");
-        } else if (m.event === "chunk") {
-          st.raw += m.data.text || "";
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.innerHTML = renderContent(st.raw);
-          scrollToBottom();
-        } else if (m.event === "done") {
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.classList.remove("typing");
-          const badges = st.wrap.querySelector(".badges");
-          const cost = m.data.costUsd;
-          badges.appendChild(makeBadge("$" + cost.toFixed(5), "muted"));
-          const hasCode = st.raw.indexOf(FENCE) >= 0;
-          const actions = document.createElement("div");
-          actions.className = "actions";
-          if (hasCode) {
-            const applyBtn = document.createElement("button");
-            applyBtn.className = "primary";
-            applyBtn.textContent = "Apply";
-            applyBtn.title = "Replace current file content (Ctrl+Z to undo) OR write to detected paths";
-            applyBtn.dataset.action = "apply";
-            const diffBtn = document.createElement("button");
-            diffBtn.textContent = "Diff";
-            diffBtn.title = "Open side-by-side diff to review before applying";
-            diffBtn.dataset.action = "diff";
-            const newFileBtn = document.createElement("button");
-            newFileBtn.textContent = "New file";
-            newFileBtn.dataset.action = "newFile";
-            const insertBtn = document.createElement("button");
-            insertBtn.textContent = "Insert at cursor";
-            insertBtn.dataset.action = "insert";
-            const copyBtn = document.createElement("button");
-            copyBtn.textContent = "Copy";
-            copyBtn.dataset.action = "copy";
-            actions.appendChild(applyBtn);
-            actions.appendChild(diffBtn);
-            actions.appendChild(newFileBtn);
-            actions.appendChild(insertBtn);
-            actions.appendChild(copyBtn);
-          } else {
-            const copyBtn = document.createElement("button");
-            copyBtn.textContent = "Copy";
-            copyBtn.dataset.action = "copy";
-            actions.appendChild(copyBtn);
-          }
-          actions.addEventListener("click", function(e) {
-            const tgt = e.target;
-            if (!tgt || tgt.tagName !== "BUTTON") return;
-            const action = tgt.dataset.action;
-            if (action === "copy") {
-              vscode.postMessage({ type: "copy", text: st.raw });
-            } else if (action === "apply" || action === "newFile" || action === "insert" || action === "diff") {
-              vscode.postMessage({ type: "apply", text: st.raw, mode: action === "apply" ? "auto" : action });
-            }
-          });
-          st.wrap.appendChild(actions);
-          msgState.delete(m.id);
-          setStatus("");
-          sendBtn.disabled = false;
-        } else if (m.event === "error") {
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.classList.remove("typing");
-          const errDiv = document.createElement("div");
-          errDiv.className = "err";
-          errDiv.textContent = m.data.message || "Error";
-          st.wrap.appendChild(errDiv);
-          msgState.delete(m.id);
-          setStatus("error");
-          sendBtn.disabled = false;
-        } else if (m.event === "cpl") {
-          const badges = st.wrap.querySelector(".badges");
-          badges.appendChild(makeBadge("CPL +" + m.data.injectedEntries, "muted"));
-        }
-        break;
-      }
-      case "error": {
-        const st = msgState.get(m.id);
-        if (st) {
-          const errDiv = document.createElement("div");
-          errDiv.className = "err";
-          errDiv.textContent = m.message;
-          st.wrap.appendChild(errDiv);
-          msgState.delete(m.id);
-        } else {
-          const div = document.createElement("div");
-          div.className = "err";
-          div.textContent = m.message;
-          messagesEl.appendChild(div);
-        }
-        setStatus("error");
-        sendBtn.disabled = false;
-        scrollToBottom();
-        break;
-      }
-      case "aborted": {
-        const st = msgState.get(m.id);
-        if (st) {
-          const note = document.createElement("div");
-          note.className = "err";
-          note.textContent = "Stopped.";
-          st.wrap.appendChild(note);
-          msgState.delete(m.id);
-        }
-        setStatus("");
-        sendBtn.disabled = false;
-        break;
-      }
-      case "assistantEnd":
-        sendBtn.disabled = false;
-        break;
-      case "sessionReset":
-        setStatus("session reset");
-        setTimeout(function() { setStatus(""); }, 1500);
-        break;
-    }
   });
+}
 
-  function scrollToBottom() {
-    requestAnimationFrame(function() { messagesEl.scrollTop = messagesEl.scrollHeight; });
+function hideMentionDropdown() {
+  dropdown.classList.remove('show');
+  mentionStart = -1;
+  mentionQuery = '';
+}
+
+function selectMention(filePath) {
+  if (!filePath) return;
+  // Replace @query with nothing (chip handles display)
+  const val = inputEl.value;
+  const before = val.slice(0, mentionStart);
+  const after  = val.slice(mentionStart + 1 + mentionQuery.length);
+  inputEl.value = before + after;
+  hideMentionDropdown();
+  autoSize();
+  // Request file content
+  vscode.postMessage({ type: 'readFile', path: filePath });
+}
+
+function moveMentionSelection(delta) {
+  const items = dropdown.querySelectorAll('.mention-item');
+  if (!items.length) return;
+  items[selectedMentionIdx]?.classList.remove('selected');
+  selectedMentionIdx = (selectedMentionIdx + delta + items.length) % items.length;
+  items[selectedMentionIdx]?.classList.add('selected');
+  items[selectedMentionIdx]?.scrollIntoView({ block: 'nearest' });
+}
+
+// ── Attachment chips ──────────────────────────────────────────────────────────
+function addAttachment(path, content) {
+  if (attachments.find(a => a.path === path)) return;
+  attachments.push({ path, content });
+  renderAttachments();
+}
+
+function removeAttachment(path) {
+  attachments = attachments.filter(a => a.path !== path);
+  renderAttachments();
+}
+
+function renderAttachments() {
+  if (attachments.length === 0) {
+    attRow.innerHTML = '';
+    attRow.classList.add('empty');
+    return;
   }
+  attRow.classList.remove('empty');
+  attRow.innerHTML = attachments.map(a =>
+    `<span class="att-chip">
+      📎 ${esc(a.path.split('/').pop())}
+      <span class="remove-chip" data-path="${esc(a.path)}" title="Remove">×</span>
+    </span>`
+  ).join('');
+  attRow.querySelectorAll('.remove-chip').forEach(el => {
+    el.addEventListener('click', () => removeAttachment(el.dataset.path));
+  });
+}
+
+// ── Send ──────────────────────────────────────────────────────────────────────
+function send() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  hideMentionDropdown();
+  vscode.postMessage({
+    type: 'send',
+    text,
+    attachments: attachments.map(a => ({ path: a.path, content: a.content })),
+  });
+  inputEl.value = '';
+  autoSize();
+  attachments = [];
+  renderAttachments();
+}
+
+sendBtn.addEventListener('click', send);
+inputEl.addEventListener('keydown', (e) => {
+  if (dropdown.classList.contains('show')) {
+    if (e.key === 'ArrowDown')  { e.preventDefault(); moveMentionSelection(1); return; }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); moveMentionSelection(-1); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      const selected = dropdown.querySelector('.mention-item.selected');
+      if (selected) selectMention(selected.dataset.path);
+      return;
+    }
+    if (e.key === 'Escape') { hideMentionDropdown(); return; }
+  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+inputEl.addEventListener('input', (e) => {
+  const val = inputEl.value;
+  const pos = inputEl.selectionStart;
+
+  // Find @ position
+  const lastAt = val.lastIndexOf('@', pos - 1);
+  if (lastAt !== -1) {
+    const afterAt = val.slice(lastAt + 1, pos);
+    if (!afterAt.includes(' ') && !afterAt.includes('\n')) {
+      mentionStart = lastAt;
+      mentionQuery = afterAt;
+      if (allFiles.length === 0) requestFileList();
+      else showMentionDropdown(afterAt);
+      return;
+    }
+  }
+  hideMentionDropdown();
+});
+
+// Toolbar buttons
+document.getElementById('tb-stop').addEventListener('click', () => {
+  vscode.postMessage({ type: 'stopAll' });
+});
+document.getElementById('tb-reset').addEventListener('click', () => {
+  vscode.postMessage({ type: 'resetSession' });
+});
+document.getElementById('tb-settings').addEventListener('click', () => {
+  vscode.postMessage({ type: 'openSettings' });
+});
+document.getElementById('tb-inline').addEventListener('click', () => {
+  vscode.postMessage({ type: 'openInlineEdit' });
+});
+
+// Example chips
+document.querySelectorAll('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    inputEl.value = chip.dataset.prompt || '';
+    autoSize();
+    inputEl.focus();
+  });
+});
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+function clearEmpty() {
+  if (emptyEl) emptyEl.style.display = 'none';
+}
+
+function scrollToBottom(smooth) {
+  requestAnimationFrame(() => {
+    messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
+  });
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ── Syntax highlight (character-level tokenizer) ─────────────────────────────
+const JS_KW = new Set('const let var function return if else for while do class new this typeof instanceof null undefined true false import export from as async await try catch finally throw break continue switch case default delete in of void yield super extends static get set type interface enum declare namespace abstract readonly'.split(' '));
+const PY_KW = new Set('def class import from if elif else for while return try except with as None True False lambda yield pass break continue raise in not and or is del global nonlocal assert async await'.split(' '));
+const GO_KW = new Set('func var const type struct interface map chan go defer select case default fallthrough break continue return for if else switch package import range make new len cap append nil true false string int float64 bool byte rune error'.split(' '));
+const RS_KW = new Set('fn let mut const if else for while loop match use impl struct enum trait type pub return self Self super mod extern crate unsafe async await move dyn where'.split(' '));
+const SH_KW = new Set('if then else fi for while do done case esac function return export local echo'.split(' '));
+
+function getKws(lang) {
+  const l = lang.toLowerCase();
+  if (['js','javascript','ts','typescript','tsx','jsx'].includes(l)) return JS_KW;
+  if (['py','python'].includes(l)) return PY_KW;
+  if (l === 'go') return GO_KW;
+  if (['rs','rust'].includes(l)) return RS_KW;
+  if (['sh','bash','shell'].includes(l)) return SH_KW;
+  return null;
+}
+
+function highlight(code, lang) {
+  const kws = getKws(lang);
+  if (!kws) return esc(code);
+
+  const isJS = ['js','javascript','ts','typescript','tsx','jsx'].includes(lang.toLowerCase());
+  const isPY = ['py','python'].includes(lang.toLowerCase());
+  const isSH = ['sh','bash','shell'].includes(lang.toLowerCase());
+
+  let out = '';
+  let i = 0;
+  const n = code.length;
+
+  const e = c => c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : c;
+  const eStr = s => s.split('').map(e).join('');
+
+  while (i < n) {
+    const ch = code[i];
+
+    // Single-line comment //
+    if ((isJS) && ch === '/' && code[i+1] === '/') {
+      let end = code.indexOf('\n', i); if (end === -1) end = n;
+      out += `<span class="hl-comment">${eStr(code.slice(i, end))}</span>`;
+      i = end; continue;
+    }
+    // Block comment /* */
+    if (isJS && ch === '/' && code[i+1] === '*') {
+      let end = code.indexOf('*/', i+2); if (end === -1) end = n-2;
+      out += `<span class="hl-comment">${eStr(code.slice(i, end+2))}</span>`;
+      i = end+2; continue;
+    }
+    // Python # comment
+    if ((isPY || isSH) && ch === '#') {
+      let end = code.indexOf('\n', i); if (end === -1) end = n;
+      out += `<span class="hl-comment">${eStr(code.slice(i, end))}</span>`;
+      i = end; continue;
+    }
+    // Template literal `...`
+    if (isJS && ch === '`') {
+      let j = i+1;
+      while (j < n) { if (code[j] === '\\') { j+=2; continue; } if (code[j] === '`') { j++; break; } j++; }
+      out += `<span class="hl-string">${eStr(code.slice(i, j))}</span>`;
+      i = j; continue;
+    }
+    // String " or '
+    if (ch === '"' || ch === "'") {
+      const q = ch; let j = i+1;
+      while (j < n) {
+        if (code[j] === '\\') { j+=2; continue; }
+        if (code[j] === q || code[j] === '\n') { j++; break; }
+        j++;
+      }
+      out += `<span class="hl-string">${eStr(code.slice(i, j))}</span>`;
+      i = j; continue;
+    }
+    // Number
+    if (/[0-9]/.test(ch) && (i === 0 || /\W/.test(code[i-1]))) {
+      let j = i;
+      while (j < n && /[0-9._xXa-fA-FbBoO]/.test(code[j])) j++;
+      out += `<span class="hl-number">${eStr(code.slice(i, j))}</span>`;
+      i = j; continue;
+    }
+    // Identifier / keyword
+    if (/[a-zA-Z_$]/.test(ch)) {
+      let j = i;
+      while (j < n && /[a-zA-Z0-9_$]/.test(code[j])) j++;
+      const word = code.slice(i, j);
+      if (kws.has(word)) {
+        out += `<span class="hl-keyword">${eStr(word)}</span>`;
+      } else if (j < n && code[j] === '(' ) {
+        out += `<span class="hl-func">${eStr(word)}</span>`;
+      } else if (word[0] >= 'A' && word[0] <= 'Z') {
+        out += `<span class="hl-type">${eStr(word)}</span>`;
+      } else {
+        out += eStr(word);
+      }
+      i = j; continue;
+    }
+    out += e(ch);
+    i++;
+  }
+  return out;
+}
+
+// ── Markdown renderer ─────────────────────────────────────────────────────────
+function renderMarkdown(raw, msgId) {
+  // Split into code blocks and prose
+  const segments = [];
+  const fenceRe = /```([a-zA-Z0-9_+.-]*)\s*([^\n]*)\n([\s\S]*?)```/g;
+  let last = 0, m;
+  while ((m = fenceRe.exec(raw)) !== null) {
+    if (m.index > last) segments.push({ t: 'prose', c: raw.slice(last, m.index) });
+    segments.push({ t: 'code', lang: m[1] || '', fenceInfo: m[2] || '', code: m[3] || '' });
+    last = m.index + m[0].length;
+  }
+  if (last < raw.length) segments.push({ t: 'prose', c: raw.slice(last) });
+
+  return segments.map(seg => {
+    if (seg.t === 'code') return renderCodeBlock(seg.lang, seg.fenceInfo, seg.code, msgId);
+    return renderProse(seg.c);
+  }).join('');
+}
+
+function renderProse(text) {
+  const lines = text.split('\n');
+  let html = '';
+  let inUl = false, inOl = false, inBq = false;
+
+  function closeList() {
+    if (inUl) { html += '</ul>'; inUl = false; }
+    if (inOl) { html += '</ol>'; inOl = false; }
+  }
+  function closeBq() {
+    if (inBq) { html += '</blockquote>'; inBq = false; }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const ulM = line.match(/^[-*+] (.+)/);
+    const olM = line.match(/^(\d+)\. (.+)/);
+    const bqM = line.match(/^> ?(.*)/);
+    const h1M = line.match(/^# (.+)/);
+    const h2M = line.match(/^## (.+)/);
+    const h3M = line.match(/^### (.+)/);
+    const hrM = /^---+$/.test(line.trim());
+
+    if (!ulM) { if (inUl) { html += '</ul>'; inUl = false; } }
+    if (!olM) { if (inOl) { html += '</ol>'; inOl = false; } }
+    if (!bqM) closeBq();
+
+    if (hrM)       { closeList(); closeBq(); html += '<hr>'; }
+    else if (h3M)  { closeList(); closeBq(); html += `<h3>${renderInline(h3M[1])}</h3>`; }
+    else if (h2M)  { closeList(); closeBq(); html += `<h2>${renderInline(h2M[1])}</h2>`; }
+    else if (h1M)  { closeList(); closeBq(); html += `<h1>${renderInline(h1M[1])}</h1>`; }
+    else if (bqM)  { if (!inBq) { html += '<blockquote>'; inBq = true; } html += `<p>${renderInline(bqM[1])}</p>`; }
+    else if (ulM)  { if (!inUl) { html += '<ul>'; inUl = true; } html += `<li>${renderInline(ulM[1])}</li>`; }
+    else if (olM)  { if (!inOl) { html += '<ol>'; inOl = true; } html += `<li>${renderInline(olM[2])}</li>`; }
+    else if (line.trim() === '') {
+      closeList(); closeBq();
+      // Blank lines separate paragraphs
+      if (i > 0 && lines[i-1]?.trim() !== '' && !html.endsWith('<br>')) html += '<br>';
+    }
+    else {
+      html += renderInline(line) + '<br>';
+    }
+  }
+
+  closeList(); closeBq();
+  return `<div class="md-content">${html}</div>`;
+}
+
+function renderInline(raw) {
+  // Split by inline code first
+  const parts = [];
+  const codeRe = /`([^`]+)`/g;
+  let last = 0, m;
+  while ((m = codeRe.exec(raw)) !== null) {
+    if (m.index > last) parts.push({ t: 'text', c: raw.slice(last, m.index) });
+    parts.push({ t: 'code', c: m[1] });
+    last = m.index + m[0].length;
+  }
+  if (last < raw.length) parts.push({ t: 'text', c: raw.slice(last) });
+
+  return parts.map(p => {
+    if (p.t === 'code') return `<code>${esc(p.c)}</code>`;
+    let s = esc(p.c);
+    // Bold+italic
+    s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+    // Bold
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    // Italic
+    s = s.replace(/\*([^*\s][^*]*)\*/g, '<em>$1</em>');
+    s = s.replace(/_([^_\s][^_]*)_/g, '<em>$1</em>');
+    // Links
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+      const safe = /^(javascript|data|vbscript):/i.test(url.trim()) ? '#' : url;
+      return `<a href="${esc(safe)}" target="_blank">${text}</a>`;
+    });
+    return s;
+  }).join('');
+}
+
+function parseFenceInfo(fenceInfo) {
+  const pathM = fenceInfo.match(/path=([^\s]+)/);
+  const modeM = fenceInfo.match(/mode=(replace|patch|insert)/);
+  return { path: pathM ? pathM[1] : null, mode: modeM ? modeM[1] : null };
+}
+
+// Completed message raws persist after msgState is cleared
+const completedMsgs = new Map(); // msgId → raw
+
+function renderCodeBlock(lang, fenceInfo, code, msgId) {
+  const { path: filePath, mode } = parseFenceInfo(fenceInfo);
+  const displayLang = lang || 'text';
+  const lineCount = code.split('\n').length;
+  const hlCode = highlight(code, lang);
+
+  // Header
+  let headerHtml = `<span class="lang-tag">${esc(displayLang)}</span>`;
+  if (filePath) headerHtml += ` <span class="path-tag">${esc(filePath)}</span>`;
+  if (mode) headerHtml += ` <span class="mode-tag ${esc(mode)}">${esc(mode)}</span>`;
+  headerHtml += ` <span class="line-count">${lineCount}L</span>`;
+
+  const blockId = 'cb-' + Math.random().toString(36).slice(2, 8);
+  const safeLang = esc(lang || '');
+  const safeFenceInfo = esc(fenceInfo || '');
+  const safeMsgId = esc(msgId || '');
+
+  return `<div class="code-block" id="${blockId}" data-lang="${safeLang}" data-fenceinfo="${safeFenceInfo}" data-msgid="${safeMsgId}">
+  <div class="code-header">${headerHtml}</div>
+  <div class="code-actions">
+    <button onclick="copyBlock('${blockId}')">Copy</button>
+    <button class="apply-btn" onclick="applyBlock('${blockId}')">Apply</button>
+    <button onclick="diffBlock('${blockId}')">Diff</button>
+  </div>
+  <div class="code-body" id="body-${blockId}">${hlCode}</div>
+</div>`;
+}
+
+/** Get the raw fenced code for a specific block by reconstructing from DOM. */
+function getBlockFenced(blockId) {
+  const block = document.getElementById(blockId);
+  const body  = document.getElementById('body-' + blockId);
+  if (!block || !body) return '';
+  const lang      = block.dataset.lang || '';
+  const fenceInfo = block.dataset.fenceinfo || '';
+  const code      = body.textContent || '';
+  return '```' + lang + (fenceInfo ? ' ' + fenceInfo : '') + '\n' + code + '\n```';
+}
+
+function copyBlock(blockId) {
+  const el = document.getElementById('body-' + blockId);
+  vscode.postMessage({ type: 'copy', text: el ? el.textContent || '' : '' });
+}
+
+function applyBlock(blockId) {
+  const block = document.getElementById(blockId);
+  const msgId = block ? block.dataset.msgid : '';
+  // Use full message raw when available (to let apply.ts handle multi-block logic)
+  const raw = (msgId && (completedMsgs.get(msgId) || msgState.get(msgId)?.raw)) || getBlockFenced(blockId);
+  vscode.postMessage({ type: 'apply', text: raw, mode: 'auto' });
+}
+
+function diffBlock(blockId) {
+  const block = document.getElementById(blockId);
+  const msgId = block ? block.dataset.msgid : '';
+  const raw = (msgId && (completedMsgs.get(msgId) || msgState.get(msgId)?.raw)) || getBlockFenced(blockId);
+  vscode.postMessage({ type: 'apply', text: raw, mode: 'diff' });
+}
+
+// ── Message event handlers ────────────────────────────────────────────────────
+
+window.addEventListener('message', function (ev) {
+  const m = ev.data;
+
+  switch (m.type) {
+
+    case 'init':
+      sessionKey = m.sessionKey || '';
+      // Request health check
+      vscode.postMessage({ type: 'checkHealth' });
+      break;
+
+    case 'focusInput':
+      if (m.prefill) { inputEl.value = m.prefill; autoSize(); }
+      inputEl.focus();
+      break;
+
+    case 'backendStatus': {
+      const online = !!m.online;
+      statusDot.className = online ? 'online' : 'offline';
+      statusDot.title = online ? `Backend online: ${m.url || ''}` : 'Backend offline — run pnpm dev';
+      backendBanner.style.display = online ? 'none' : 'block';
+      break;
+    }
+
+    case 'activeCount':
+      updateActiveUI(m.count || 0);
+      break;
+
+    case 'fileList':
+      allFiles = m.files || [];
+      if (dropdown.classList.contains('show')) {
+        showMentionDropdown(mentionQuery);
+      }
+      break;
+
+    case 'fileContent': {
+      if (m.content === null) {
+        setStatus('⚠ Could not read ' + (m.path || ''));
+        return;
+      }
+      addAttachment(m.path, m.content);
+      break;
+    }
+
+    case 'userMsg': {
+      clearEmpty();
+      const group = document.createElement('div');
+      group.className = 'msg-group';
+      group.id = 'group-' + m.id;
+
+      const userDiv = document.createElement('div');
+      userDiv.className = 'msg-user';
+      userDiv.textContent = m.text;
+
+      if (m.attachments && m.attachments.length > 0) {
+        const attDiv = document.createElement('div');
+        attDiv.className = 'attachments';
+        m.attachments.forEach(p => {
+          const chip = document.createElement('span');
+          chip.className = 'attach-chip';
+          chip.textContent = '📎 ' + p.split('/').pop();
+          attDiv.appendChild(chip);
+        });
+        userDiv.appendChild(attDiv);
+      }
+
+      if (m.activeFile) {
+        const hint = document.createElement('div');
+        hint.className = 'active-file-hint';
+        hint.textContent = '📄 ' + m.activeFile;
+        userDiv.appendChild(hint);
+      }
+
+      group.appendChild(userDiv);
+      messagesEl.appendChild(group);
+      scrollToBottom(false);
+      break;
+    }
+
+    case 'assistantStart': {
+      const group = document.getElementById('group-' + m.id) || messagesEl;
+
+      const assistDiv = document.createElement('div');
+      assistDiv.className = 'msg-assistant';
+      assistDiv.id = 'assist-' + m.id;
+
+      const routingRow = document.createElement('div');
+      routingRow.className = 'routing-row';
+      routingRow.id = 'routing-' + m.id;
+      routingRow.innerHTML = makeBadge('routing…', 'muted');
+
+      const dotsDiv = document.createElement('div');
+      dotsDiv.className = 'streaming-dots';
+      dotsDiv.id = 'dots-' + m.id;
+      dotsDiv.innerHTML = '<span></span><span></span><span></span>';
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'md-content';
+      contentDiv.id = 'content-' + m.id;
+
+      assistDiv.appendChild(routingRow);
+      assistDiv.appendChild(dotsDiv);
+      assistDiv.appendChild(contentDiv);
+
+      // Add stop button for this specific message
+      const stopDiv = document.createElement('div');
+      stopDiv.className = 'msg-actions';
+      stopDiv.id = 'actions-' + m.id;
+      const stopBtn = document.createElement('button');
+      stopBtn.className = 'stop-btn';
+      stopBtn.textContent = '⏹ Stop';
+      stopBtn.onclick = () => vscode.postMessage({ type: 'stop', id: m.id });
+      stopDiv.appendChild(stopBtn);
+      assistDiv.appendChild(stopDiv);
+
+      if (group === messagesEl) {
+        messagesEl.appendChild(assistDiv);
+      } else {
+        group.appendChild(assistDiv);
+      }
+
+      msgState.set(m.id, { wrap: assistDiv, raw: '', hasCode: false });
+      setStatus('routing…');
+      scrollToBottom(false);
+      break;
+    }
+
+    case 'stream': {
+      const st = msgState.get(m.id);
+      if (!st) break;
+      const routingEl  = document.getElementById('routing-' + m.id);
+      const dotsEl     = document.getElementById('dots-' + m.id);
+      const contentEl  = document.getElementById('content-' + m.id);
+
+      if (m.event === 'routing') {
+        const r = m.data.routing || {};
+        const c = m.data.classification || {};
+        const ll = m.data.llmRouting || null;
+        const cost = m.data.costUsd;
+
+        if (routingEl) {
+          routingEl.innerHTML = [
+            makeBadge(r.displayName || r.selectedModel || '?', 'model'),
+            makeBadge(c.taskType || '?', 'task'),
+            ll ? makeBadge(ll.fellBackToRules ? 'rules' : 'llm-routed', 'muted') : makeBadge('rule-based', 'muted'),
+          ].join('');
+        }
+        setStatus('generating…');
+      }
+      else if (m.event === 'chunk') {
+        st.raw += (m.data.text || '');
+        if (contentEl) {
+          contentEl.innerHTML = renderMarkdown(st.raw, m.id);
+        }
+        const nearBottom = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 120;
+        if (nearBottom) scrollToBottom(false);
+      }
+      else if (m.event === 'done') {
+        if (dotsEl) dotsEl.remove();
+        const routingEl2 = document.getElementById('routing-' + m.id);
+        if (routingEl2 && m.data.costUsd !== undefined) {
+          routingEl2.innerHTML += makeBadge('$' + Number(m.data.costUsd).toFixed(5), 'cost');
+          if (m.data.savingsPercent > 0) {
+            routingEl2.innerHTML += makeBadge('↓' + Math.round(m.data.savingsPercent) + '% cost', 'savings');
+          }
+        }
+        if (m.data.cpl && m.data.cpl.injectedEntries > 0) {
+          if (routingEl2) routingEl2.innerHTML += makeBadge('🧠 ' + m.data.cpl.injectedEntries + ' CPL', 'cpl');
+        }
+
+        // Final render
+        if (contentEl) contentEl.innerHTML = renderMarkdown(st.raw, m.id);
+
+        // Replace stop btn with action buttons
+        const completedRaw = st.raw; // capture before msgState.delete
+        const actionsEl = document.getElementById('actions-' + m.id);
+        if (actionsEl) {
+          actionsEl.innerHTML = '';
+          const hasCode = completedRaw.includes('```');
+          if (hasCode) {
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'primary';
+            applyBtn.textContent = 'Apply';
+            applyBtn.title = 'Apply code to current file (with confirmation)';
+            applyBtn.onclick = () => vscode.postMessage({ type: 'apply', text: completedRaw, mode: 'auto' });
+
+            const diffBtn = document.createElement('button');
+            diffBtn.textContent = 'Diff';
+            diffBtn.onclick = () => vscode.postMessage({ type: 'apply', text: completedRaw, mode: 'diff' });
+
+            const newFileBtn = document.createElement('button');
+            newFileBtn.textContent = 'New file';
+            newFileBtn.onclick = () => vscode.postMessage({ type: 'apply', text: completedRaw, mode: 'newFile' });
+
+            actionsEl.appendChild(applyBtn);
+            actionsEl.appendChild(diffBtn);
+            actionsEl.appendChild(newFileBtn);
+          }
+
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = 'Copy all';
+          copyBtn.onclick = () => vscode.postMessage({ type: 'copy', text: completedRaw });
+          actionsEl.appendChild(copyBtn);
+        }
+
+        // Persist raw for per-block actions after msgState is cleared
+        completedMsgs.set(m.id, st.raw);
+        // Trim old entries to avoid memory growth
+        if (completedMsgs.size > 100) {
+          const firstKey = completedMsgs.keys().next().value;
+          completedMsgs.delete(firstKey);
+        }
+        msgState.delete(m.id);
+        setStatus('');
+      }
+      else if (m.event === 'error') {
+        if (dotsEl) dotsEl.remove();
+        const errDiv = document.createElement('div');
+        errDiv.className = 'err-block';
+        errDiv.textContent = m.data.message || 'Error';
+        st.wrap.appendChild(errDiv);
+        const actionsEl = document.getElementById('actions-' + m.id);
+        if (actionsEl) actionsEl.remove();
+        msgState.delete(m.id);
+        setStatus('error');
+      }
+      break;
+    }
+
+    case 'error': {
+      const st = msgState.get(m.id);
+      const errDiv = document.createElement('div');
+      errDiv.className = 'err-block';
+      errDiv.textContent = m.message || 'Unknown error';
+      if (st) {
+        const dotsEl = document.getElementById('dots-' + m.id);
+        if (dotsEl) dotsEl.remove();
+        const actionsEl = document.getElementById('actions-' + m.id);
+        if (actionsEl) actionsEl.remove();
+        st.wrap.appendChild(errDiv);
+        msgState.delete(m.id);
+      } else {
+        messagesEl.appendChild(errDiv);
+      }
+      setStatus('');
+      scrollToBottom(true);
+      break;
+    }
+
+    case 'aborted': {
+      const st = msgState.get(m.id);
+      if (st) {
+        const dotsEl = document.getElementById('dots-' + m.id);
+        if (dotsEl) dotsEl.remove();
+        const actionsEl = document.getElementById('actions-' + m.id);
+        if (actionsEl) actionsEl.remove();
+        const note = document.createElement('div');
+        note.className = 'err-block';
+        note.style.color = 'var(--fg-muted)';
+        note.style.borderColor = 'var(--border)';
+        note.style.background = 'transparent';
+        note.textContent = '⏹ Stopped.';
+        st.wrap.appendChild(note);
+        msgState.delete(m.id);
+      }
+      setStatus('');
+      break;
+    }
+
+    case 'assistantEnd':
+      setStatus('');
+      break;
+
+    case 'sessionReset':
+      setStatus('Session reset');
+      try { localStorage.removeItem(getHistoryKey()); } catch { /* ignore */ }
+      setTimeout(() => setStatus(''), 2000);
+      break;
+  }
+});
+
+// ── Badge helper ──────────────────────────────────────────────────────────────
+function makeBadge(text, cls) {
+  return `<span class="badge ${cls || ''}">${esc(text)}</span>`;
+}
+
+// ── Health check on load ──────────────────────────────────────────────────────
+setTimeout(() => { vscode.postMessage({ type: 'checkHealth' }); }, 500);
+
 })();
 </script>
 </body>

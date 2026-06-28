@@ -1,12 +1,14 @@
 {
   "name": "cupid-ai-router",
   "displayName": "Cupid AI Router",
-  "description": "Cursor-style AI chat with intelligent multi-model routing — saves 90%+ cost vs always using Opus",
-  "version": "0.2.0",
+  "description": "Cursor-style AI chat with intelligent multi-model routing — saves 90%+ vs always using top-tier models",
+  "version": "0.3.0",
+  "publisher": "cupid-ai",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": ["AI", "Other"],
+  "keywords": ["ai", "chat", "cursor", "copilot", "llm", "routing", "gpt", "claude"],
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -26,8 +28,9 @@
         {
           "type": "webview",
           "id": "cupid.chatView",
-          "name": "Chat",
-          "icon": "$(comment-discussion)"
+          "name": "Cupid Chat",
+          "icon": "$(comment-discussion)",
+          "contextualTitle": "Cupid AI Router"
         }
       ]
     },
@@ -35,28 +38,58 @@
       {
         "command": "cupid.openChat",
         "title": "Cupid: Open Chat",
-        "icon": "$(robot)"
+        "icon": "$(robot)",
+        "category": "Cupid"
       },
       {
         "command": "cupid.askWithSelection",
         "title": "Cupid: Ask about selected code",
-        "icon": "$(comment-discussion)"
+        "icon": "$(comment-discussion)",
+        "category": "Cupid"
+      },
+      {
+        "command": "cupid.inlineEdit",
+        "title": "Cupid: Inline Edit (Ctrl+K)",
+        "icon": "$(edit)",
+        "category": "Cupid"
       },
       {
         "command": "cupid.showStats",
-        "title": "Cupid: Show session stats"
+        "title": "Cupid: Show session stats",
+        "category": "Cupid"
       },
       {
         "command": "cupid.resetSession",
-        "title": "Cupid: Reset session memory (CPL)"
+        "title": "Cupid: Reset session memory",
+        "category": "Cupid"
       },
       {
         "command": "cupid.configureEndpoint",
-        "title": "Cupid: Configure backend endpoint"
+        "title": "Cupid: Configure backend endpoint",
+        "category": "Cupid"
       },
       {
         "command": "cupid.moveToRight",
-        "title": "Cupid: Move chat to right (Secondary Side Bar)"
+        "title": "Cupid: Move chat to right panel (Cursor-style)",
+        "category": "Cupid"
+      },
+      {
+        "command": "cupid.stopAll",
+        "title": "Cupid: Stop all streaming requests",
+        "icon": "$(debug-stop)",
+        "category": "Cupid"
+      },
+      {
+        "command": "cupid.acceptChanges",
+        "title": "Cupid: Accept changes",
+        "icon": "$(check)",
+        "category": "Cupid"
+      },
+      {
+        "command": "cupid.rejectChanges",
+        "title": "Cupid: Reject changes",
+        "icon": "$(x)",
+        "category": "Cupid"
       }
     ],
     "keybindings": [
@@ -70,32 +103,75 @@
         "key": "ctrl+shift+l",
         "mac": "cmd+shift+l",
         "when": "editorHasSelection"
+      },
+      {
+        "command": "cupid.inlineEdit",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "cupid.acceptChanges",
+        "key": "ctrl+shift+y",
+        "mac": "cmd+shift+y"
+      },
+      {
+        "command": "cupid.rejectChanges",
+        "key": "ctrl+shift+n",
+        "mac": "cmd+shift+n"
+      },
+      {
+        "command": "cupid.stopAll",
+        "key": "ctrl+shift+.",
+        "mac": "cmd+shift+."
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "cupid.askWithSelection",
+          "when": "editorHasSelection",
+          "group": "cupid"
+        },
+        {
+          "command": "cupid.inlineEdit",
+          "group": "cupid"
+        }
+      ]
+    },
     "configuration": {
       "title": "Cupid AI Router",
       "properties": {
         "cupid.backendUrl": {
           "type": "string",
           "default": "http://localhost:3300",
-          "description": "URL of the Cupid backend server"
+          "description": "URL of the Cupid backend server. Default: http://localhost:3300. Start the backend with `pnpm dev` in the cupid project folder."
         },
         "cupid.userMode": {
           "type": "string",
           "enum": ["cost_saving", "balanced", "max_quality"],
+          "enumDescriptions": [
+            "Always prefer the cheapest model — great for simple completions and repetitive tasks",
+            "Smart routing: cheap models for simple tasks, strong models for complex ones (recommended)",
+            "Always use the strongest available model — maximum quality, higher cost"
+          ],
           "default": "balanced",
-          "description": "cost_saving aggressively prefers cheap models; max_quality always uses strong models"
+          "description": "How aggressively Cupid optimizes for cost vs. quality."
         },
         "cupid.routingMode": {
           "type": "string",
           "enum": ["rule_based", "llm_assisted"],
+          "enumDescriptions": [
+            "Fast, deterministic routing using rule-based classification (near-zero latency overhead)",
+            "LLM-assisted routing for higher classification accuracy on ambiguous tasks"
+          ],
           "default": "llm_assisted",
-          "description": "How tasks are classified before routing"
+          "description": "How tasks are classified before model routing."
         },
         "cupid.autoMoveToRight": {
           "type": "boolean",
           "default": true,
-          "description": "On first activation, move the Cupid chat to the right Secondary Side Bar (Cursor-style)"
+          "description": "On first activation, automatically move the Cupid chat to the right Secondary Side Bar (Cursor-style layout). You can manually use 'Cupid: Move chat to right panel' at any time."
         }
       }
     }
@@ -103,7 +179,7 @@
   "scripts": {
     "compile": "tsc -p tsconfig.json",
     "watch": "tsc -watch -p tsconfig.json",
-    "package": "vsce package"
+    "package": "vsce package --allow-missing-repository"
   },
   "dependencies": {},
   "devDependencies": {
