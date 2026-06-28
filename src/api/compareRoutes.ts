@@ -11,6 +11,7 @@ import type { ModelRecord, ModelTier, UserMode, TaskClassification } from "../ty
 import { logger } from "../utils/logger.js";
 import { sessionContextStore } from "../cpl/sessionContextStore.js";
 import { extractAndStore } from "../cpl/contextExtractor.js";
+import { injectRepoFileTree } from "../cpl/repoFileTree.js";
 
 const BENCHMARK_MODEL_ID = "anthropic/claude-opus-4-5";
 
@@ -102,7 +103,7 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const optimizePrompt = body.optimizePrompt ?? true;
     const routingMode: RoutingMode = body.routingMode ?? "rule_based";
     const enhancedPrompts = body.enhancedPrompts ?? true;
-    const selfRevise = body.selfRevise ?? false;
+    const selfReviseExplicit = body.selfRevise;
     const sessionKey = body.sessionKey ?? "";
     const useCpl = (body.useCpl ?? true) && !!sessionKey;
     const extractCpl = (body.extractCpl ?? true) && !!sessionKey;
@@ -160,6 +161,16 @@ export async function registerCompareRoutes(app: FastifyInstance) {
         selectedCode: body.rawCode,
         activeFilePath: body.fileName,
       });
+    }
+
+    // Auto self-revise for high-risk tasks (security, db, arch, devops) unless
+    // the caller explicitly set selfRevise=false
+    const selfRevise = selfReviseExplicit ?? (classification.riskLevel >= 4);
+    const selfReviseAutoTriggered = selfReviseExplicit === undefined && classification.riskLevel >= 4;
+
+    // Inject repo file tree into CPL for tasks that need workspace context
+    if (useCpl) {
+      void injectRepoFileTree(sessionKey, classification.taskType);
     }
 
     const promptOpt = optimizePrompt
@@ -388,6 +399,7 @@ export async function registerCompareRoutes(app: FastifyInstance) {
             cplCompressedChars: routerBuild.cpl?.compressedChars ?? 0,
             selfReviseRequested: selfRevise,
             selfReviseApplied: finalRouterExec.revisionApplied ?? false,
+            selfReviseAutoTriggered,
           }
         : null,
       cpl: cplDebug ? {

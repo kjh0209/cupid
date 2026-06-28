@@ -1,0 +1,90 @@
+{
+  "name": "cupid-ai-router",
+  "displayName": "Cupid AI Router",
+  "description": "Intelligent LLM routing for VS Code — routes to the best model for each task, saving 90%+ cost vs always using Opus",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["AI", "Other"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cupid.ask",
+        "title": "Cupid: Ask AI (current file)",
+        "icon": "$(robot)"
+      },
+      {
+        "command": "cupid.askWithSelection",
+        "title": "Cupid: Ask AI (selected code)",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "cupid.showStats",
+        "title": "Cupid: Show Session Stats"
+      },
+      {
+        "command": "cupid.resetSession",
+        "title": "Cupid: Reset Session Memory (CPL)"
+      },
+      {
+        "command": "cupid.configureEndpoint",
+        "title": "Cupid: Configure Backend Endpoint"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "cupid.ask",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorFocus"
+      },
+      {
+        "command": "cupid.askWithSelection",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l",
+        "when": "editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "Cupid AI Router",
+      "properties": {
+        "cupid.backendUrl": {
+          "type": "string",
+          "default": "http://localhost:3300",
+          "description": "URL of the Cupid backend server"
+        },
+        "cupid.userMode": {
+          "type": "string",
+          "enum": ["cost_saving", "balanced", "max_quality"],
+          "default": "balanced",
+          "description": "Routing mode: cost_saving aggressively prefers cheap models, max_quality always uses strong models"
+        },
+        "cupid.routingMode": {
+          "type": "string",
+          "enum": ["rule_based", "llm_assisted"],
+          "default": "rule_based",
+          "description": "How to classify tasks: rule_based is instant, llm_assisted uses a classifier model"
+        },
+        "cupid.selfRevise": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable self-revision pass for high-risk tasks (doubles cost but improves quality)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json",
+    "package": "vsce package"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}

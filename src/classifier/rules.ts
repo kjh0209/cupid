@@ -196,6 +196,44 @@ export const PROMPT_REWRITE_KEYWORDS = [
   "verbose.prompt", "shorter.prompt", "trim.this",
 ];
 
+export const PERFORMANCE_KEYWORDS = [
+  "slow", "performance", "optimize", "optimization", "profil", "benchmark",
+  "latency", "throughput", "memory.leak", "memory.usage", "cpu.usage",
+  "n.plus.1", "n+1", "query.slow", "slow.query", "cache.miss",
+  "bundle.size", "render.time", "load.time", "time.to.first.byte",
+  "lighthouse", "core.web.vitals", "lcp", "fid", "cls", "inp",
+  "memoize", "memoization", "useMemo", "useCallback", "react.memo",
+  "lazy.loading", "code.splitting", "tree.shaking", "dead.code",
+  "index.missing", "full.table.scan", "explain.analyze",
+];
+
+export const DEVOPS_KEYWORDS = [
+  "ci", "cd", "pipeline", "github.actions", "workflow", "workflows",
+  "dockerfile", "docker.compose", "container", "containers",
+  "kubernetes", "k8s", "helm", "pod", "deployment", "service",
+  "terraform", "infrastructure.as.code", "iac", "ansible", "pulumi",
+  "nginx", "load.balancer", "reverse.proxy", "ssl.cert",
+  "secrets.management", "environment.variable", "dotenv",
+  "deploy", "deployment", "release", "rollout",
+  "monitoring", "alerting", "observability", "logging.infra",
+];
+
+export const DEPENDENCY_KEYWORDS = [
+  "upgrade.dependency", "update.dependency", "bump.version",
+  "package.json", "pnpm", "npm.update", "yarn.upgrade",
+  "security.vulnerability", "cve", "audit.fix", "npm.audit",
+  "breaking.change", "migration.guide", "changelog",
+  "peer.dependency", "version.conflict", "lock.file",
+];
+
+export const CODE_REVIEW_KEYWORDS = [
+  "review.this", "code.review", "review.my.code", "give.feedback",
+  "what.do.you.think", "any.issues", "is.this.correct", "is.this.good",
+  "pr.review", "pull.request.review", "approve.this",
+  "readability", "maintainability", "code.quality",
+  "best.practices", "patterns", "anti.patterns",
+];
+
 export const LONG_CONTEXT_TRIGGERS = [
   "entire.codebase", "full.repo", "all.files", "whole.project", "the.whole.project",
   "throughout.the.project", "across.the.entire", "every.module", "every.file",
@@ -311,6 +349,10 @@ function gatherSignals(text: string): ClassificationSignals {
     ui: countKeywordHits(text, UI_KEYWORDS),
     simpleEdit: countKeywordHits(text, SIMPLE_EDIT_KEYWORDS),
     promptRewrite: countKeywordHits(text, PROMPT_REWRITE_KEYWORDS),
+    performance: countKeywordHits(text, PERFORMANCE_KEYWORDS),
+    devops: countKeywordHits(text, DEVOPS_KEYWORDS),
+    dependency: countKeywordHits(text, DEPENDENCY_KEYWORDS),
+    codeReview: countKeywordHits(text, CODE_REVIEW_KEYWORDS),
   };
 
   // Each task type accumulates a weighted score from relevant signals
@@ -326,6 +368,11 @@ function gatherSignals(text: string): ClassificationSignals {
     security_sensitive_change: 0,
     architecture_design: 0,
     prompt_rewrite_only: 0,
+    performance_optimization: 0,
+    devops_config: 0,
+    documentation_write: 0,
+    dependency_update: 0,
+    code_review: 0,
     unknown: 0,
   };
 
@@ -340,10 +387,19 @@ function gatherSignals(text: string): ClassificationSignals {
   scores.test_generation += hits.test * 1.2;
   scores.ui_change += hits.ui * 0.9;
   scores.simple_edit += hits.simpleEdit * 1.0;
+  scores.performance_optimization += hits.performance * 1.1;
+  scores.devops_config += hits.devops * 1.0;
+  scores.dependency_update += hits.dependency * 1.0;
+  scores.code_review += hits.codeReview * 1.0;
 
   // API impl detection (regex-based)
   if (/api.?route|endpoint|handler|controller|middleware|rest.?api|graphql.?resolver|route\.(?:get|post|put|delete|patch)/i.test(text)) {
     scores.api_implementation += 2.0;
+  }
+
+  // Documentation detection
+  if (/\b(write|add|generate|create|update).{0,20}(readme|documentation|docs|docstring|jsdoc|tsdoc|adl|adr|openapi|swagger)/i.test(text)) {
+    scores.documentation_write += 2.0;
   }
 
   // Bug fix detection (regex-based)
@@ -413,6 +469,11 @@ export function detectRiskLevel(
     security_sensitive_change: 5,
     architecture_design: 4,
     prompt_rewrite_only: 1,
+    performance_optimization: 3,
+    devops_config: 4,
+    documentation_write: 1,
+    dependency_update: 3,
+    code_review: 1,
     unknown: 2,
   };
 
@@ -458,6 +519,11 @@ export function detectDifficulty(message: string, taskType: TaskType): number {
     security_sensitive_change: 4,
     architecture_design: 5,
     prompt_rewrite_only: 1,
+    performance_optimization: 3,
+    devops_config: 3,
+    documentation_write: 1,
+    dependency_update: 2,
+    code_review: 2,
     unknown: 2,
   };
 
@@ -491,6 +557,11 @@ export function detectContextNeed(message: string, taskType: TaskType): ContextN
     security_sensitive_change: "medium",
     architecture_design: "large",
     prompt_rewrite_only: "small",
+    performance_optimization: "large",
+    devops_config: "medium",
+    documentation_write: "small",
+    dependency_update: "medium",
+    code_review: "large",
     unknown: "medium",
   };
 
@@ -521,6 +592,11 @@ export function detectChangeScope(taskType: TaskType, message: string): ChangeSc
     security_sensitive_change: "multi_file",
     architecture_design: "repo_wide",
     prompt_rewrite_only: "none",
+    performance_optimization: "multi_file",
+    devops_config: "single_file",
+    documentation_write: "single_file",
+    dependency_update: "multi_file",
+    code_review: "none",
     unknown: "single_file",
   };
 
@@ -544,7 +620,7 @@ export function detectCompressionSensitivity(
 ): CompressionSensitivity {
   if (riskLevel >= 4) return "high";
   if (riskLevel === 3) return "medium";
-  if (taskType === "security_sensitive_change" || taskType === "database_schema_change") return "high";
-  if (taskType === "architecture_design" || taskType === "multi_file_refactor") return "medium";
+  if (taskType === "security_sensitive_change" || taskType === "database_schema_change" || taskType === "devops_config") return "high";
+  if (taskType === "architecture_design" || taskType === "multi_file_refactor" || taskType === "performance_optimization" || taskType === "dependency_update") return "medium";
   return "low";
 }

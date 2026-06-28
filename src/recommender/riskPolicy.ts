@@ -132,12 +132,14 @@ export function getTierPolicy(
     };
   }
 
-  // Explanation / simple edit / UI / prompt rewrite: cheap or mid (strong only for max_quality)
+  // Explanation / simple edit / UI / prompt rewrite / docs / code review: cheap or mid
   if (
     taskType === "explanation" ||
     taskType === "simple_edit" ||
     taskType === "ui_change" ||
-    taskType === "prompt_rewrite_only"
+    taskType === "prompt_rewrite_only" ||
+    taskType === "documentation_write" ||
+    taskType === "code_review"
   ) {
     const allowed: ModelTier[] =
       userMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
