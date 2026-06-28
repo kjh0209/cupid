@@ -1,6 +1,6 @@
 # Prompt Optimization Policy
 
-Generated: 2026-06-28T02:29:59.535Z
+Generated: 2026-06-28T07:12:31.023Z
 
 ## Token-Saving Rules
 

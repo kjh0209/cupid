@@ -29,6 +29,7 @@ export type TaskType =
   | "documentation_write"
   | "dependency_update"
   | "code_review"
+  | "creative_generation"
   | "unknown";
 
 // ── Context Need ─────────────────────────────────────────────

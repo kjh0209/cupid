@@ -204,6 +204,8 @@ const STRATEGY_BY_TASK: Record<TaskType, string[]> = {
   devops_config:          ["strip-whitespace"],  // preserve config files as-is
   documentation_write:    ["dedupe-imports", "strip-comments", "strip-whitespace", "extract-signatures"],
   dependency_update:      ["strip-whitespace"],
+  // Creative generation: no source code typically supplied — passthrough
+  creative_generation:    [],
   code_review:            ["dedupe-imports", "strip-comments", "strip-whitespace"],
   unknown:                ["dedupe-imports", "strip-whitespace"],
 };

@@ -17,7 +17,7 @@ const TASK_TYPES: TaskType[] = [
   "database_schema_change", "security_sensitive_change",
   "architecture_design", "prompt_rewrite_only",
   "performance_optimization", "devops_config", "documentation_write",
-  "dependency_update", "code_review", "unknown",
+  "dependency_update", "code_review", "creative_generation", "unknown",
 ];
 const CONTEXT_NEEDS: ContextNeed[] = ["small", "medium", "large", "huge"];
 const CHANGE_SCOPES: ChangeScope[] = ["none", "single_file", "multi_file", "repo_wide"];
@@ -28,7 +28,7 @@ const SYSTEM_PROMPT = `You are a task classifier for a code-assistant routing sy
 Read the user's prompt + file context, then output STRICT JSON (no markdown fences, no commentary):
 
 {
-  "task_type": "<one of: explanation|simple_edit|test_generation|local_bug_fix|ui_change|api_implementation|multi_file_refactor|database_schema_change|security_sensitive_change|architecture_design|prompt_rewrite_only|performance_optimization|devops_config|documentation_write|dependency_update|code_review|unknown>",
+  "task_type": "<one of: explanation|simple_edit|test_generation|local_bug_fix|ui_change|api_implementation|multi_file_refactor|database_schema_change|security_sensitive_change|architecture_design|prompt_rewrite_only|performance_optimization|devops_config|documentation_write|dependency_update|code_review|creative_generation|unknown>",
   "difficulty": <integer 1..5>,
   "risk_level": <integer 0..5>,
   "context_need": "<small|medium|large|huge>",
@@ -57,6 +57,10 @@ CRITICAL classification rules (these override surface keywords):
 14. "Write docs", "add README", "generate JSDoc", "write ADR/RFC", "document this API" → documentation_write. risk_level = 1.
 15. "Upgrade package", "bump version", "update dependency", "npm audit fix", "CVE", "breaking change" → dependency_update. risk_level = 3.
 16. "Review this code", "give feedback", "what's wrong with", "is this good practice", "code review" → code_review. risk_level = 1.
+    - **CRITICAL**: "Review this migration / this auth code / this PR" is code_review FIRST, not security/db. The user is asking for FEEDBACK, not for you to write a migration. Look for verbs like "review", "give feedback", "what would you change", "is this safe/good/idiomatic" — those are code_review even if the subject matter is a migration/auth/security file. risk_level matches the subject matter (review of migration → risk_level 4, review of styling → risk_level 1).
+17. **CREATIVE WHOLE-APP / GAME / DEMO GENERATION**: "Make a breakout game", "build a snake game", "create a landing page", "make a calculator app", "build me a demo of X", "interactive playground for Y", "build a kanban board", "build a chat app", "code a tetris clone" → **creative_generation**. risk_level = 1, BUT difficulty = 4 (creative + design taste is decisive). DO NOT route these to cheap tier — small models produce wireframe-quality output with no color palette, no UX touches, no polish. Strong tier (Sonnet/Opus/Gemini Pro) is required to get a result that "feels like a small product, not a placeholder".
+    - Hint signals: naming a specific game (breakout, snake, tetris, pong, 2048, wordle), "make/build/create a [game/app/website/tool/demo/landing page/dashboard]", "interactive", "playable", "showcase", "playground", "demo page", "drag-and-drop", "fun little".
+    - Distinguish from ui_change: ui_change = modify existing component/style; creative_generation = invent a new app/game/demo from scratch.
 
 Difficulty scale:
 1 = trivial (rename, format, typo)

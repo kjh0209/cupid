@@ -153,7 +153,13 @@ export function scoreModel(
     classification.taskType === "security_sensitive_change" ||
     classification.taskType === "database_schema_change" ||
     classification.taskType === "devops_config";
-  const affinityFloorPenalty = (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 1.0 : 0;
+  // Creative generation also needs a floor — cheap-tier output is wireframe-quality.
+  // We penalize anything below 0.70 affinity HARD (penalty factor 1.5 vs 1.0 for sec/db).
+  const isCreativeTask = classification.taskType === "creative_generation";
+  const affinityFloorPenalty =
+    (isHighRiskTask && taskAffinity < 0.75) ? (0.75 - taskAffinity) * 1.0 :
+    (isCreativeTask && taskAffinity < 0.70) ? (0.70 - taskAffinity) * 1.5 :
+    0;
 
   const score =
     (forbidden ? -10 : 0) +

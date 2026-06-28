@@ -30,7 +30,7 @@ models:
   - id: anthropic/claude-sonnet-4-5
     provider: anthropic
     display_name: "Claude Sonnet 4"
-    tier: mid
+    tier: strong
     input_price_per_million: 3.00
     output_price_per_million: 15.00
     cached_input_price_per_million: 0.30
@@ -330,7 +330,7 @@ models:
   - id: anthropic/claude-sonnet-4.6
     provider: anthropic
     display_name: "Claude Sonnet 4.6"
-    tier: mid
+    tier: strong
     input_price_per_million: 3.00
     output_price_per_million: 15.00
     cached_input_price_per_million: 0.30

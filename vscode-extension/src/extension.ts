@@ -1,123 +1,81 @@
 import * as vscode from "vscode";
-import { callCupid, getSessionStats, resetSession, checkHealth } from "./client.js";
-import { CupidPanel } from "./panel.js";
+import { CupidChatViewProvider } from "./chatView.js";
 import { getWorkspaceSessionKey } from "./sessionKey.js";
 
-let statusBar: vscode.StatusBarItem;
+let chatProvider: CupidChatViewProvider | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
-  statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBar.text = "$(robot) Cupid";
-  statusBar.tooltip = "Cupid AI Router — click to ask";
-  statusBar.command = "cupid.ask";
-  statusBar.show();
-  context.subscriptions.push(statusBar);
+  chatProvider = new CupidChatViewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(CupidChatViewProvider.viewType, chatProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
+  );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("cupid.ask", () => askCupid(context, false)),
-    vscode.commands.registerCommand("cupid.askWithSelection", () => askCupid(context, true)),
+    vscode.commands.registerCommand("cupid.openChat", async () => {
+      // Reveal the sidebar view and focus the chat input
+      await vscode.commands.executeCommand("workbench.view.extension.cupid-sidebar");
+      chatProvider?.focus();
+    }),
+    vscode.commands.registerCommand("cupid.askWithSelection", async () => {
+      await vscode.commands.executeCommand("workbench.view.extension.cupid-sidebar");
+      chatProvider?.sendSelection();
+    }),
     vscode.commands.registerCommand("cupid.showStats", () => showStats()),
-    vscode.commands.registerCommand("cupid.resetSession", () => doResetSession()),
+    vscode.commands.registerCommand("cupid.resetSession", () => resetSession()),
     vscode.commands.registerCommand("cupid.configureEndpoint", () => configureEndpoint()),
+    vscode.commands.registerCommand("cupid.moveToRight", () => moveChatToRight()),
   );
-}
 
-async function askCupid(context: vscode.ExtensionContext, withSelection: boolean) {
-  const config = vscode.workspace.getConfiguration("cupid");
-  const backendUrl = config.get<string>("backendUrl") ?? "http://localhost:3300";
+  // First-time auto-move to right Secondary Side Bar (Cursor-style)
+  void maybeAutoMove(context);
 
-  const healthy = await checkHealth(backendUrl);
-  if (!healthy) {
-    vscode.window.showErrorMessage(`Cupid backend not reachable at ${backendUrl}. Run 'pnpm dev' in the cupid directory.`);
-    return;
-  }
-
-  const editor = vscode.window.activeTextEditor;
-  const selectedCode = withSelection && editor
-    ? editor.document.getText(editor.selection) || undefined
-    : undefined;
-  const fileName = editor?.document.fileName;
-
-  const prompt = await vscode.window.showInputBox({
-    prompt: selectedCode
-      ? "Ask about the selected code..."
-      : "Ask Cupid AI (routed to best model for your task)...",
-    placeHolder: "e.g. Fix the bug in this function / Explain this code / Add tests",
-  });
-
-  if (!prompt) return;
-
-  const panel = CupidPanel.createOrShow(context.extensionUri);
-  panel.showLoading(prompt);
-  statusBar.text = "$(sync~spin) Cupid…";
-
-  try {
-    const sessionKey = getWorkspaceSessionKey();
-    const result = await callCupid({
-      backendUrl,
-      prompt,
-      sessionKey,
-      userMode: config.get<string>("userMode") ?? "balanced",
-      routingMode: config.get<string>("routingMode") ?? "rule_based",
-      fileName,
-      selectedCode,
-      selfRevise: config.get<boolean>("selfRevise"),
-    });
-
-    const savings = result.comparison.savingsPercent;
-    statusBar.text = `$(robot) Cupid ${savings > 0 ? `· ${savings.toFixed(0)}% saved` : ""}`;
-
-    panel.showResult({
-      prompt,
-      response: result.router.response,
-      modelName: result.router.displayName,
-      taskType: result.classification.taskType,
-      savingsPercent: result.comparison.savingsPercent,
-      costUsd: result.router.costUsd,
-      latencyMs: result.router.latencyMs,
-      cplEntries: result.cpl?.injectedEntries ?? 0,
-      selfReviseApplied: result.executor?.selfReviseApplied ?? false,
-      selfReviseAutoTriggered: result.executor?.selfReviseAutoTriggered ?? false,
-      reasons: result.routing.reasons,
-    });
-  } catch (err) {
-    statusBar.text = "$(robot) Cupid";
-    panel.showError(err instanceof Error ? err.message : String(err));
-  }
+  // Status bar item
+  const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  statusBar.text = "$(robot) Cupid";
+  statusBar.tooltip = "Open Cupid chat";
+  statusBar.command = "cupid.openChat";
+  statusBar.show();
+  context.subscriptions.push(statusBar);
 }
 
 async function showStats() {
   const config = vscode.workspace.getConfiguration("cupid");
   const backendUrl = config.get<string>("backendUrl") ?? "http://localhost:3300";
   const sessionKey = getWorkspaceSessionKey();
-
   try {
-    const stats = await getSessionStats(backendUrl, sessionKey);
+    const res = await fetch(`${backendUrl}/api/cpl/stats?sessionKey=${encodeURIComponent(sessionKey)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const stats = await res.json() as { entryCount: number; historyCount: number; totalCostUsd: number; modelsUsed: string[] };
     const msg = [
       `Session: ${sessionKey}`,
-      `Entries: ${stats.entryCount} | Tasks: ${stats.taskCount}`,
-      `Total cost: $${stats.totalCostUsd?.toFixed(6) ?? "0"}`,
+      `Memory entries: ${stats.entryCount}  |  Tasks logged: ${stats.historyCount}`,
+      `Total cost (estimated): $${(stats.totalCostUsd ?? 0).toFixed(6)}`,
+      `Models used: ${(stats.modelsUsed ?? []).join(", ") || "—"}`,
     ].join("\n");
     vscode.window.showInformationMessage(msg, { modal: true });
   } catch (err) {
-    vscode.window.showErrorMessage(`Could not fetch stats: ${err instanceof Error ? err.message : String(err)}`);
+    vscode.window.showErrorMessage(`Cupid stats: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
-async function doResetSession() {
+async function resetSession() {
   const config = vscode.workspace.getConfiguration("cupid");
   const backendUrl = config.get<string>("backendUrl") ?? "http://localhost:3300";
   const sessionKey = getWorkspaceSessionKey();
-
   const confirm = await vscode.window.showWarningMessage(
-    "Reset Cupid session memory? All CPL context entries for this workspace will be deleted.",
+    "Reset Cupid session memory for this workspace? All CPL context entries will be deleted.",
     "Reset", "Cancel",
   );
   if (confirm !== "Reset") return;
-
   try {
-    await resetSession(backendUrl, sessionKey);
-    vscode.window.showInformationMessage("Session memory reset.");
+    await fetch(`${backendUrl}/api/cpl/reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionKey }),
+    });
+    vscode.window.setStatusBarMessage("Cupid: session memory reset", 2000);
   } catch (err) {
     vscode.window.showErrorMessage(`Reset failed: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -127,7 +85,7 @@ async function configureEndpoint() {
   const config = vscode.workspace.getConfiguration("cupid");
   const current = config.get<string>("backendUrl") ?? "http://localhost:3300";
   const url = await vscode.window.showInputBox({
-    prompt: "Enter the Cupid backend URL",
+    prompt: "Cupid backend URL",
     value: current,
     placeHolder: "http://localhost:3300",
   });
@@ -137,6 +95,36 @@ async function configureEndpoint() {
   }
 }
 
-export function deactivate() {
-  statusBar?.dispose();
+async function moveChatToRight() {
+  try {
+    // Focus the view first so the command knows what to move
+    await vscode.commands.executeCommand("cupid.chatView.focus");
+    await new Promise((r) => setTimeout(r, 100));
+    // Move the focused view to the auxiliary (secondary side) bar
+    await vscode.commands.executeCommand("workbench.action.moveView", {
+      viewId: "cupid.chatView",
+      destinationId: "workbench.parts.auxiliarybar",
+    } as unknown as never);
+  } catch {
+    // Fallback: open the auxiliary bar so user knows it exists
+    try {
+      await vscode.commands.executeCommand("workbench.action.toggleAuxiliaryBar");
+    } catch { /* ignore */ }
+    vscode.window.showInformationMessage(
+      "Cupid: drag the Cupid AI panel to the right Secondary Side Bar (View → Appearance → Secondary Side Bar).",
+    );
+  }
 }
+
+async function maybeAutoMove(context: vscode.ExtensionContext) {
+  const config = vscode.workspace.getConfiguration("cupid");
+  if (!config.get<boolean>("autoMoveToRight")) return;
+  const key = "cupid.didAutoMove";
+  if (context.globalState.get<boolean>(key)) return;
+  // Wait a moment for views to finish registering
+  await new Promise((r) => setTimeout(r, 600));
+  await moveChatToRight();
+  await context.globalState.update(key, true);
+}
+
+export function deactivate() { /* nothing to do */ }

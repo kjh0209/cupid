@@ -1,6 +1,6 @@
 # Recommendation Policy
 
-Generated: 2026-06-28T02:29:59.534Z
+Generated: 2026-06-28T07:12:31.021Z
 
 ## Task Type to Tier Mapping
 

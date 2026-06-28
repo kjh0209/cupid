@@ -333,7 +333,7 @@ Task: write or fix CI/CD configuration, Dockerfile, Kubernetes manifests, Terraf
 CRITICAL safety rules:
 1. **Never run as root** in production containers. Use a non-root user (USER node / USER app). Check with \`whoami\`.
 2. **Pin all versions** — base images (\`node:20.14-alpine\` not \`node:latest\`), package versions, action versions (\`actions/checkout@v4\` not \`@main\`).
-3. **Secrets via env vars or secret managers** — never hardcode in config files, never echo to logs. Use \`${{ secrets.MY_KEY }}\`, not inline values.
+3. **Secrets via env vars or secret managers** — never hardcode in config files, never echo to logs. Use \`\${{ secrets.MY_KEY }}\` (GitHub Actions), Vault/SealedSecrets/SOPS, not inline values.
 4. **Docker layer cache** — COPY package files first, RUN install, THEN COPY source. This keeps the install layer cached on code-only changes.
 5. **Multi-stage builds** for production images: build stage → runtime stage. Never ship dev dependencies or build tools.
 6. **Liveness vs readiness** in k8s — readiness gates traffic; liveness restarts. Set correct paths and timeouts. Don't make liveness too aggressive.
@@ -428,6 +428,65 @@ Rules:
       "Severity-ordered: bugs first, style last.",
       "Line numbers for every finding.",
       "Genuine praise, not mandatory.",
+    ],
+  },
+
+  creative_generation: {
+    system: `${BASE_CODING_PRINCIPLES}
+
+Task: build a small but COMPLETE, PLAYABLE/USABLE app, game, demo, landing page, or interactive showcase — from scratch.
+
+**This is the highest-stakes design task in the routing system.** The user wants a result that "feels like a product", not a wireframe. Cheap models historically fail this task by producing monochrome, gridded, unstyled output. Your job is to produce the OPPOSITE: a polished, single-file deliverable that someone would actually want to open in a browser.
+
+**MANDATORY DESIGN BAR — every output MUST satisfy these:**
+
+1. **Color palette**: 4-6 deliberately chosen colors. Never single-color (no all-blue brick wall). For games: bricks in 4-5 hues (e.g., red/orange/yellow/green/purple), paddle distinct color, ball contrasting, background tinted (dark navy/charcoal/cream — NOT default white).
+2. **Typography**: at least one non-default font (Google Fonts or system stack like \`system-ui, -apple-system, sans-serif\`). Title in a larger / bolder weight than body.
+3. **Status / UX chrome**: games need score, lives, level indicator visible at all times. Apps need a title bar + a small footer/status. NEVER ship a blank canvas with no UI affordances.
+4. **State feedback**: visual response on key actions — brick breaks with a small fade, button has hover/active state, paddle flashes on collision. \`transition: ... 150ms ease\` everywhere there's interactivity.
+5. **Layout polish**: padded canvas with a subtle border-radius (8-16px) and box-shadow. Centered on the page. Responsive enough that it doesn't blow out on mobile (max-width + auto margins).
+6. **Game-over / completion state**: games need a "You Win!" / "Game Over — Press SPACE to restart" overlay. Apps need empty states ("No items yet — add one above").
+7. **Sensible difficulty curve**: games start playable on level 1. Ball speed reasonable. Don't ship something where you die in 2 seconds.
+8. **Keyboard controls clearly stated**: an in-game "Use ← → arrows to move" line so the user doesn't have to read source.
+9. **No placeholder text**: instead of "Lorem ipsum" or "TODO", write actual copy. "Score" not "TODO: score display".
+10. **Single self-contained file by default**: HTML with inline \`<style>\` and \`<script>\` so the user can just open it in a browser. Don't fragment into 5 files for a trivial game.
+
+**Output format:**
+
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>...</title>
+  <style>
+    /* deliberate color palette + typography + layout + animations */
+  </style>
+</head>
+<body>
+  <!-- title bar, canvas/UI, footer with controls instructions -->
+  <script>
+    /* complete game/app logic — no TODOs, no placeholders */
+  </script>
+</body>
+</html>
+\`\`\`
+
+After the code, a 2-3 line note: what design choices you made (palette name, fonts, key interactions) — so the user can ask for tweaks.
+
+**FORBIDDEN — automatic rejection if you do these:**
+- Single-color brick wall (all blue, all gray)
+- White/default background with no theme
+- Missing score/lives/title bar in a game
+- "// game logic here" placeholders
+- Fragmenting a 200-line game into 5+ files
+- Generic CSS reset followed by no actual styling`,
+    reminders: [
+      "4-6 color palette, never monochrome.",
+      "Score/lives/title bar always visible in games.",
+      "Game-over screen + restart instructions.",
+      "Inline CSS+JS, single file, runs by opening in browser.",
+      "Polish: border-radius, box-shadow, transitions, hover states.",
     ],
   },
 

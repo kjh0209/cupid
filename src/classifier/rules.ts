@@ -187,6 +187,37 @@ export const SIMPLE_EDIT_KEYWORDS = [
   "rename.file", "move.file",
 ];
 
+// Creative whole-app/game/demo generation — design taste is decisive
+// These tasks look superficially like "ui_change" but the model needs to
+// invent the visual identity, layout, and small UX details from scratch.
+// Cheap models produce wireframe-quality output. ONLY strong tier delivers
+// the "feels like a real product" result.
+export const CREATIVE_GENERATION_KEYWORDS = [
+  // Games
+  "make.a.game", "build.a.game", "create.a.game", "code.a.game",
+  "breakout", "brick.out", "brick.breaker", "pong", "snake.game", "tetris",
+  "flappy.bird", "space.invaders", "asteroids", "pacman", "minesweeper",
+  "tic.tac.toe", "memory.game", "match.three", "platformer", "endless.runner",
+  "2048", "wordle", "rpg.game", "puzzle.game", "arcade.game", "card.game",
+  // Demos / showcases
+  "interactive.demo", "playground", "showcase", "demo.page", "demo.site",
+  "interactive.example", "interactive.tutorial",
+  // Landing/marketing
+  "landing.page", "marketing.page", "splash.page", "hero.section.with",
+  "portfolio.site", "personal.website", "one.pager",
+  // Animations / visuals
+  "animation.showcase", "particle.effect", "physics.simulation",
+  "visualization", "data.viz", "interactive.chart", "3d.scene",
+  "canvas.animation", "webgl.scene", "shader",
+  // Whole-app generation
+  "build.an.app", "build.me.an.app", "make.an.app", "build.a.website",
+  "make.a.website", "build.a.web.app", "make.a.web.app",
+  "build.a.tool", "build.a.dashboard", "build.a.kanban",
+  "build.a.chat.app", "build.a.todo.app", "build.a.calculator",
+  // Style/design signal words paired with build verb (below) catch the rest
+  "drag.and.drop", "playable", "interactive", "fun.little", "tiny.app",
+];
+
 export const PROMPT_REWRITE_KEYWORDS = [
   "rewrite.prompt", "rewrite.this.prompt", "optimize.prompt", "improve.prompt",
   "reduce.tokens", "reduce.token.count", "shrink.prompt",
@@ -353,6 +384,7 @@ function gatherSignals(text: string): ClassificationSignals {
     devops: countKeywordHits(text, DEVOPS_KEYWORDS),
     dependency: countKeywordHits(text, DEPENDENCY_KEYWORDS),
     codeReview: countKeywordHits(text, CODE_REVIEW_KEYWORDS),
+    creative: countKeywordHits(text, CREATIVE_GENERATION_KEYWORDS),
   };
 
   // Each task type accumulates a weighted score from relevant signals
@@ -373,6 +405,7 @@ function gatherSignals(text: string): ClassificationSignals {
     documentation_write: 0,
     dependency_update: 0,
     code_review: 0,
+    creative_generation: 0,
     unknown: 0,
   };
 
@@ -391,6 +424,18 @@ function gatherSignals(text: string): ClassificationSignals {
   scores.devops_config += hits.devops * 1.0;
   scores.dependency_update += hits.dependency * 1.0;
   scores.code_review += hits.codeReview * 1.0;
+  // Creative generation — high weight because miscategorizing this as ui_change
+  // routes to cheap tier and produces wireframe-quality output (see PR #4 bug)
+  scores.creative_generation += hits.creative * 1.5;
+
+  // Strong signal: "make/build/create + a + (game|app|website|tool|demo|landing|playground)"
+  if (/\b(make|build|create|code|implement)\s+(?:me\s+)?a\s+(?:simple\s+|tiny\s+|small\s+|cool\s+|fun\s+|nice\s+)?(?:web\s+)?(game|app|web.?app|website|demo|playground|tool|dashboard|landing\s?page|portfolio|showcase|simulation|visualization|chat\s?app|todo\s?app|kanban|calculator|clock|timer)/i.test(text)) {
+    scores.creative_generation += 3.5;
+  }
+  // Naming a specific game/demo concept is a strong creative signal
+  if (/\b(breakout|brick.?breaker|brick.?out|pong|snake|tetris|flappy|space.?invaders|asteroids|pacman|minesweeper|tic.?tac.?toe|memory.game|match.?three|2048|wordle|rock.?paper.?scissors|whack.?a.?mole)\b/i.test(text)) {
+    scores.creative_generation += 3.0;
+  }
 
   // API impl detection (regex-based)
   if (/api.?route|endpoint|handler|controller|middleware|rest.?api|graphql.?resolver|route\.(?:get|post|put|delete|patch)/i.test(text)) {
@@ -474,6 +519,7 @@ export function detectRiskLevel(
     documentation_write: 1,
     dependency_update: 3,
     code_review: 1,
+    creative_generation: 1,
     unknown: 2,
   };
 
@@ -524,6 +570,10 @@ export function detectDifficulty(message: string, taskType: TaskType): number {
     documentation_write: 1,
     dependency_update: 2,
     code_review: 2,
+    // Difficulty 4: creative generation demands design taste — small models
+    // produce wireframe-quality output. We bump this to push routing toward
+    // strong tier.
+    creative_generation: 4,
     unknown: 2,
   };
 
@@ -562,6 +612,7 @@ export function detectContextNeed(message: string, taskType: TaskType): ContextN
     documentation_write: "small",
     dependency_update: "medium",
     code_review: "large",
+    creative_generation: "small",
     unknown: "medium",
   };
 
@@ -597,6 +648,7 @@ export function detectChangeScope(taskType: TaskType, message: string): ChangeSc
     documentation_write: "single_file",
     dependency_update: "multi_file",
     code_review: "none",
+    creative_generation: "single_file",
     unknown: "single_file",
   };
 

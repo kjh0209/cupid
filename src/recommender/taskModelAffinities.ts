@@ -38,6 +38,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.80,
       dependency_update: 0.85,
       code_review: 0.98,
+      creative_generation: 0.98,
       unknown: 0.88,
     },
   },
@@ -61,6 +62,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.85,
       dependency_update: 0.88,
       code_review: 0.95,
+      creative_generation: 0.95,
       unknown: 0.87,
     },
   },
@@ -84,6 +86,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.84,
       dependency_update: 0.86,
       code_review: 0.93,
+      creative_generation: 0.93,
       unknown: 0.85,
     },
   },
@@ -107,6 +110,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.92,
       dependency_update: 0.75,
       code_review: 0.70,
+      creative_generation: 0.35,
       unknown: 0.75,
     },
   },
@@ -130,6 +134,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.88,
       dependency_update: 0.82,
       code_review: 0.88,
+      creative_generation: 0.78,
       unknown: 0.83,
     },
   },
@@ -153,6 +158,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.88,
       dependency_update: 0.70,
       code_review: 0.65,
+      creative_generation: 0.30,
       unknown: 0.65,
     },
   },
@@ -176,6 +182,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.75,
       dependency_update: 0.85,
       code_review: 0.96,
+      creative_generation: 0.75,
       unknown: 0.88,
     },
   },
@@ -199,6 +206,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.75,
       dependency_update: 0.78,
       code_review: 0.82,
+      creative_generation: 0.55,
       unknown: 0.78,
     },
   },
@@ -222,6 +230,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.88,
       dependency_update: 0.85,
       code_review: 0.88,
+      creative_generation: 0.85,
       unknown: 0.85,
     },
   },
@@ -245,6 +254,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.88,
       dependency_update: 0.68,
       code_review: 0.62,
+      creative_generation: 0.40,
       unknown: 0.65,
     },
   },
@@ -268,6 +278,7 @@ const AFFINITIES: AffinityRow[] = [
       documentation_write: 0.65,
       dependency_update: 0.75,
       code_review: 0.82,
+      creative_generation: 0.45,
       unknown: 0.78,
     },
   },
@@ -289,6 +300,11 @@ export function isForbidden(modelId: string, taskType: TaskType): boolean {
      taskType === "database_schema_change") &&
     affinity < 0.40
   ) {
+    return true;
+  }
+  // Creative generation: forbid models with affinity < 0.45 — these produce
+  // wireframe-quality output that ruins the "feels like a product" signal.
+  if (taskType === "creative_generation" && affinity < 0.45) {
     return true;
   }
   return false;

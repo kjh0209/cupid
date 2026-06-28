@@ -8,6 +8,7 @@ import { registerAuthRoutes } from "./api/authRoutes.js";
 import { registerWorkspaceRoutes } from "./api/workspaceRoutes.js";
 import { registerChatRoutes } from "./api/chatRoutes.js";
 import { registerCplRoutes } from "./api/cplRoutes.js";
+import { registerStreamRoutes } from "./api/streamRoutes.js";
 import { initDb } from "./db/database.js";
 import { logger } from "./utils/logger.js";
 
@@ -39,6 +40,7 @@ export async function createServer() {
   await registerWorkspaceRoutes(app);
   await registerChatRoutes(app);
   await registerCplRoutes(app);
+  await registerStreamRoutes(app);
 
   return app;
 }

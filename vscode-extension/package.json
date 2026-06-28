@@ -1,45 +1,69 @@
 {
   "name": "cupid-ai-router",
   "displayName": "Cupid AI Router",
-  "description": "Intelligent LLM routing for VS Code — routes to the best model for each task, saving 90%+ cost vs always using Opus",
-  "version": "0.1.0",
+  "description": "Cursor-style AI chat with intelligent multi-model routing — saves 90%+ cost vs always using Opus",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": ["AI", "Other"],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cupid-sidebar",
+          "title": "Cupid AI",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "views": {
+      "cupid-sidebar": [
+        {
+          "type": "webview",
+          "id": "cupid.chatView",
+          "name": "Chat",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "cupid.ask",
-        "title": "Cupid: Ask AI (current file)",
+        "command": "cupid.openChat",
+        "title": "Cupid: Open Chat",
         "icon": "$(robot)"
       },
       {
         "command": "cupid.askWithSelection",
-        "title": "Cupid: Ask AI (selected code)",
+        "title": "Cupid: Ask about selected code",
         "icon": "$(comment-discussion)"
       },
       {
         "command": "cupid.showStats",
-        "title": "Cupid: Show Session Stats"
+        "title": "Cupid: Show session stats"
       },
       {
         "command": "cupid.resetSession",
-        "title": "Cupid: Reset Session Memory (CPL)"
+        "title": "Cupid: Reset session memory (CPL)"
       },
       {
         "command": "cupid.configureEndpoint",
-        "title": "Cupid: Configure Backend Endpoint"
+        "title": "Cupid: Configure backend endpoint"
+      },
+      {
+        "command": "cupid.moveToRight",
+        "title": "Cupid: Move chat to right (Secondary Side Bar)"
       }
     ],
     "keybindings": [
       {
-        "command": "cupid.ask",
+        "command": "cupid.openChat",
         "key": "ctrl+shift+k",
-        "mac": "cmd+shift+k",
-        "when": "editorFocus"
+        "mac": "cmd+shift+k"
       },
       {
         "command": "cupid.askWithSelection",
@@ -60,18 +84,18 @@
           "type": "string",
           "enum": ["cost_saving", "balanced", "max_quality"],
           "default": "balanced",
-          "description": "Routing mode: cost_saving aggressively prefers cheap models, max_quality always uses strong models"
+          "description": "cost_saving aggressively prefers cheap models; max_quality always uses strong models"
         },
         "cupid.routingMode": {
           "type": "string",
           "enum": ["rule_based", "llm_assisted"],
-          "default": "rule_based",
-          "description": "How to classify tasks: rule_based is instant, llm_assisted uses a classifier model"
+          "default": "llm_assisted",
+          "description": "How tasks are classified before routing"
         },
-        "cupid.selfRevise": {
+        "cupid.autoMoveToRight": {
           "type": "boolean",
-          "default": false,
-          "description": "Enable self-revision pass for high-risk tasks (doubles cost but improves quality)"
+          "default": true,
+          "description": "On first activation, move the Cupid chat to the right Secondary Side Bar (Cursor-style)"
         }
       }
     }

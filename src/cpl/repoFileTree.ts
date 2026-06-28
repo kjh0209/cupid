@@ -31,6 +31,7 @@ function extractWorkspaceId(sessionKey: string): string | null {
   const parts = sessionKey.split("::");
   if (parts.length >= 2) {
     const last = parts[parts.length - 1];
+    if (!last) return null;
     // Handle "ws-<uuid>" format
     if (last.startsWith("ws-")) return last.slice(3);
     return last;

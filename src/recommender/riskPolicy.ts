@@ -76,6 +76,26 @@ export function getTierPolicy(
     };
   }
 
+  // Creative whole-app/game/demo generation — design taste decisive.
+  // ALWAYS minimum mid tier; in balanced/max_quality lean strong.
+  // Cheap tier is forbidden — it produces wireframe-quality output (see PR #4
+  // bug where "make a breakout game" → gpt-4o-mini → monochrome wireframe vs
+  // Opus → polished multi-color game with score/lives/dark theme).
+  if (taskType === "creative_generation") {
+    const allowed: ModelTier[] =
+      userMode === "cost_saving"
+        ? ["mid", "strong"]
+        : ["strong", "long_context"];
+    return {
+      allowedTiers: allowed,
+      requiredMinTier: userMode === "cost_saving" ? "mid" : "strong",
+      reason:
+        userMode === "cost_saving"
+          ? "Creative generation: mid-tier minimum (cheap tier produces wireframe-quality output)"
+          : "Creative generation: strong tier required for design polish and product feel",
+    };
+  }
+
   // Huge context: long_context or strong
   if (contextNeed === "huge") {
     return {

@@ -224,7 +224,10 @@ interface RunResult {
 async function runScenario(baseUrl: string, scenario: Scenario): Promise<RunResult> {
   // Heavy tasks need more output headroom — eval shows refactor/arch get cut off at 1024
   const heavyTasks = ["multi_file_refactor", "architecture_design", "database_schema_change", "security_sensitive_change", "api_implementation", "performance_optimization", "devops_config", "code_review"];
-  const maxTokens = heavyTasks.includes(scenario.category) ? 3000 : 1500;
+  // Creative generation needs the most headroom — a complete styled HTML game can be 6-10k tokens
+  const maxTokens = scenario.category === "creative_generation" ? 8000
+    : heavyTasks.includes(scenario.category) ? 3000
+    : 1500;
   const body = {
     prompt: scenario.prompt,
     userMode: scenario.userMode ?? "balanced",
