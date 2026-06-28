@@ -47,7 +47,7 @@ export async function registerEvalRoutes(app: FastifyInstance) {
       repoId: String(body.repoId),
       taskMessage: String(body.taskMessage),
       activeFilePath: body.activeFilePath ? String(body.activeFilePath) : undefined,
-      userMode: (body.userMode ?? "balanced") as "cost_saving" | "balanced" | "max_quality",
+      userMode: (body.userMode ?? "balanced") as "cost_aggressive" | "cost_saving" | "balanced" | "max_quality",
       experimentMode: (body.experimentMode ?? "router_vs_strong") as "router_vs_strong" | "router_vs_cheap_vs_strong" | "manual_vs_router",
       strongBaselineModel: body.strongBaselineModel ? String(body.strongBaselineModel) : undefined,
       cheapBaselineModel: body.cheapBaselineModel ? String(body.cheapBaselineModel) : undefined,

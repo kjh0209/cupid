@@ -549,10 +549,34 @@ export function detectRiskLevel(
     risk = Math.min(risk + 1, 5);
   }
 
+  // Concurrency / memory / perf diagnostics — riskLevel 4 because root cause can be subtle
+  if (/\bmemory\s+leak\b|\bheap\s+grows?\b|\bout\s+of\s+memory\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+  if (/\brace\s+condition\b|\bdeadlock\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+  if (/\bvectorize?\b|\bsimd\b|\bhot\s+loop\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+
+  // Sharding / partitioning — architectural risk
+  if (/\bshard\b|\bsharding\b|\bpartition\s+by\b|\bbackfill\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+
   return risk;
 }
 
-export function detectDifficulty(message: string, taskType: TaskType): number {
+// Creation verbs that signal open-ended generation from scratch — no code context = high difficulty
+const OPEN_ENDED_CREATION_PATTERNS = [
+  /\b(make|build|create)\s+(?:me\s+)?(?:a|an)\s+\w+/i,
+  /\b(implement|write)\s+a\s+(?:complete|full|whole)\b/i,
+  /\bfrom\s+scratch\b/i,
+  /\b(build|make|create)\s+(?:something|a\s+thing)/i,
+];
+
+export function detectDifficulty(message: string, taskType: TaskType, hasCodeContext?: boolean): number {
   const base: Record<TaskType, number> = {
     explanation: 2,
     simple_edit: 1,
@@ -588,6 +612,19 @@ export function detectDifficulty(message: string, taskType: TaskType): number {
   if (taskType === "local_bug_fix" && /\bwhy.?is.?(my.?code|this|it).?slow|why.?doesn.?t.?(?:this|it).?work|something.?feels?.?(off|wrong)/i.test(message)) {
     diff = Math.max(diff, 4);
   }
+
+  // Open-ended creation without code context → difficulty ≥ 4
+  // Rationale: model must invent everything (structure, UX, logic, style) from scratch.
+  // Cheap models produce placeholder-quality output on these tasks.
+  const noCodeContext = hasCodeContext === undefined ? true : !hasCodeContext;
+  if (noCodeContext && OPEN_ENDED_CREATION_PATTERNS.some(p => p.test(message))) {
+    diff = Math.max(diff, 4);
+  }
+
+  // Memory leaks, race conditions, vectorization — diagnosis requires expert reasoning
+  if (/\bmemory\s+leak\b|\bheap\s+grows?\b|\bout\s+of\s+memory\b/i.test(message)) diff = Math.max(diff, 4);
+  if (/\brace\s+condition\b|\bdeadlock\b|\bconcurrent\b/i.test(message)) diff = Math.max(diff, 4);
+  if (/\bvectorize?\b|\bflamegraph\b|\bsimd\b|\bhot\s+loop\b/i.test(message)) diff = Math.max(diff, 4);
 
   return diff;
 }

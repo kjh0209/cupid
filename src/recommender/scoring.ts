@@ -2,8 +2,21 @@ import type { ModelRecord, TaskClassification, UserMode, ScoringWeights, ModelCa
 import { estimateQuality, estimateLatencyScore, estimateFailureRisk } from "./qualityEstimator.js";
 import { estimateCost, estimateTokens } from "./costEstimator.js";
 import { getTaskAffinity, isForbidden } from "./taskModelAffinities.js";
+import { drsForbidsCheap } from "./disappointmentRisk.js";
 
 const WEIGHTS: Record<UserMode, ScoringWeights> = {
+  // cost_aggressive: CI/배치 파이프라인, DRS 무시, 비용 최우선
+  cost_aggressive: {
+    alpha: 0.20,
+    beta: 0.50,   // cost is king
+    gamma: 0.10,
+    delta: 0.08,
+    epsilon: 0.04,
+    zeta: 0.04,
+    eta: 0.02,
+    theta: 0.01,
+    iota: 0.01,
+  },
   cost_saving: {
     alpha: 0.30,   // success rate
     beta: 0.35,    // cost (penalty)
@@ -110,7 +123,8 @@ export function scoreModel(
   optimizedMessage: string,
   selectedCode?: string,
   repoSummary?: string,
-  ragHints?: RagResult[]
+  ragHints?: RagResult[],
+  disappointmentRiskScore?: number
 ): { score: number; breakdown: Record<string, number>; reasons: string[] } {
   const w = WEIGHTS[userMode];
   const tokens = estimateTokens(classification, optimizedMessage, selectedCode, repoSummary);
@@ -122,6 +136,12 @@ export function scoreModel(
   const qualityScore = estimateQuality(model, classification);
   const latencyScore = estimateLatencyScore(model);
   const failureRisk = estimateFailureRisk(model, classification);
+
+  // DRS-based cheap tier veto: apply -10 penalty (equivalent to forbidden)
+  const drsForbids =
+    model.tier === "cheap" &&
+    disappointmentRiskScore !== undefined &&
+    drsForbidsCheap(disappointmentRiskScore, userMode);
 
   // Context fit bonus: long-context model on large context task
   const contextFit =
@@ -163,6 +183,7 @@ export function scoreModel(
 
   const score =
     (forbidden ? -10 : 0) +
+    (drsForbids ? -10 : 0) +
     w.alpha * qualityWithAffinity -
     affinityFloorPenalty -
     w.beta * normalizedCost -
@@ -174,6 +195,8 @@ export function scoreModel(
 
   const reasons: string[] = [];
   if (forbidden) reasons.push(`⛔ Model forbidden for ${classification.taskType} — affinity too low`);
+  if (drsForbids) reasons.push(`⚠️ DRS=${disappointmentRiskScore} — cheap tier vetoed (user mode: ${userMode})`);
+
   if (taskAffinity >= 0.9) reasons.push(`Strong task affinity (${(taskAffinity * 100).toFixed(0)}%) — benchmarks show top performance on this task type`);
   else if (taskAffinity >= 0.75) reasons.push(`Good task affinity (${(taskAffinity * 100).toFixed(0)}%)`);
   else if (taskAffinity < 0.5) reasons.push(`Weak task affinity (${(taskAffinity * 100).toFixed(0)}%) — consider a stronger model`);
@@ -201,6 +224,7 @@ export function scoreModel(
       contextBonus: w.eta * contextFit,
       cacheBonus: w.theta * cacheFit,
       ragBonus: w.iota * ragBonus,
+      drsPenalty: drsForbids ? -10 : 0,
     },
     reasons,
   };

@@ -40,8 +40,9 @@ export class TaskClassifier {
     // Step 2: Detect risk level
     const riskLevel = detectRiskLevel(fullText, taskType);
 
-    // Step 3: Detect difficulty
-    const difficulty = detectDifficulty(fullText, taskType);
+    // Step 3: Detect difficulty (pass code context so creation-verb floor only fires without code)
+    const hasCodeContext = (selectedCode?.length ?? 0) > 0;
+    const difficulty = detectDifficulty(fullText, taskType, hasCodeContext);
 
     // Step 4: Detect context need
     const contextNeed = detectContextNeed(fullText, taskType);

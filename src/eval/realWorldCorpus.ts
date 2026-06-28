@@ -23,7 +23,7 @@ export interface CorpusPrompt {
   prompt: string;
   rawCode?: string;
   fileName?: string;
-  userMode?: "cost_saving" | "balanced" | "max_quality";
+  userMode?: "cost_aggressive" | "cost_saving" | "balanced" | "max_quality";
 
   // ── Ground truth ──
   expectedTaskType: TaskType;
@@ -35,6 +35,8 @@ export interface CorpusPrompt {
   designBar?: string[];
   /** What this prompt is testing (for the report's failure analysis). */
   intent: string;
+  /** Expected Disappointment Risk Score (0-5). If set, eval measures measured DRS vs expected. */
+  expectedDRS?: number;
 }
 
 const T = (
@@ -332,6 +334,114 @@ export const CORPUS: CorpusPrompt[] = [
     "yes/no question — both explanation and code_review are defensible; we go with code_review since user is asking analysis of a snippet", { rawCode: "let x=0;function inc(){x++;}", tierCeiling: "strong" }),
   T("edge-6", "simple_edit", "make this prettier", "simple_edit", "cheap",
     "format — could be misrouted as creative", { rawCode: "const x   = {a :1,b   : 2};", tierCeiling: "mid" }),
+
+  // ══════════════════════════════════════════════════════════
+  // 19. RETENTION-RISK SCENARIOS (20)
+  // DRS (Disappointment Risk Score) 테스트:
+  // cheap tier로 라우팅하면 사용자가 실망할 확률이 높은 시나리오들.
+  // expectedDRS: 측정 예상값 (eval에서 measured DRS와 비교)
+  // ══════════════════════════════════════════════════════════
+
+  // --- Open-ended creation, blank workspace ---
+  T("drs-1", "creative_generation", "build me an app", "creative_generation", "mid",
+    "극단적으로 모호한 creation — DRS 최대값 기대", {
+      expectedDRS: 4,
+    }),
+  T("drs-2", "creative_generation", "make something cool", "creative_generation", "mid",
+    "quality adjective + creation + no spec — high DRS", {
+      expectedDRS: 4,
+    }),
+  T("drs-3", "creative_generation", "create a simple game", "creative_generation", "mid",
+    "creation verb + game — DRS 3+", {
+      expectedDRS: 3,
+    }),
+  T("drs-4", "creative_generation", "make a clock", "creative_generation", "mid",
+    "15자 미만 + creation verb — DRS 3+ (short prompt penalty)", {
+      expectedDRS: 3,
+    }),
+  T("drs-5", "creative_generation", "build a calculator", "creative_generation", "mid",
+    "18자 + creation verb — DRS 3", {
+      expectedDRS: 3,
+    }),
+  T("drs-6", "creative_generation", "make a polished todo app with drag and drop", "creative_generation", "mid",
+    "quality adjective (polished) + creation — DRS 4", {
+      expectedDRS: 4,
+    }),
+  T("drs-7", "creative_generation", "build a real weather app from scratch", "creative_generation", "mid",
+    "quality adjective (real) + from scratch — DRS 4+", {
+      expectedDRS: 4,
+    }),
+  T("drs-8", "creative_generation", "create a full calendar app", "creative_generation", "mid",
+    "quality adjective (full) + creation — DRS 4", {
+      expectedDRS: 4,
+    }),
+
+  // --- Ambiguous prompts — unknown or vague task ---
+  T("drs-9", "local_bug_fix", "fix it", "local_bug_fix", "mid",
+    "극단적으로 짧고 모호 — no code context, DRS 2+", {
+      expectedDRS: 2,
+    }),
+  T("drs-10", "local_bug_fix", "make it better", "local_bug_fix", "mid",
+    "vague improvement request — DRS 2+", {
+      expectedDRS: 2,
+    }),
+  T("drs-11", "performance_optimization", "optimize this", "performance_optimization", "mid",
+    "vague optimize — DRS 1 (has performance context)", {
+      expectedDRS: 1,
+    }),
+  T("drs-12", "unknown", "help me", "unknown", "mid",
+    "최고로 모호한 prompt — DRS 2+", {
+      expectedDRS: 2,
+    }),
+
+  // --- Short creation verb prompts ---
+  T("drs-13", "creative_generation", "build a game", "creative_generation", "mid",
+    "12자 + creation verb — DRS 3 (short + visual)", {
+      expectedDRS: 3,
+    }),
+  T("drs-14", "creative_generation", "make an app for tracking habits", "creative_generation", "mid",
+    "habit tracker app — DRS 3", {
+      expectedDRS: 3,
+    }),
+  T("drs-15", "creative_generation", "create a fun quiz app", "creative_generation", "mid",
+    "quality adj (fun) + creation — DRS 4", {
+      expectedDRS: 4,
+    }),
+
+  // --- Creative with code context — DRS should be lower ---
+  T("drs-16", "ui_change", "make this component look nicer", "ui_change", "cheap",
+    "UI change WITH code context — DRS should be low (0-1)", {
+      rawCode: "function Button({ label }) { return <button>{label}</button>; }",
+      expectedDRS: 0,
+      tierCeiling: "mid",
+    }),
+  T("drs-17", "local_bug_fix", "fix this bug", "local_bug_fix", "cheap",
+    "bug fix WITH code context — DRS 0", {
+      rawCode: "function sum(arr) { return arr.reduce((a,b) => a+b); }",
+      expectedDRS: 0,
+      tierCeiling: "mid",
+    }),
+
+  // --- Game/demo with specific enough prompt — DRS moderate ---
+  T("drs-18", "creative_generation",
+    "build a snake game with score counter, lives, and game-over screen — use HTML canvas", "creative_generation", "mid",
+    "specific game spec — DRS 2 (creation verb, but detailed spec)", {
+      expectedDRS: 2,
+      designBar: ["score", "lives", "endstate", "self-contained"],
+    }),
+  T("drs-19", "creative_generation",
+    "create a landing page for 'AcmeCo' with hero section, pricing, and dark mode support", "creative_generation", "mid",
+    "marketing landing page with spec — DRS 2", {
+      expectedDRS: 2,
+      designBar: ["multi-color", "themed-bg", "typography", "self-contained"],
+    }),
+
+  // --- code_review misclassification guard ---
+  T("drs-20", "database_schema_change",
+    "design the migration plan to shard the orders table by tenant_id", "database_schema_change", "strong",
+    "shard/design = arch/db task, NOT code_review — this must NOT trigger rule 16", {
+      expectedDRS: 0,
+    }),
 ];
 
 /** Total corpus size — exported for sanity checks. */

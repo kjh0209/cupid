@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const UserModeSchema = z.enum(["cost_saving", "balanced", "max_quality"]);
+export const UserModeSchema = z.enum(["cost_aggressive", "cost_saving", "balanced", "max_quality"]);
 
 export const EngineerChatSchema = z.object({
   message: z.string().min(1).max(10000),

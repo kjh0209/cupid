@@ -37,6 +37,7 @@ Read the user's prompt + file context, then output STRICT JSON (no markdown fenc
   "needs_tool_calling": <true|false>,
   "privacy_sensitive": <true|false>,
   "compression_sensitivity": "<low|medium|high>",
+  "confidence": <float 0.0..1.0 — how certain you are about this classification>,
   "rationale": "<one short sentence: WHY this classification>"
 }
 
@@ -56,8 +57,13 @@ CRITICAL classification rules (these override surface keywords):
 13. CI/CD pipelines, Dockerfile, GitHub Actions workflow, Kubernetes manifests, Terraform, nginx config → devops_config. risk_level = 4 (prod infra).
 14. "Write docs", "add README", "generate JSDoc", "write ADR/RFC", "document this API" → documentation_write. risk_level = 1.
 15. "Upgrade package", "bump version", "update dependency", "npm audit fix", "CVE", "breaking change" → dependency_update. risk_level = 3.
-16. "Review this code", "give feedback", "what's wrong with", "is this good practice", "code review" → code_review. risk_level = 1.
-    - **CRITICAL**: "Review this migration / this auth code / this PR" is code_review FIRST, not security/db. The user is asking for FEEDBACK, not for you to write a migration. Look for verbs like "review", "give feedback", "what would you change", "is this safe/good/idiomatic" — those are code_review even if the subject matter is a migration/auth/security file. risk_level matches the subject matter (review of migration → risk_level 4, review of styling → risk_level 1).
+16. "Review this code", "give feedback on", "what would you change about", "is this good practice", "check this for issues" → code_review. risk_level = 1.
+    - **CRITICAL**: code_review requires that "review/feedback/check" is the PRIMARY ACTION VERB of the sentence — the user is asking for YOUR OPINION on existing code, not asking you to write/implement/design something.
+    - ✅ code_review: "review this migration", "give feedback on this auth handler", "is this good practice?", "what would you change?", "check this for issues"
+    - ❌ NOT code_review (generative verbs are primary): "design the migration plan", "implement the auth flow", "write the migration", "build the schema", "create the auth system"
+    - If the sentence contains a generative primary verb (design/implement/build/create/write/add/make/fix/refactor) AND the subject is a migration/schema/auth task, classify it as the domain task (database_schema_change, security_sensitive_change, etc.), NOT code_review.
+    - risk_level matches the subject matter (review of migration → risk_level 4, review of styling → risk_level 1).
+    - confidence: how certain you are this is the right classification (0.0–1.0)
 17. **CREATIVE WHOLE-APP / GAME / DEMO GENERATION**: "Make a breakout game", "build a snake game", "create a landing page", "make a calculator app", "build me a demo of X", "interactive playground for Y", "build a kanban board", "build a chat app", "code a tetris clone" → **creative_generation**. risk_level = 1, BUT difficulty = 4 (creative + design taste is decisive). DO NOT route these to cheap tier — small models produce wireframe-quality output with no color palette, no UX touches, no polish. Strong tier (Sonnet/Opus/Gemini Pro) is required to get a result that "feels like a small product, not a placeholder".
     - Hint signals: naming a specific game (breakout, snake, tetris, pong, 2048, wordle), "make/build/create a [game/app/website/tool/demo/landing page/dashboard]", "interactive", "playable", "showcase", "playground", "demo page", "drag-and-drop", "fun little".
     - Distinguish from ui_change: ui_change = modify existing component/style; creative_generation = invent a new app/game/demo from scratch.
@@ -124,6 +130,8 @@ export interface LlmClassificationResult {
   ruleBased: TaskClassification;
   llmRaw: Record<string, unknown> | null;
   rationale: string | null;
+  /** LLM self-reported confidence 0-1; null if LLM didn't emit it or fell back to rules */
+  confidence: number | null;
   modelId: string;
   inputTokens: number;
   outputTokens: number;
@@ -186,6 +194,7 @@ export async function classifyWithLlm(
         ruleBased,
         llmRaw: null,
         rationale: null,
+        confidence: null,
         modelId,
         inputTokens: res.usage.inputTokens,
         outputTokens: res.usage.outputTokens,
@@ -231,11 +240,22 @@ export async function classifyWithLlm(
       }
     } catch { /* costUsd stays 0 */ }
 
+    // Parse confidence from LLM response (0-1 float)
+    let confidence: number | null = null;
+    const rawConf = parsed["confidence"];
+    if (typeof rawConf === "number" && rawConf >= 0 && rawConf <= 1) {
+      confidence = Math.round(rawConf * 100) / 100;
+    } else if (typeof rawConf === "string") {
+      const parsed_conf = parseFloat(rawConf);
+      if (!isNaN(parsed_conf) && parsed_conf >= 0 && parsed_conf <= 1) confidence = parsed_conf;
+    }
+
     return {
       classification: merged,
       ruleBased,
       llmRaw: parsed,
       rationale: parsed["rationale"] != null ? String(parsed["rationale"]).slice(0, 240) : null,
+      confidence,
       modelId,
       inputTokens: res.usage.inputTokens,
       outputTokens: res.usage.outputTokens,
@@ -250,6 +270,7 @@ export async function classifyWithLlm(
       ruleBased,
       llmRaw: null,
       rationale: null,
+      confidence: null,
       modelId,
       inputTokens: 0,
       outputTokens: 0,
