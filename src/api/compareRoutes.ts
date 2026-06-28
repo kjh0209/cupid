@@ -12,6 +12,8 @@ import { logger } from "../utils/logger.js";
 import { sessionContextStore } from "../cpl/sessionContextStore.js";
 import { extractAndStore } from "../cpl/contextExtractor.js";
 import { injectRepoFileTree } from "../cpl/repoFileTree.js";
+import { computeDisappointmentRisk } from "../recommender/disappointmentRisk.js";
+import { isBlankSlateSession } from "../recommender/contextSignals.js";
 
 const BENCHMARK_MODEL_ID = "anthropic/claude-opus-4-5";
 
@@ -39,6 +41,8 @@ interface CompareRequestBody {
   useCpl?: boolean;
   /** Extract durable facts from the response into the CPL after the call */
   extractCpl?: boolean;
+  /** Skip benchmark (Opus) execution — set true in eval runs to save cost */
+  noBenchmark?: boolean;
 }
 
 interface ExecutionResult {
@@ -101,6 +105,7 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const prompt = (body.prompt ?? "").trim();
     const userMode: UserMode = body.userMode ?? "cost_saving";
     const optimizePrompt = body.optimizePrompt ?? true;
+    const noBenchmark = body.noBenchmark ?? false;
     const routingMode: RoutingMode = body.routingMode ?? "rule_based";
     const enhancedPrompts = body.enhancedPrompts ?? true;
     const selfReviseExplicit = body.selfRevise;
@@ -126,10 +131,12 @@ export async function registerCompareRoutes(app: FastifyInstance) {
       costUsd: number;
       latencyMs: number;
       rationale: string | null;
+      confidence: number | null;
       fellBackToRules: boolean;
       errorMessage?: string;
       ruleBasedSnapshot: TaskClassification;
     } | null = null;
+    let disappointmentRisk = 0;
 
     if (routingMode === "llm_assisted") {
       const r = await classifyWithLlm(
@@ -149,11 +156,28 @@ export async function registerCompareRoutes(app: FastifyInstance) {
         costUsd: r.costUsd,
         latencyMs: r.latencyMs,
         rationale: r.rationale,
+        confidence: r.confidence,
         fellBackToRules: r.fellBackToRules,
         errorMessage: r.errorMessage,
         ruleBasedSnapshot: r.ruleBased,
       };
       logger.info(`Compare: LLM-assisted classification via ${r.modelId} → ${classification.taskType} (risk=${classification.riskLevel}, fellback=${r.fellBackToRules})`);
+
+      // Compute Disappointment Risk Score for retention-first routing
+      const hasCodeContext = !!(body.rawCode && body.rawCode.trim().length > 0);
+      const blankSlate = sessionKey ? isBlankSlateSession(sessionKey) : false;
+      disappointmentRisk = computeDisappointmentRisk({
+        prompt,
+        taskType: classification.taskType,
+        llmRationale: r.rationale,
+        fellBackToRules: r.fellBackToRules,
+        hasCodeContext,
+        confidence: r.confidence,
+        isBlankSlate: blankSlate,
+      });
+      if (disappointmentRisk > 0) {
+        logger.info(`Compare: DRS=${disappointmentRisk} for task=${classification.taskType}`);
+      }
     } else {
       classification = taskClassifier.classify({
         message: prompt,
@@ -192,6 +216,8 @@ export async function registerCompareRoutes(app: FastifyInstance) {
       messageForRouter,
       BENCHMARK_MODEL_ID,
       body.rawCode,
+      undefined,
+      disappointmentRisk,
     );
 
     const [routerModel, benchmarkModel] = await Promise.all([
@@ -281,7 +307,8 @@ export async function registerCompareRoutes(app: FastifyInstance) {
         ];
 
     // ── Execute router + benchmark in parallel ─────────────────
-    let [routerExec, benchmarkExec] = sameModel
+    // Skip benchmark when noBenchmark=true (eval cost savings) or same model
+    let [routerExec, benchmarkExec] = (sameModel || noBenchmark)
       ? await Promise.all([
           executeWithMessages(routerModel, routerMessages, maxTokens),
           Promise.resolve<ExecutionResult | null>(null),
@@ -382,6 +409,7 @@ export async function registerCompareRoutes(app: FastifyInstance) {
       optimizedPrompt: promptOpt?.optimizedMessage ?? prompt,
       promptTokenSavings: promptOpt?.estimatedTokenSavings ?? 0,
       routingMode,
+      disappointmentRisk,
       classification: {
         taskType: classification.taskType,
         riskLevel: classification.riskLevel,

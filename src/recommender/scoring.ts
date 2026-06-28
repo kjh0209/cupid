@@ -1,9 +1,21 @@
-import type { ModelRecord, TaskClassification, UserMode, ScoringWeights, ModelCandidate, RagResult } from "../types.js";
+import type { ModelRecord, TaskClassification, UserMode, ScoringWeights, ModelCandidate, RagResult, ModelTier } from "../types.js";
 import { estimateQuality, estimateLatencyScore, estimateFailureRisk } from "./qualityEstimator.js";
 import { estimateCost, estimateTokens } from "./costEstimator.js";
 import { getTaskAffinity, isForbidden } from "./taskModelAffinities.js";
 
 const WEIGHTS: Record<UserMode, ScoringWeights> = {
+  // cost_aggressive: maximum cost pressure, DRS not enforced
+  cost_aggressive: {
+    alpha: 0.22,
+    beta: 0.50,
+    gamma: 0.10,
+    delta: 0.06,
+    epsilon: 0.04,
+    zeta: 0.04,
+    eta: 0.02,
+    theta: 0.01,
+    iota: 0.01,
+  },
   cost_saving: {
     alpha: 0.30,   // success rate
     beta: 0.35,    // cost (penalty)
@@ -102,6 +114,19 @@ function computeRagBonus(
   return { bonus: Math.min(bonus, 1.0), reason: topReason };
 }
 
+/**
+ * Returns true if the DRS level is high enough to forbid cheap-tier routing
+ * for the given user mode. cost_aggressive never enforces DRS.
+ */
+function drsForbidsCheap(tier: ModelTier, userMode: UserMode, drs: number): boolean {
+  if (userMode === "cost_aggressive") return false;
+  if (tier !== "cheap") return false;
+  if (userMode === "max_quality") return true;
+  if (userMode === "cost_saving" && drs >= 3) return true;
+  if (userMode === "balanced" && drs >= 2) return true;
+  return false;
+}
+
 export function scoreModel(
   model: ModelRecord,
   classification: TaskClassification,
@@ -110,7 +135,9 @@ export function scoreModel(
   optimizedMessage: string,
   selectedCode?: string,
   repoSummary?: string,
-  ragHints?: RagResult[]
+  ragHints?: RagResult[],
+  /** Disappointment Risk Score 0-5 from computeDisappointmentRisk() */
+  disappointmentRisk = 0,
 ): { score: number; breakdown: Record<string, number>; reasons: string[] } {
   const w = WEIGHTS[userMode];
   const tokens = estimateTokens(classification, optimizedMessage, selectedCode, repoSummary);
@@ -139,6 +166,7 @@ export function scoreModel(
   // Task-specific affinity from benchmarks/playbooks
   const taskAffinity = getTaskAffinity(model.id, classification.taskType);
   const forbidden = isForbidden(model.id, classification.taskType);
+  const drsForbidden = drsForbidsCheap(model.tier, userMode, disappointmentRisk);
 
   // Affinity-weighted quality: task affinity dominates when it's a clear signal.
   // Generic quality contributes 25%, task affinity contributes 75% — this aligns
@@ -162,7 +190,7 @@ export function scoreModel(
     0;
 
   const score =
-    (forbidden ? -10 : 0) +
+    ((forbidden || drsForbidden) ? -10 : 0) +
     w.alpha * qualityWithAffinity -
     affinityFloorPenalty -
     w.beta * normalizedCost -
@@ -174,6 +202,7 @@ export function scoreModel(
 
   const reasons: string[] = [];
   if (forbidden) reasons.push(`⛔ Model forbidden for ${classification.taskType} — affinity too low`);
+  if (drsForbidden) reasons.push(`🛑 DRS=${disappointmentRisk}: cheap tier skipped to preserve user retention`);
   if (taskAffinity >= 0.9) reasons.push(`Strong task affinity (${(taskAffinity * 100).toFixed(0)}%) — benchmarks show top performance on this task type`);
   else if (taskAffinity >= 0.75) reasons.push(`Good task affinity (${(taskAffinity * 100).toFixed(0)}%)`);
   else if (taskAffinity < 0.5) reasons.push(`Weak task affinity (${(taskAffinity * 100).toFixed(0)}%) — consider a stronger model`);

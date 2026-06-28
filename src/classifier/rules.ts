@@ -589,6 +589,16 @@ export function detectDifficulty(message: string, taskType: TaskType): number {
     diff = Math.max(diff, 4);
   }
 
+  // Open-ended creation with no existing code context → difficulty ≥ 4
+  // "make/build/create a/an <thing>", "implement/write a complete/full/whole X", "from scratch"
+  if (
+    /\b(make|build|create)\s+(?:me\s+)?(?:a|an)\s+\w+/i.test(message) ||
+    /\b(implement|write)\s+a\s+(?:complete|full|whole)\b/i.test(message) ||
+    /\bfrom\s+scratch\b/i.test(message)
+  ) {
+    diff = Math.max(diff, 4);
+  }
+
   return diff;
 }
 

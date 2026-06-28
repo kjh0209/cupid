@@ -43,7 +43,11 @@ export type ChangeScope =
   | "repo_wide";
 
 // ── User Mode ────────────────────────────────────────────────
-export type UserMode = "cost_saving" | "balanced" | "max_quality";
+// cost_aggressive: only route cheap on clearly safe tasks, ignores DRS
+// cost_saving (default): retention-leaning; DRS ≥ 3 forces strong tier
+// balanced: DRS ≥ 2 forces strong tier
+// max_quality: always routes to strong tier
+export type UserMode = "cost_aggressive" | "cost_saving" | "balanced" | "max_quality";
 
 // ── Source Confidence ────────────────────────────────────────
 export type SourceConfidence =

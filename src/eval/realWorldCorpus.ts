@@ -35,6 +35,12 @@ export interface CorpusPrompt {
   designBar?: string[];
   /** What this prompt is testing (for the report's failure analysis). */
   intent: string;
+  /**
+   * Expected Disappointment Risk Score (DRS) in [0, 5].
+   * Null = not a retention-risk test (DRS not measured for this prompt).
+   * Non-null = the DRS the algorithm should produce ± 1 tolerance.
+   */
+  expectedDRS?: number | null;
 }
 
 const T = (
@@ -332,6 +338,64 @@ export const CORPUS: CorpusPrompt[] = [
     "yes/no question — both explanation and code_review are defensible; we go with code_review since user is asking analysis of a snippet", { rawCode: "let x=0;function inc(){x++;}", tierCeiling: "strong" }),
   T("edge-6", "simple_edit", "make this prettier", "simple_edit", "cheap",
     "format — could be misrouted as creative", { rawCode: "const x   = {a :1,b   : 2};", tierCeiling: "mid" }),
+
+  // ══════════════════════════════════════════════════════════
+  // 19. RETENTION-RISK SCENARIOS (20) — DRS measurement
+  // Blank workspace + open-ended creation, ambiguous, short + creation verb.
+  // These prompts test the Disappointment Risk Score (DRS) system.
+  // expectedDRS is computed assuming: no rawCode, no session (isBlankSlate=false),
+  // unknown LLM confidence / fellBackToRules. Measured DRS should match ± 1.
+  // ══════════════════════════════════════════════════════════
+
+  // Open-ended creation with "a/an" → DRS +2 base
+  T("drs-1", "retention_risk", "build me an app", "creative_generation", "mid",
+    "ultra-short open-ended creation — highest DRS scenario", { expectedDRS: 4 }),
+  T("drs-2", "retention_risk", "make something cool", "creative_generation", "mid",
+    "no 'a/an' but quality adj 'cool' + short", { expectedDRS: 3 }),
+  T("drs-3", "retention_risk", "create a simple game", "creative_generation", "mid",
+    "short creation verb + simple game", { expectedDRS: 4 }),
+  T("drs-4", "retention_risk", "make a clock", "creative_generation", "mid",
+    "12-char creation prompt — extreme info deficit", { expectedDRS: 4 }),
+  T("drs-5", "retention_risk", "build a calculator", "creative_generation", "mid",
+    "18-char creation prompt", { expectedDRS: 4 }),
+  T("drs-6", "retention_risk", "build an app", "creative_generation", "mid",
+    "12-char — short + creation verb", { expectedDRS: 4 }),
+
+  // Quality adjective signals
+  T("drs-7", "retention_risk", "make a fun interactive demo", "creative_generation", "mid",
+    "27-char: creation + 'fun' + short + visual = DRS 5", { expectedDRS: 5 }),
+  T("drs-8", "retention_risk", "make me a nice dashboard", "creative_generation", "mid",
+    "25-char: creation + 'nice' + short + visual = DRS 5", { expectedDRS: 5 }),
+  T("drs-9", "retention_risk", "build me a full portfolio site from scratch", "creative_generation", "strong",
+    "creation + 'full' + visual = DRS 4", { expectedDRS: 4 }),
+  T("drs-10", "retention_risk", "create a real todo app with all the features", "creative_generation", "strong",
+    "creation + 'real' + visual = DRS 4", { expectedDRS: 4 }),
+
+  // Longer open-ended creation (not short, but still high DRS)
+  T("drs-11", "retention_risk", "design a polished landing page", "creative_generation", "mid",
+    "creation + 'polished' + visual = DRS 4", { expectedDRS: 4 }),
+  T("drs-12", "retention_risk", "build a complete chat application", "creative_generation", "strong",
+    "creation + 'complete' + visual = DRS 4", { expectedDRS: 4 }),
+  T("drs-13", "retention_risk", "create a cool particle animation", "creative_generation", "mid",
+    "creation + 'cool' + visual = DRS 4", { expectedDRS: 4 }),
+  T("drs-14", "retention_risk", "build a real e-commerce store", "creative_generation", "strong",
+    "creation + 'real' + visual = DRS 4", { expectedDRS: 4 }),
+
+  // Ambiguous / vague prompts — DRS lower but tier floor still mid
+  T("drs-15", "retention_risk", "fix it", "local_bug_fix", "mid",
+    "ultra-vague — DRS=0 but mid floor from vague bug rule", { expectedDRS: 0 }),
+  T("drs-16", "retention_risk", "make it better", "local_bug_fix", "mid",
+    "vague improvement — creation verb present but no 'a/an', short = DRS 1", { expectedDRS: 1 }),
+  T("drs-17", "retention_risk", "optimize this", "performance_optimization", "mid",
+    "terse optimization — no creation verb = DRS 0", { expectedDRS: 0 }),
+  T("drs-18", "retention_risk", "make something", "creative_generation", "mid",
+    "14-char: no 'a/an' + short + creative = DRS 2", { expectedDRS: 2 }),
+
+  // Security / API creation with DRS signal
+  T("drs-19", "retention_risk", "implement a complete auth system from scratch", "security_sensitive_change", "strong",
+    "creation + 'complete' + security (not visual) = DRS 3", { expectedDRS: 3 }),
+  T("drs-20", "retention_risk", "implement a complete REST API from scratch", "api_implementation", "mid",
+    "creation + 'complete' + api (not visual) = DRS 3", { expectedDRS: 3 }),
 ];
 
 /** Total corpus size — exported for sanity checks. */

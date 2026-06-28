@@ -67,8 +67,14 @@ interface RouteResult {
   rationale: string;
   reasons: string[];
   topCandidates: Array<{ modelId: string; tier: string; score: number }>;
+  /** Disappointment Risk Score returned by the router (0-5, null if not available) */
+  disappointmentRisk: number | null;
   error?: string;
 }
+
+// Skip benchmark model execution to save eval costs (~90% reduction in Opus calls).
+// Set EVAL_NO_BENCHMARK=true when running v3+ accuracy eval.
+const NO_BENCHMARK = process.env["EVAL_NO_BENCHMARK"] === "true";
 
 async function route(baseUrl: string, prompt: CorpusPrompt): Promise<RouteResult> {
   // Tokens: creative/refactor/arch need more headroom
@@ -87,6 +93,7 @@ async function route(baseUrl: string, prompt: CorpusPrompt): Promise<RouteResult
     sessionKey: "",
     useCpl: false,
     extractCpl: false,
+    noBenchmark: NO_BENCHMARK,
   };
 
   try {
@@ -101,6 +108,7 @@ async function route(baseUrl: string, prompt: CorpusPrompt): Promise<RouteResult
         routerCostUsd: 0, routerResponse: "", benchmarkCostUsd: 0, benchmarkResponse: "",
         selfReviseAuto: false, fellBackToRules: false,
         rationale: "", reasons: [], topCandidates: [],
+        disappointmentRisk: null,
         error: `HTTP ${res.status}`,
       };
     }
@@ -118,6 +126,7 @@ async function route(baseUrl: string, prompt: CorpusPrompt): Promise<RouteResult
       rationale: d.llmRouting?.rationale ?? "",
       reasons: d.routing?.reasons ?? [],
       topCandidates: (d.routing?.topCandidates ?? []).slice(0, 3),
+      disappointmentRisk: typeof d.disappointmentRisk === "number" ? d.disappointmentRisk : null,
     };
   } catch (err) {
     return {
@@ -125,6 +134,7 @@ async function route(baseUrl: string, prompt: CorpusPrompt): Promise<RouteResult
       routerCostUsd: 0, routerResponse: "", benchmarkCostUsd: 0, benchmarkResponse: "",
       selfReviseAuto: false, fellBackToRules: false,
       rationale: "", reasons: [], topCandidates: [],
+      disappointmentRisk: null,
       error: String(err),
     };
   }
@@ -165,6 +175,8 @@ interface EvalRow {
   tierCeilingOk: boolean;
   designChecks: DesignCheck[];
   designPassRate: number;        // 0-1
+  /** DRS was correct: measured DRS matches expectedDRS ± 1 (null if not a DRS test prompt) */
+  drsCorrect: boolean | null;
   // For the report
   routedTierRank: number;
   expectedFloorRank: number;
@@ -182,7 +194,14 @@ function evaluate(row: { prompt: CorpusPrompt; routed: RouteResult }): EvalRow {
     : [];
   const designPassRate = designChecks.length === 0 ? 1
     : designChecks.filter((c) => c.found).length / designChecks.length;
-  return { prompt, routed, taskTypeCorrect, tierFloorOk, tierCeilingOk, designChecks, designPassRate, routedTierRank, expectedFloorRank };
+
+  // DRS correctness: measured DRS should be within ±1 of expectedDRS
+  let drsCorrect: boolean | null = null;
+  if (prompt.expectedDRS != null && routed.disappointmentRisk != null) {
+    drsCorrect = Math.abs(routed.disappointmentRisk - prompt.expectedDRS) <= 1;
+  }
+
+  return { prompt, routed, taskTypeCorrect, tierFloorOk, tierCeilingOk, designChecks, designPassRate, drsCorrect, routedTierRank, expectedFloorRank };
 }
 
 async function runAll() {
@@ -207,6 +226,7 @@ async function runAll() {
         ev.tierFloorOk ? "✓floor" : `✗FLOOR(want≥${ev.prompt.tierFloor},got${ev.routed.routedTier})`,
         ev.tierCeilingOk ? "✓ceil" : `✗ceil`,
         ev.prompt.designBar ? `design ${(ev.designPassRate * 100).toFixed(0)}%` : "",
+        ev.prompt.expectedDRS != null ? `DRS=${ev.routed.disappointmentRisk ?? "?"}(exp${ev.prompt.expectedDRS})${ev.drsCorrect ? "✓" : "✗"}` : "",
       ].filter(Boolean).join(" ");
       logger.info(`[${rows.length}/${CORPUS.length}] ${ev.prompt.id.padEnd(12)} → ${ev.routed.routedModel.padEnd(35)} ${flags}${ev.routed.error ? " ERR:" + ev.routed.error.slice(0, 60) : ""}`);
     }
@@ -222,6 +242,13 @@ async function runAll() {
   const designPrompts = rows.filter((r) => r.prompt.designBar);
   const avgDesign = designPrompts.length === 0 ? 0
     : designPrompts.reduce((acc, r) => acc + r.designPassRate, 0) / designPrompts.length;
+
+  // DRS accuracy: how many high-DRS prompts were routed above cheap tier
+  const drsTestRows = rows.filter((r) => r.prompt.expectedDRS != null);
+  const drsCorrectRows = drsTestRows.filter((r) => r.drsCorrect === true);
+  // High-DRS prompts (expectedDRS >= 3) should NOT be routed to cheap tier
+  const highDrsRows = drsTestRows.filter((r) => (r.prompt.expectedDRS ?? 0) >= 3);
+  const highDrsNotCheap = highDrsRows.filter((r) => r.routed.routedTier !== "cheap");
 
   const totalRouterCost = rows.reduce((a, r) => a + r.routed.routerCostUsd, 0);
   const totalBenchCost = rows.reduce((a, r) => a + r.routed.benchmarkCostUsd, 0);
@@ -241,7 +268,7 @@ async function runAll() {
   const failedDesign = designPrompts.filter((r) => r.designPassRate < 0.7);
 
   // ── CSV ──
-  const csv = ["id,category,prompt,expected_task,expected_floor,classified_task,routed_model,routed_tier,task_correct,floor_ok,ceiling_ok,design_pass_pct,router_cost,benchmark_cost,llm_fellback,error"];
+  const csv = ["id,category,prompt,expected_task,expected_floor,classified_task,routed_model,routed_tier,task_correct,floor_ok,ceiling_ok,design_pass_pct,expected_drs,measured_drs,drs_correct,router_cost,benchmark_cost,llm_fellback,error"];
   for (const r of rows) {
     csv.push([
       r.prompt.id,
@@ -256,13 +283,17 @@ async function runAll() {
       r.tierFloorOk ? "Y" : "N",
       r.tierCeilingOk ? "Y" : "N",
       (r.designPassRate * 100).toFixed(0),
+      r.prompt.expectedDRS ?? "",
+      r.routed.disappointmentRisk ?? "",
+      r.drsCorrect == null ? "" : r.drsCorrect ? "Y" : "N",
       r.routed.routerCostUsd.toFixed(6),
       r.routed.benchmarkCostUsd.toFixed(6),
       r.routed.fellBackToRules ? "Y" : "N",
       `"${(r.routed.error ?? "").slice(0, 80)}"`,
     ].join(","));
   }
-  fs.writeFileSync(path.join(outDir, "routing_accuracy.csv"), csv.join("\n"));
+  const csvFileName = NO_BENCHMARK ? "routing_accuracy_v3.csv" : "routing_accuracy.csv";
+  fs.writeFileSync(path.join(outDir, csvFileName), csv.join("\n"));
 
   // ── Markdown report with failure analysis ──
   const md: string[] = [];
@@ -280,6 +311,8 @@ async function runAll() {
   md.push(`| **Tier-floor compliance** (no under-route) | **${floorOk}/${rows.length} = ${(100 * floorOk / rows.length).toFixed(1)}%** |`);
   md.push(`| Tier-ceiling efficiency (no over-route) | ${ceilOk}/${rows.length} = ${(100 * ceilOk / rows.length).toFixed(1)}% |`);
   md.push(`| Avg design-bar pass rate (visual tasks only) | ${(avgDesign * 100).toFixed(1)}% (${designPrompts.length} prompts) |`);
+  md.push(`| **DRS accuracy** (measured ± 1 of expected) | **${drsCorrectRows.length}/${drsTestRows.length} = ${drsTestRows.length > 0 ? (100 * drsCorrectRows.length / drsTestRows.length).toFixed(1) : "—"}%** |`);
+  md.push(`| High-DRS not routed to cheap | ${highDrsNotCheap.length}/${highDrsRows.length} = ${highDrsRows.length > 0 ? (100 * highDrsNotCheap.length / highDrsRows.length).toFixed(1) : "—"}% |`);
   md.push(`| Total router cost (this run) | $${totalRouterCost.toFixed(4)} |`);
   md.push(`| Total benchmark cost | $${totalBenchCost.toFixed(4)} |`);
   md.push(`| Cost reduction | ${(((totalBenchCost - totalRouterCost) / Math.max(0.0001, totalBenchCost)) * 100).toFixed(1)}% |`);
@@ -380,16 +413,20 @@ async function runAll() {
     md.push("");
   }
 
-  fs.writeFileSync(path.join(outDir, "routing_accuracy.md"), md.join("\n"));
-  logger.info(`Report written: ${path.join(outDir, "routing_accuracy.md")}`);
-  logger.info(`CSV written: ${path.join(outDir, "routing_accuracy.csv")}`);
+  const mdFileName = NO_BENCHMARK ? "routing_accuracy_v3.md" : "routing_accuracy.md";
+  fs.writeFileSync(path.join(outDir, mdFileName), md.join("\n"));
+  logger.info(`Report written: ${path.join(outDir, mdFileName)}`);
+  logger.info(`CSV written: ${path.join(outDir, csvFileName)}`);
 
   console.log("\n========== HEADLINE ==========");
   console.log(`Classification: ${classifiedRight}/${rows.length} = ${(100 * classifiedRight / rows.length).toFixed(1)}%`);
   console.log(`Tier-floor compliance: ${floorOk}/${rows.length} = ${(100 * floorOk / rows.length).toFixed(1)}%`);
   console.log(`Tier-ceiling efficiency: ${ceilOk}/${rows.length} = ${(100 * ceilOk / rows.length).toFixed(1)}%`);
   console.log(`Avg design pass rate: ${(avgDesign * 100).toFixed(1)}% over ${designPrompts.length} visual prompts`);
+  console.log(`DRS accuracy: ${drsCorrectRows.length}/${drsTestRows.length} = ${drsTestRows.length > 0 ? (100 * drsCorrectRows.length / drsTestRows.length).toFixed(1) : "—"}%`);
+  console.log(`High-DRS not cheap: ${highDrsNotCheap.length}/${highDrsRows.length} = ${highDrsRows.length > 0 ? (100 * highDrsNotCheap.length / highDrsRows.length).toFixed(1) : "—"}%`);
   console.log(`Errors: ${errCount}`);
+  console.log(`Benchmark skipped: ${NO_BENCHMARK}`);
   console.log(`Total saved: $${(totalBenchCost - totalRouterCost).toFixed(4)} (${(((totalBenchCost - totalRouterCost) / Math.max(0.0001, totalBenchCost)) * 100).toFixed(1)}%)`);
   console.log(`Floor violations: ${failedFloor.length}, Classification errors: ${failedClass.length}, Design misses: ${failedDesign.length}`);
 }

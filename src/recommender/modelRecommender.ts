@@ -27,7 +27,9 @@ export class ModelRecommender {
     optimizedMessage: string,
     baselineModelId?: string,
     selectedCode?: string,
-    repoSummary?: string
+    repoSummary?: string,
+    /** Disappointment Risk Score 0-5 — penalizes cheap tier when high */
+    disappointmentRisk = 0,
   ): Promise<RecommendationResult> {
     // Step 1: Get all active models
     let allModels: ModelRecord[];
@@ -80,7 +82,8 @@ export class ModelRecommender {
         optimizedMessage,
         selectedCode,
         repoSummary,
-        ragHints
+        ragHints,
+        disappointmentRisk,
       );
 
       const costEstimate = estimateCost(model, tokens);

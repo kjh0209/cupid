@@ -1,4 +1,4 @@
-import type { TaskClassification, ModelTier, UserMode } from "../types.js";
+import type { TaskClassification, ModelTier, UserMode, TaskType } from "../types.js";
 
 export interface TierPolicy {
   allowedTiers: ModelTier[];
@@ -28,6 +28,10 @@ export function getTierPolicy(
   userMode: UserMode
 ): TierPolicy {
   const { taskType, riskLevel, contextNeed, privacySensitive } = classification;
+
+  // cost_aggressive: like cost_saving but no DRS enforcement (handled in scoring)
+  // — tier policy is the same as cost_saving for hard constraints
+  const effectiveMode = userMode === "cost_aggressive" ? "cost_saving" : userMode;
 
   // Privacy: prefer local/private if available
   if (privacySensitive) {
@@ -68,7 +72,7 @@ export function getTierPolicy(
   // Architecture: strong preferred
   if (taskType === "architecture_design") {
     const allowed: ModelTier[] =
-      userMode === "max_quality" ? ["strong"] : ["mid", "strong", "long_context"];
+      effectiveMode === "max_quality" ? ["strong"] : ["mid", "strong", "long_context"];
     return {
       allowedTiers: allowed,
       requiredMinTier: "mid",
@@ -83,14 +87,14 @@ export function getTierPolicy(
   // Opus → polished multi-color game with score/lives/dark theme).
   if (taskType === "creative_generation") {
     const allowed: ModelTier[] =
-      userMode === "cost_saving"
+      effectiveMode === "cost_saving"
         ? ["mid", "strong"]
         : ["strong", "long_context"];
     return {
       allowedTiers: allowed,
-      requiredMinTier: userMode === "cost_saving" ? "mid" : "strong",
+      requiredMinTier: effectiveMode === "cost_saving" ? "mid" : "strong",
       reason:
-        userMode === "cost_saving"
+        effectiveMode === "cost_saving"
           ? "Creative generation: mid-tier minimum (cheap tier produces wireframe-quality output)"
           : "Creative generation: strong tier required for design polish and product feel",
     };
@@ -127,7 +131,7 @@ export function getTierPolicy(
   if (taskType === "local_bug_fix") {
     if (riskLevel <= 2) {
       const allowed: ModelTier[] =
-        userMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
+        effectiveMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
       return {
         allowedTiers: allowed,
         requiredMinTier: null,
@@ -144,7 +148,7 @@ export function getTierPolicy(
   // Test generation: cheap or mid (strong only for max_quality)
   if (taskType === "test_generation") {
     const allowed: ModelTier[] =
-      userMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
+      effectiveMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
     return {
       allowedTiers: allowed,
       requiredMinTier: null,
@@ -162,7 +166,7 @@ export function getTierPolicy(
     taskType === "code_review"
   ) {
     const allowed: ModelTier[] =
-      userMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
+      effectiveMode === "max_quality" ? ["cheap", "mid", "strong"] : ["cheap", "mid"];
     return {
       allowedTiers: allowed,
       requiredMinTier: null,
@@ -171,7 +175,7 @@ export function getTierPolicy(
   }
 
   // Default: cap at mid for low-risk unknown tasks in non-max_quality modes
-  if (riskLevel <= 2 && userMode !== "max_quality") {
+  if (riskLevel <= 2 && effectiveMode !== "max_quality") {
     return {
       allowedTiers: ["cheap", "mid"],
       requiredMinTier: null,
@@ -184,6 +188,32 @@ export function getTierPolicy(
     requiredMinTier: null,
     reason: "Unknown task type: all tiers allowed",
   };
+}
+
+/** Task-type minimum difficulty — overrides LLM if it goes too low */
+const TASK_MIN_DIFFICULTY: Partial<Record<TaskType, number>> = {
+  creative_generation: 4,
+  architecture_design: 4,
+  security_sensitive_change: 4,
+};
+
+/**
+ * Returns the enforced minimum difficulty for a task, taking into account
+ * the task type and whether code context is available.
+ * Used to prevent the LLM from downgrading hard tasks to cheap tier.
+ */
+export function enforceMinDifficulty(
+  classification: TaskClassification,
+  hasCodeContext: boolean,
+): number {
+  let min = TASK_MIN_DIFFICULTY[classification.taskType] ?? 0;
+
+  // multi_file_refactor without existing code context needs strong reasoning
+  if (classification.taskType === "multi_file_refactor" && !hasCodeContext) {
+    min = Math.max(min, 4);
+  }
+
+  return Math.max(classification.difficulty, min);
 }
 
 export function getFallbackModel(riskLevel: number): string {
