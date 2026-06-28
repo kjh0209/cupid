@@ -38,30 +38,33 @@ export function getTierPolicy(
     };
   }
 
-  // Security-sensitive: never cheap
+  // Security-sensitive: always strong — auth/crypto/payment mistakes cause incidents
   if (taskType === "security_sensitive_change" || riskLevel >= 5) {
     return {
-      allowedTiers: ["mid", "strong"],
-      requiredMinTier: "mid",
-      reason: "Security-sensitive task: minimum mid-tier required",
+      allowedTiers: ["strong"],
+      requiredMinTier: "strong",
+      reason: "Security-sensitive task: strong tier required (mid-tier misses timing-safe patterns, correct key derivation, and subtle auth flaws)",
     };
   }
 
-  // Risk >= 4: mid or strong
+  // Risk >= 4: strong tier preferred — high-risk changes are irreversible in prod.
+  // long_context is also allowed (it's a capability tier, not a quality floor).
+  // We exclude cheap and mid by listing only strong/long_context.
   if (riskLevel >= 4) {
     return {
-      allowedTiers: ["mid", "strong", "long_context"],
-      requiredMinTier: "mid",
-      reason: `High risk (${riskLevel}/5): minimum mid-tier required`,
+      allowedTiers: ["strong", "long_context"],
+      requiredMinTier: null,
+      reason: `High risk (${riskLevel}/5): strong or long-context tier required for production-safe output`,
     };
   }
 
-  // Database schema: mid or strong
+  // Database schema: always strong — migrations are irreversible, 50M-row tables
+  // need zero-lock strategies that cheap/mid models routinely get wrong
   if (taskType === "database_schema_change") {
     return {
-      allowedTiers: ["mid", "strong"],
-      requiredMinTier: "mid",
-      reason: "Database schema changes carry data loss risk: mid-tier minimum",
+      allowedTiers: ["strong"],
+      requiredMinTier: "strong",
+      reason: "Database schema changes are irreversible in production: strong tier required for zero-downtime migration strategies",
     };
   }
 

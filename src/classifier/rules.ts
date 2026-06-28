@@ -51,6 +51,10 @@ export const DATABASE_KEYWORDS = [
   "migration", "migrations", "migrate", "schema", "ddl", "alter.table", "drop.table",
   "create.table", "create.index", "drop.index", "add.column", "drop.column", "rename.column",
   "rename.table", "change.column", "modify.column",
+  // unambiguous DB schema terms
+  "row.level", "lookup.table", "enum.column", "junction.table",
+  "pivot.table", "shard", "sharding", "tenant", "multi.tenant",
+  "data.migration", "backfill", "zero.downtime", "zero.lock",
   // ORMs / query builders
   "prisma", "drizzle", "sequelize", "typeorm", "knex", "mongoose", "objection",
   "diesel", "sqlx", "active.record", "sqlalchemy", "django.orm",
@@ -470,6 +474,17 @@ export function detectTaskType(message: string, filePath?: string): TaskType {
   // Hard rules / overrides first
   if (scores.prompt_rewrite_only >= 3) return "prompt_rewrite_only";
 
+  // "Review this [X]" / "give feedback on [X]" → code_review even when subject is a migration/auth/security file.
+  // The verb determines the intent: user wants FEEDBACK, not code generation.
+  // Priority: if a review-intent verb appears as the primary action, code_review wins.
+  if (/^\s*(review\s+this|review\s+the|review\s+my|give\s+(me\s+)?feedback|is\s+this\s+(good|safe|correct|idiomatic|secure)|what\s+(do|would)\s+you\s+(change|think))\b/i.test(message)) {
+    scores.code_review += 3.0;
+  }
+  // Secondary pattern: "review [subject]" anywhere early in a short prompt
+  if (message.length < 80 && /\breview\s+(this|the|my)\b/i.test(message)) {
+    scores.code_review += 2.0;
+  }
+
   // Filename hints
   if (filePath) {
     const lowerPath = filePath.toLowerCase();
@@ -549,6 +564,23 @@ export function detectRiskLevel(
     risk = Math.min(risk + 1, 5);
   }
 
+  // Memory / system-level issues — require strong tier for root-cause diagnosis
+  // These are notoriously hard to diagnose: heap profiling, GC tuning, OS interaction
+  if (/\b(memory.?leak|heap.?grow|out.?of.?memory|oom|process.?crash|segfault|stack.?overflow|cpu.?spike|thread.?leak)\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+
+  // Concurrency / race condition — require expert reasoning
+  if (/\b(race.?condition|deadlock|thread.?safe|atomic|mutex|semaphore|concurrent)\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+
+  // Low-level performance optimization — SIMD, vectorization, flamegraph analysis,
+  // algorithmic complexity; requires expert-level reasoning
+  if (/\b(vectorize|simd|avx|sse|intrinsic|flamegraph|hot.?loop|hot.?path|assembly|asm\b|bitwise|bit.?twiddl|cache.?line|branch.?predict)\b/i.test(message)) {
+    risk = Math.max(risk, 4);
+  }
+
   return risk;
 }
 
@@ -586,6 +618,16 @@ export function detectDifficulty(message: string, taskType: TaskType): number {
 
   // Vague bug reports require strong reasoning to diagnose
   if (taskType === "local_bug_fix" && /\bwhy.?is.?(my.?code|this|it).?slow|why.?doesn.?t.?(?:this|it).?work|something.?feels?.?(off|wrong)/i.test(message)) {
+    diff = Math.max(diff, 4);
+  }
+
+  // Open-ended creation without code context → design taste is decisive, cheap models produce
+  // wireframe-quality output. Bump to difficulty 4 so scoring skips cheap tier.
+  if (
+    /\b(make|build|create)\s+(?:me\s+)?(?:a|an)\s+\w/i.test(message) ||
+    /\b(implement|write)\s+a\s+(?:complete|full|whole)\b/i.test(message) ||
+    /\bfrom\s+scratch\b/i.test(message)
+  ) {
     diff = Math.max(diff, 4);
   }
 

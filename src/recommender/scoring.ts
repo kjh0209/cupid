@@ -4,6 +4,18 @@ import { estimateCost, estimateTokens } from "./costEstimator.js";
 import { getTaskAffinity, isForbidden } from "./taskModelAffinities.js";
 
 const WEIGHTS: Record<UserMode, ScoringWeights> = {
+  // cost_aggressive: maximize savings, ignore DRS, suitable for batch/CI pipelines
+  cost_aggressive: {
+    alpha: 0.20,   // success rate (lower weight → more cost-driven)
+    beta: 0.50,    // cost (heavy penalty)
+    gamma: 0.12,   // latency
+    delta: 0.08,   // failure risk
+    epsilon: 0.05, // repo history bonus
+    zeta: 0.03,    // user history bonus
+    eta: 0.01,     // context fit
+    theta: 0.01,   // cache fit
+    iota: 0.00,    // RAG hint
+  },
   cost_saving: {
     alpha: 0.30,   // success rate
     beta: 0.35,    // cost (penalty)
@@ -110,7 +122,8 @@ export function scoreModel(
   optimizedMessage: string,
   selectedCode?: string,
   repoSummary?: string,
-  ragHints?: RagResult[]
+  ragHints?: RagResult[],
+  disappointmentRiskScore?: number
 ): { score: number; breakdown: Record<string, number>; reasons: string[] } {
   const w = WEIGHTS[userMode];
   const tokens = estimateTokens(classification, optimizedMessage, selectedCode, repoSummary);
@@ -140,6 +153,14 @@ export function scoreModel(
   const taskAffinity = getTaskAffinity(model.id, classification.taskType);
   const forbidden = isForbidden(model.id, classification.taskType);
 
+  // DRS: if disappointment risk is high and mode is not cost_aggressive,
+  // heavily penalize cheap tier to push routing toward strong
+  const drs = disappointmentRiskScore ?? 0;
+  const drsPenalty =
+    model.tier === "cheap" && userMode !== "cost_aggressive" && drs >= 3 ? 10 :
+    model.tier === "cheap" && userMode === "balanced" && drs >= 2 ? 10 :
+    0;
+
   // Affinity-weighted quality: task affinity dominates when it's a clear signal.
   // Generic quality contributes 25%, task affinity contributes 75% — this aligns
   // routing with the specific task the user is doing rather than overall model
@@ -162,7 +183,8 @@ export function scoreModel(
     0;
 
   const score =
-    (forbidden ? -10 : 0) +
+    (forbidden ? -10 : 0) -
+    drsPenalty +
     w.alpha * qualityWithAffinity -
     affinityFloorPenalty -
     w.beta * normalizedCost -
@@ -187,6 +209,7 @@ export function scoreModel(
   else reasons.push("Higher cost justified by quality");
 
   if (failureRisk > 0.4) reasons.push(`⚠️ Elevated failure risk (${(failureRisk * 100).toFixed(0)}%)`);
+  if (drsPenalty > 0) reasons.push(`⚠️ High disappointment risk (DRS=${drs}/5) — cheap tier penalized to protect user experience`);
   if (ragReason) reasons.push(ragReason);
   if (contextFit > 0) reasons.push("Context window fits the task size");
   if (cacheFit > 0) reasons.push("Supports prompt caching for cost savings");

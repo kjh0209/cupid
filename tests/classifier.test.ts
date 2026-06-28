@@ -147,6 +147,66 @@ describe("TaskClassifier", () => {
     });
   });
 
+  describe("code_review detection (review-verb overrides subject-matter)", () => {
+    it("classifies 'review this migration for production safety' as code_review", () => {
+      const result = taskClassifier.classify({
+        message: "review this migration for production safety",
+        userMode: "balanced",
+      });
+      expect(result.taskType).toBe("code_review");
+    });
+
+    it("classifies 'review this auth handler — focus on security' as code_review", () => {
+      const result = taskClassifier.classify({
+        message: "review this auth handler — focus on security",
+        userMode: "balanced",
+      });
+      expect(result.taskType).toBe("code_review");
+    });
+
+    it("classifies 'give me feedback on this implementation' as code_review", () => {
+      const result = taskClassifier.classify({
+        message: "give me feedback on this implementation",
+        userMode: "balanced",
+      });
+      expect(result.taskType).toBe("code_review");
+    });
+
+    it("does NOT classify 'design the migration plan' as code_review", () => {
+      const result = taskClassifier.classify({
+        message: "shard the orders table by tenant_id — design the migration plan",
+        userMode: "balanced",
+      });
+      expect(result.taskType).not.toBe("code_review");
+    });
+
+    it("does NOT classify 'implement the migration' as code_review", () => {
+      const result = taskClassifier.classify({
+        message: "implement a migration to add deleted_at column",
+        userMode: "balanced",
+      });
+      expect(result.taskType).not.toBe("code_review");
+    });
+  });
+
+  describe("creation verb difficulty bumping", () => {
+    it("bumps difficulty to 4+ for 'build me an app' without code context", () => {
+      const result = taskClassifier.classify({
+        message: "build me a todo app",
+        userMode: "balanced",
+      });
+      expect(result.difficulty).toBeGreaterThanOrEqual(4);
+    });
+
+    it("bumps difficulty to 4+ for 'create a game from scratch'", () => {
+      const result = taskClassifier.classify({
+        message: "create a game from scratch",
+        userMode: "balanced",
+      });
+      expect(result.difficulty).toBeGreaterThanOrEqual(4);
+    });
+  });
+
   describe("compression sensitivity", () => {
     it("security tasks have high compression sensitivity", () => {
       const result = taskClassifier.classify({

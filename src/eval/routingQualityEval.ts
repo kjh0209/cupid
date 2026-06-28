@@ -40,7 +40,7 @@ interface Scenario {
   id: string;
   category: string;
   prompt: string;
-  userMode?: "cost_saving" | "balanced" | "max_quality";
+  userMode?: "cost_aggressive" | "cost_saving" | "balanced" | "max_quality";
   rawCode?: string;
   fileName?: string;
   expectedTaskType?: string;

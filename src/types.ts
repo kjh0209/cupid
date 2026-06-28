@@ -43,7 +43,11 @@ export type ChangeScope =
   | "repo_wide";
 
 // ── User Mode ────────────────────────────────────────────────
-export type UserMode = "cost_saving" | "balanced" | "max_quality";
+// cost_aggressive: skip DRS entirely, route cheap whenever safe (for CI/batch use)
+// cost_saving: default — DRS ≥ 3 forces strong tier to prevent user disappointment
+// balanced: DRS ≥ 2 forces strong tier
+// max_quality: always strong
+export type UserMode = "cost_aggressive" | "cost_saving" | "balanced" | "max_quality";
 
 // ── Source Confidence ────────────────────────────────────────
 export type SourceConfidence =

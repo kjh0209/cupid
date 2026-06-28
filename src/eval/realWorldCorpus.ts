@@ -23,7 +23,7 @@ export interface CorpusPrompt {
   prompt: string;
   rawCode?: string;
   fileName?: string;
-  userMode?: "cost_saving" | "balanced" | "max_quality";
+  userMode?: "cost_aggressive" | "cost_saving" | "balanced" | "max_quality";
 
   // ── Ground truth ──
   expectedTaskType: TaskType;

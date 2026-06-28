@@ -20,7 +20,7 @@ function makeClassification(overrides: Partial<TaskClassification>): TaskClassif
 
 describe("RiskPolicy", () => {
   describe("security sensitive tasks", () => {
-    it("blocks cheap tier for security_sensitive_change", () => {
+    it("requires strong tier for security_sensitive_change", () => {
       const classification = makeClassification({
         taskType: "security_sensitive_change",
         riskLevel: 5,
@@ -28,25 +28,29 @@ describe("RiskPolicy", () => {
 
       const policy = getTierPolicy(classification, "balanced");
       expect(isTierAllowed("cheap", policy)).toBe(false);
-      expect(isTierAllowed("mid", policy)).toBe(true);
+      expect(isTierAllowed("mid", policy)).toBe(false);
       expect(isTierAllowed("strong", policy)).toBe(true);
     });
 
-    it("blocks cheap tier for riskLevel >= 5", () => {
+    it("requires strong for riskLevel >= 5", () => {
       const classification = makeClassification({ riskLevel: 5 });
       const policy = getTierPolicy(classification, "cost_saving");
       expect(isTierAllowed("cheap", policy)).toBe(false);
+      expect(isTierAllowed("mid", policy)).toBe(false);
+      expect(isTierAllowed("strong", policy)).toBe(true);
     });
 
-    it("blocks cheap tier for riskLevel >= 4", () => {
+    it("blocks cheap and mid for riskLevel >= 4", () => {
       const classification = makeClassification({ riskLevel: 4 });
       const policy = getTierPolicy(classification, "cost_saving");
       expect(isTierAllowed("cheap", policy)).toBe(false);
+      expect(isTierAllowed("mid", policy)).toBe(false);
+      expect(isTierAllowed("strong", policy)).toBe(true);
     });
   });
 
   describe("database schema tasks", () => {
-    it("blocks cheap tier for database_schema_change", () => {
+    it("requires strong tier for database_schema_change", () => {
       const classification = makeClassification({
         taskType: "database_schema_change",
         riskLevel: 4,
@@ -54,7 +58,18 @@ describe("RiskPolicy", () => {
 
       const policy = getTierPolicy(classification, "cost_saving");
       expect(isTierAllowed("cheap", policy)).toBe(false);
-      expect(isTierAllowed("mid", policy)).toBe(true);
+      expect(isTierAllowed("mid", policy)).toBe(false);
+      expect(isTierAllowed("strong", policy)).toBe(true);
+    });
+
+    it("requires strong tier for db change even in cost_saving mode", () => {
+      const classification = makeClassification({
+        taskType: "database_schema_change",
+        riskLevel: 3,
+      });
+      const policy = getTierPolicy(classification, "cost_saving");
+      expect(isTierAllowed("mid", policy)).toBe(false);
+      expect(isTierAllowed("strong", policy)).toBe(true);
     });
   });
 
