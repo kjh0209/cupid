@@ -2,15 +2,25 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { getWorkspaceSessionKey } from "./sessionKey.js";
-import { applyCodeBlocks, extractCodeBlocks } from "./apply.js";
+import { parseFenceBlocks, applyFenceBlocks } from "./apply.js";
+
+type StatusState = "idle" | "routing" | "streaming" | "error";
+type StatusCallback = (state: StatusState, detail?: string) => void;
 
 export class CupidChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "cupid.chatView";
 
   private view?: vscode.WebviewView;
   private activeStream?: AbortController;
+  private lastUserPrompt = "";
+  private readonly onStatus: StatusCallback;
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    onStatus: StatusCallback,
+  ) {
+    this.onStatus = onStatus;
+  }
 
   resolveWebviewView(view: vscode.WebviewView) {
     this.view = view;
@@ -20,19 +30,26 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
     };
     view.webview.html = this.html();
 
-    view.webview.onDidReceiveMessage(async (msg) => {
-      switch (msg.type) {
+    view.webview.onDidReceiveMessage(async (msg: Record<string, unknown>) => {
+      switch (msg["type"]) {
         case "send":
-          await this.handleSend(msg.text as string, !!msg.includeSelection);
+          await this.handleSend(
+            msg["text"] as string,
+            !!msg["includeSelection"],
+            (msg["attachments"] as string[] | undefined) ?? [],
+          );
           break;
         case "stop":
           this.activeStream?.abort();
           break;
         case "apply":
-          await this.handleApply(msg.text as string, msg.mode as "auto" | "newFile" | "insert" | "diff");
+          await this.handleApply(
+            msg["text"] as string,
+            msg["mode"] as "auto" | "newFile" | "insert" | "diff",
+          );
           break;
         case "copy":
-          await vscode.env.clipboard.writeText(msg.text as string);
+          await vscode.env.clipboard.writeText(msg["text"] as string);
           vscode.window.setStatusBarMessage("Cupid: copied", 1500);
           break;
         case "openSettings":
@@ -40,6 +57,15 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
           break;
         case "resetSession":
           await this.handleResetSession();
+          break;
+        case "listFiles":
+          await this.handleListFiles();
+          break;
+        case "readFile":
+          await this.handleReadFile(msg["path"] as string);
+          break;
+        case "checkHealth":
+          await this.handleHealthCheck();
           break;
       }
     });
@@ -69,7 +95,9 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
     this.focus(`Explain or change this code:\n\n${selection}`);
   }
 
-  private async handleSend(text: string, includeSelection: boolean) {
+  // ── Message handlers ────────────────────────────────────────────────────────
+
+  private async handleSend(text: string, includeSelection: boolean, attachments: string[]) {
     if (!this.view) return;
     const config = vscode.workspace.getConfiguration("cupid");
     const backendUrl = config.get<string>("backendUrl") ?? "http://localhost:3300";
@@ -83,6 +111,25 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
       rawCode = editor.document.getText(editor.selection) || editor.document.getText();
     }
 
+    // Resolve attachment file contents
+    let attachmentContext = "";
+    if (attachments.length > 0) {
+      const ws = vscode.workspace.workspaceFolders?.[0]?.uri;
+      if (ws) {
+        for (const filePath of attachments) {
+          try {
+            const uri = vscode.Uri.joinPath(ws, filePath);
+            const bytes = await vscode.workspace.fs.readFile(uri);
+            const content = new TextDecoder().decode(bytes);
+            attachmentContext += `\n\n--- attached: ${filePath} ---\n\`\`\`\n${content.slice(0, 8000)}\n\`\`\``;
+          } catch { /* ignore unreadable files */ }
+        }
+      }
+    }
+
+    const fullPrompt = attachmentContext ? `${text}${attachmentContext}` : text;
+    this.lastUserPrompt = text;
+
     const sessionKey = getWorkspaceSessionKey();
     const id = "msg-" + Date.now();
     this.view.webview.postMessage({ type: "userMsg", id, text });
@@ -90,13 +137,14 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
 
     this.activeStream?.abort();
     this.activeStream = new AbortController();
+    this.onStatus("routing");
 
     try {
       const res = await fetch(`${backendUrl}/api/compare/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
         body: JSON.stringify({
-          prompt: text,
+          prompt: fullPrompt,
           userMode,
           routingMode,
           rawCode,
@@ -113,12 +161,15 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
           type: "error", id,
           message: `Backend returned ${res.status}. Is the server running at ${backendUrl}?`,
         });
+        this.onStatus("error", `HTTP ${res.status}`);
         return;
       }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
+      let hasChunks = false;
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -136,21 +187,26 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
           }
           if (!data) continue;
           try {
-            const parsed = JSON.parse(data);
-            this.view.webview.postMessage({ type: "stream", id, event, data: parsed });
+            const parsed = JSON.parse(data) as Record<string, unknown>;
+            if (event === "routing") this.onStatus("streaming");
+            if (event === "chunk") hasChunks = true;
+            this.view?.webview.postMessage({ type: "stream", id, event, data: parsed });
           } catch { /* skip */ }
         }
       }
       this.view.webview.postMessage({ type: "assistantEnd", id });
+      this.onStatus("idle", hasChunks ? undefined : undefined);
     } catch (err) {
       if ((err as { name?: string })?.name === "AbortError") {
-        this.view.webview.postMessage({ type: "aborted", id });
+        this.view?.webview.postMessage({ type: "aborted", id });
+        this.onStatus("idle");
         return;
       }
-      this.view.webview.postMessage({
+      this.view?.webview.postMessage({
         type: "error", id,
         message: err instanceof Error ? err.message : String(err),
       });
+      this.onStatus("error", err instanceof Error ? err.message : String(err));
     } finally {
       this.activeStream = undefined;
     }
@@ -158,16 +214,60 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
 
   private async handleApply(text: string, mode: "auto" | "newFile" | "insert" | "diff") {
     try {
-      const blocks = extractCodeBlocks(text);
-      if (blocks.length === 0) {
+      // Try new EDIT MODE protocol blocks first
+      const fenceBlocks = parseFenceBlocks(text);
+      if (fenceBlocks.length === 0) {
         vscode.window.showInformationMessage("Cupid: no code block to apply.");
         return;
       }
-      const summary = await applyCodeBlocks(blocks, mode);
+      const summary = await applyFenceBlocks(fenceBlocks, this.lastUserPrompt, mode);
       vscode.window.setStatusBarMessage(`Cupid: ${summary}`, 3000);
     } catch (err) {
-      vscode.window.showErrorMessage(`Cupid apply failed: ${err instanceof Error ? err.message : String(err)}`);
+      vscode.window.showErrorMessage(
+        `Cupid apply failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
+  }
+
+  private async handleListFiles() {
+    const ws = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!ws) {
+      this.view?.webview.postMessage({ type: "fileList", files: [] });
+      return;
+    }
+    const uris = await vscode.workspace.findFiles("**/*", "**/node_modules/**", 200);
+    const wsPath = ws.fsPath;
+    const files = uris
+      .map((u) => u.fsPath.replace(wsPath, "").replace(/^[/\\]/, "").replace(/\\/g, "/"))
+      .sort();
+    this.view?.webview.postMessage({ type: "fileList", files });
+  }
+
+  private async handleReadFile(filePath: string) {
+    const ws = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!ws) {
+      this.view?.webview.postMessage({ type: "fileContent", path: filePath, content: "" });
+      return;
+    }
+    try {
+      const uri = vscode.Uri.joinPath(ws, filePath);
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      const content = new TextDecoder().decode(bytes);
+      this.view?.webview.postMessage({ type: "fileContent", path: filePath, content });
+    } catch {
+      this.view?.webview.postMessage({ type: "fileContent", path: filePath, content: "" });
+    }
+  }
+
+  private async handleHealthCheck() {
+    const config = vscode.workspace.getConfiguration("cupid");
+    const backendUrl = config.get<string>("backendUrl") ?? "http://localhost:3300";
+    let online = false;
+    try {
+      const res = await fetch(`${backendUrl}/health`, { signal: AbortSignal.timeout(3000) });
+      online = res.ok;
+    } catch { /* offline */ }
+    this.view?.webview.postMessage({ type: "healthResult", online, url: backendUrl });
   }
 
   private async handleResetSession() {
@@ -183,7 +283,9 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
       vscode.window.setStatusBarMessage("Cupid: session memory reset", 2000);
       this.view?.webview.postMessage({ type: "sessionReset" });
     } catch (err) {
-      vscode.window.showErrorMessage(`Reset failed: ${err instanceof Error ? err.message : String(err)}`);
+      vscode.window.showErrorMessage(
+        `Reset failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 

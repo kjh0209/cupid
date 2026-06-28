@@ -21,6 +21,35 @@ interface TaskPromptConfig {
   reminders?: string[];
 }
 
+// ── EDIT MODE PROTOCOL ──────────────────────────────────────────────────────
+// Appended to edit-related task prompts to enforce structured output format
+// so the VS Code extension can reliably parse and apply changes.
+const EDIT_MODE_PROTOCOL = `
+
+## EDIT MODE PROTOCOL — follow when modifying files
+
+When the user asks you to modify a file, you MUST use one of these two exact formats:
+
+**(A) FULL FILE REPLACEMENT** (preferred for files < 400 lines):
+\`\`\`<lang> path=<filepath> mode=replace
+<entire file content — no omissions>
+\`\`\`
+
+**(B) SEARCH/REPLACE PATCH** (for targeted changes in large files):
+\`\`\`<lang> path=<filepath> mode=patch
+<<<<<<< SEARCH
+<exact lines to find, including whitespace>
+=======
+<replacement lines>
+>>>>>>> REPLACE
+\`\`\`
+
+Critical rules:
+- NEVER output a partial snippet (changed lines only, without context) — the apply tool cannot handle it
+- Each file gets its own fenced block with its own \`path=\` and \`mode=\`
+- The \`path=\` value must match the file path from context exactly
+- For SEARCH blocks: copy lines verbatim from the original — off-by-one-space will break fuzzy matching`;
+
 const BASE_CODING_PRINCIPLES = `You are a senior software engineer responding to a coding request.
 
 Core principles:
@@ -68,8 +97,8 @@ Task: a small, targeted edit. The user wants a focused change, not a refactor.
 Specific rules:
 - Touch ONLY the parts the user named. Don't rename other variables, don't reformat unrelated lines, don't add features.
 - Return the complete updated file/function, not just a diff snippet, unless the user explicitly asks for a patch.
-- If you spot an unrelated bug in the surrounding code, mention it in the summary but DO NOT fix it.`,
-    reminders: ["Smallest change that satisfies the request — nothing more."],
+- If you spot an unrelated bug in the surrounding code, mention it in the summary but DO NOT fix it.${EDIT_MODE_PROTOCOL}`,
+    reminders: ["Smallest change that satisfies the request — nothing more.", "Use path= mode=replace or mode=patch in fence info."],
   },
 
   local_bug_fix: {
@@ -92,11 +121,12 @@ Specific rules:
 - If the user asks about a runtime error — find the EXACT line that raises, not a guess.
 - If the user reports unexpected output — trace the data flow, identify where the divergence starts.
 - If you cannot identify a clear bug, ASK what the expected vs actual behavior is rather than fabricating a diagnosis.
-- Never invent claims about language/runtime behavior (e.g., "Array.sort is slow and unstable" — it isn't, since ES2019 it's stable across engines).`,
+- Never invent claims about language/runtime behavior (e.g., "Array.sort is slow and unstable" — it isn't, since ES2019 it's stable across engines).${EDIT_MODE_PROTOCOL}`,
     reminders: [
       "Identify root cause, not just the symptom.",
       "Sanity-check claims about language behavior before writing them.",
       "If you can't find a clear bug, say so instead of fabricating a diagnosis.",
+      "Use path= mode=replace or mode=patch in fence info.",
     ],
   },
 
@@ -134,8 +164,8 @@ Specific rules:
 - For styling: Tailwind if classes are in use, CSS modules if those, styled-components if those. Don't switch styling systems.
 - Accessibility: keep semantic HTML, alt text, ARIA labels, keyboard focus.
 - Responsive: mobile-first if Tailwind is in use; preserve existing breakpoints.
-- Don't introduce new dependencies unless the user asked.`,
-    reminders: ["Match existing styling system. No new dependencies without ask."],
+- Don't introduce new dependencies unless the user asked.${EDIT_MODE_PROTOCOL}`,
+    reminders: ["Match existing styling system. No new dependencies without ask.", "Use path= mode=replace or mode=patch in fence info."],
   },
 
   api_implementation: {
@@ -153,11 +183,12 @@ Required:
 Avoid:
 - Returning raw DB errors to the client.
 - Sync DB calls in async handlers.
-- Hard-coded secrets, URLs, or IDs — read from config/env.`,
+- Hard-coded secrets, URLs, or IDs — read from config/env.${EDIT_MODE_PROTOCOL}`,
     reminders: [
       "Validate at the boundary.",
       "Correct HTTP status codes.",
       "Auth check before business logic.",
+      "Use path= mode=replace or mode=patch in fence info.",
     ],
   },
 
@@ -175,8 +206,8 @@ Process:
 Specific rules:
 - If a file is too long to fit, focus on the changed sections AND use comments like \`// ... unchanged: lines 45–120\` for the rest. The user MUST be able to apply the changes mechanically.
 - Don't introduce breaking changes silently. If a function signature must change, list every call site that needs updating.
-- Don't half-finish: every file you touch must be runnable.`,
-    reminders: ["Plan first, then code. Public APIs preserved."],
+- Don't half-finish: every file you touch must be runnable.${EDIT_MODE_PROTOCOL}`,
+    reminders: ["Plan first, then code. Public APIs preserved.", "Use path= mode=replace or mode=patch in fence info — one block per file."],
   },
 
   database_schema_change: {

@@ -2,7 +2,7 @@
   "name": "cupid-ai-router",
   "displayName": "Cupid AI Router",
   "description": "Cursor-style AI chat with intelligent multi-model routing — saves 90%+ cost vs always using Opus",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -57,6 +57,19 @@
       {
         "command": "cupid.moveToRight",
         "title": "Cupid: Move chat to right (Secondary Side Bar)"
+      },
+      {
+        "command": "cupid.inlineEdit",
+        "title": "Cupid: Inline Edit at cursor (Ctrl+K)",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "cupid.acceptChanges",
+        "title": "Cupid: Accept proposed changes"
+      },
+      {
+        "command": "cupid.rejectChanges",
+        "title": "Cupid: Reject proposed changes"
       }
     ],
     "keybindings": [
@@ -70,6 +83,12 @@
         "key": "ctrl+shift+l",
         "mac": "cmd+shift+l",
         "when": "editorHasSelection"
+      },
+      {
+        "command": "cupid.inlineEdit",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "editorTextFocus"
       }
     ],
     "configuration": {
@@ -78,24 +97,33 @@
         "cupid.backendUrl": {
           "type": "string",
           "default": "http://localhost:3300",
-          "description": "URL of the Cupid backend server"
+          "description": "URL of the Cupid backend server. Default: http://localhost:3300. Run `pnpm dev` in the cupid backend folder to start it."
         },
         "cupid.userMode": {
           "type": "string",
           "enum": ["cost_saving", "balanced", "max_quality"],
+          "enumDescriptions": [
+            "Aggressively prefers cheap models (GPT-4o-mini, Haiku). Great for simple edits and explanations.",
+            "Balanced cost and quality. Routes based on task complexity. Recommended for most users.",
+            "Always uses the strongest available model. Best output, highest cost."
+          ],
           "default": "balanced",
-          "description": "cost_saving aggressively prefers cheap models; max_quality always uses strong models"
+          "description": "Controls which model tier Cupid selects. cost_saving < balanced < max_quality."
         },
         "cupid.routingMode": {
           "type": "string",
           "enum": ["rule_based", "llm_assisted"],
+          "enumDescriptions": [
+            "Fast heuristic routing — instant, no extra cost. Good for well-defined task types.",
+            "LLM-based routing — slightly slower, slightly more expensive, but smarter task classification."
+          ],
           "default": "llm_assisted",
-          "description": "How tasks are classified before routing"
+          "description": "How Cupid classifies your task before routing to a model."
         },
         "cupid.autoMoveToRight": {
           "type": "boolean",
           "default": true,
-          "description": "On first activation, move the Cupid chat to the right Secondary Side Bar (Cursor-style)"
+          "description": "On first activation, move the Cupid chat to the right Secondary Side Bar (Cursor-style layout)."
         }
       }
     }

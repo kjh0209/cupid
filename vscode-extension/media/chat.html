@@ -3,341 +3,1076 @@
 <head>
 <meta charset="utf-8">
 <style>
-  :root {
-    --bg: var(--vscode-sideBar-background);
-    --fg: var(--vscode-foreground);
-    --border: var(--vscode-panel-border);
-    --input-bg: var(--vscode-input-background);
-    --input-fg: var(--vscode-input-foreground);
-    --input-border: var(--vscode-input-border, transparent);
-    --btn-bg: var(--vscode-button-background);
-    --btn-fg: var(--vscode-button-foreground);
-    --btn-hover: var(--vscode-button-hoverBackground);
-    --muted: var(--vscode-descriptionForeground);
-    --link: var(--vscode-textLink-foreground);
-    --user-bubble: var(--vscode-editor-inactiveSelectionBackground);
-    --code-bg: var(--vscode-textCodeBlock-background);
-    --badge-bg: var(--vscode-badge-background);
-    --badge-fg: var(--vscode-badge-foreground);
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--fg); background: var(--bg); }
-  body { display: flex; flex-direction: column; }
-  #toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 11px; }
-  #toolbar .spacer { flex: 1; }
-  .icon-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 3px; font-size: 12px; }
-  .icon-btn:hover { background: var(--btn-hover); color: var(--fg); }
-  #messages { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 10px; }
-  .msg { font-size: 12.5px; line-height: 1.5; }
-  .msg.user { background: var(--user-bubble); padding: 8px 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
-  .msg.assistant { padding: 4px 2px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; font-size: 10.5px; }
-  .badge { background: var(--badge-bg); color: var(--badge-fg); padding: 2px 6px; border-radius: 8px; }
-  .badge.savings { background: #1a7f37; color: white; }
-  .badge.muted { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .reasons { color: var(--muted); font-size: 10.5px; margin: 4px 0 8px; padding-left: 12px; }
-  .reasons li { margin: 1px 0; }
-  .content { white-space: pre-wrap; word-wrap: break-word; }
-  .content pre { background: var(--code-bg); padding: 8px 10px; border-radius: 4px; overflow-x: auto; margin: 6px 0; font-family: var(--vscode-editor-font-family); font-size: 12px; white-space: pre; position: relative; }
-  .content pre .lang-tag { position: absolute; top: 4px; right: 6px; font-size: 9px; color: var(--muted); }
-  .content code { font-family: var(--vscode-editor-font-family); font-size: 12px; }
-  .content :not(pre) > code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
-  .actions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-  .actions button { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; font-size: 11px; cursor: pointer; border-radius: 3px; }
-  .actions button:hover { background: var(--btn-hover); color: var(--fg); }
-  .actions button.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
-  .actions button.primary:hover { background: var(--btn-hover); }
-  #empty { color: var(--muted); font-size: 11px; padding: 16px; text-align: center; }
-  #empty kbd { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-family: var(--vscode-editor-font-family); font-size: 10px; }
-  #composer { border-top: 1px solid var(--border); padding: 8px; }
-  #composer .row { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
-  #composer label { font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 4px; cursor: pointer; }
-  #composer label input { margin: 0; }
-  #input-wrap { display: flex; gap: 4px; }
-  #input { flex: 1; background: var(--input-bg); color: var(--input-fg); border: 1px solid var(--input-border); border-radius: 4px; padding: 6px 8px; font-family: var(--vscode-font-family); font-size: 12.5px; resize: none; min-height: 32px; max-height: 200px; outline: none; }
-  #input:focus { border-color: var(--vscode-focusBorder); }
-  #send-btn { background: var(--btn-bg); color: var(--btn-fg); border: none; padding: 0 14px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-  #send-btn:hover { background: var(--btn-hover); }
-  #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .typing::after { content: "▍"; animation: blink 1s steps(2) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .err { color: var(--vscode-errorForeground); font-size: 11px; padding: 6px; border-left: 2px solid var(--vscode-errorForeground); background: var(--code-bg); }
+/* ── VS Code token variables ─────────────────────────────────────────────── */
+:root {
+  --bg: var(--vscode-sideBar-background);
+  --fg: var(--vscode-foreground);
+  --border: var(--vscode-panel-border, var(--vscode-widget-border, #333));
+  --input-bg: var(--vscode-input-background);
+  --input-fg: var(--vscode-input-foreground);
+  --input-border: var(--vscode-input-border, transparent);
+  --btn-bg: var(--vscode-button-background);
+  --btn-fg: var(--vscode-button-foreground);
+  --btn-hover: var(--vscode-button-hoverBackground);
+  --btn2-bg: var(--vscode-button-secondaryBackground, rgba(128,128,128,.15));
+  --btn2-fg: var(--vscode-button-secondaryForeground, var(--fg));
+  --btn2-hover: var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,.25));
+  --muted: var(--vscode-descriptionForeground);
+  --link: var(--vscode-textLink-foreground);
+  --user-bubble: var(--vscode-editor-inactiveSelectionBackground);
+  --code-bg: var(--vscode-textCodeBlock-background);
+  --badge-bg: var(--vscode-badge-background);
+  --badge-fg: var(--vscode-badge-foreground);
+  --error-fg: var(--vscode-errorForeground);
+  --success: #2ea043;
+  --editor-font: var(--vscode-editor-font-family, 'Consolas', monospace);
+  --editor-size: var(--vscode-editor-font-size, 12px);
+  --ui-font: var(--vscode-font-family);
+  --ui-size: var(--vscode-font-size, 13px);
+  --radius: 6px;
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 12px;
+  --gap-lg: 16px;
+  --transition: all 120ms ease;
+}
+
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--ui-font); font-size: var(--ui-size); color: var(--fg); background: var(--bg); overflow: hidden; }
+body { display: flex; flex-direction: column; }
+button { font-family: inherit; font-size: inherit; cursor: pointer; transition: var(--transition); }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  padding: 6px var(--gap-sm);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 34px;
+}
+#toolbar .logo { font-weight: 700; font-size: 13px; letter-spacing: 0.02em; }
+#toolbar .spacer { flex: 1; }
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 3px 6px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.icon-btn:hover { background: var(--btn2-hover); color: var(--fg); }
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#connection-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 400ms ease;
+}
+#connection-dot.online { background: var(--success); }
+#connection-dot.offline { background: var(--error-fg); }
+#stop-btn { color: var(--error-fg); border: 1px solid var(--error-fg); padding: 2px 8px; border-radius: var(--radius); background: transparent; font-size: 11px; display: none; }
+#stop-btn:hover { background: var(--error-fg); color: white; }
+#stop-btn.visible { display: flex; }
+
+/* ── Messages ─────────────────────────────────────────────────────────────── */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--gap-sm) var(--gap-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  scroll-behavior: smooth;
+}
+#messages::-webkit-scrollbar { width: 5px; }
+#messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Empty / onboarding state ─────────────────────────────────────────────── */
+#empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-md);
+  text-align: center;
+  padding: var(--gap-lg);
+  color: var(--muted);
+}
+#empty .empty-icon { font-size: 28px; opacity: 0.6; }
+#empty .empty-title { font-size: 14px; font-weight: 600; color: var(--fg); }
+#empty .empty-sub { font-size: 11.5px; line-height: 1.6; max-width: 280px; }
+.example-chips { display: flex; flex-direction: column; gap: var(--gap-xs); width: 100%; max-width: 280px; }
+.chip-btn {
+  background: var(--btn2-bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  font-size: 11.5px;
+  text-align: left;
+  transition: var(--transition);
+}
+.chip-btn:hover { background: var(--btn2-hover); border-color: var(--link); }
+
+/* ── User message ─────────────────────────────────────────────────────────── */
+.msg-user {
+  background: var(--user-bubble);
+  padding: var(--gap-sm) var(--gap-md);
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  align-self: flex-start;
+  width: 100%;
+}
+
+/* ── Assistant message ────────────────────────────────────────────────────── */
+.msg-assistant { font-size: 13px; line-height: 1.55; }
+
+/* ── Routing badges ───────────────────────────────────────────────────────── */
+.badges { display: flex; flex-wrap: wrap; gap: var(--gap-xs); margin-bottom: 8px; align-items: center; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  animation: fadeSlideIn 200ms ease forwards;
+}
+.badge.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.badge.savings { background: #1a7f37; color: white; border-color: #1a7f37; }
+.badge.muted { background: transparent; color: var(--muted); }
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reasons { color: var(--muted); font-size: 10.5px; margin: 4px 0 6px; padding-left: 14px; }
+.reasons li { margin: 2px 0; }
+
+/* ── Rendered content ─────────────────────────────────────────────────────── */
+.content { word-wrap: break-word; }
+.content p { margin: 6px 0; }
+.content p:first-child { margin-top: 0; }
+.content p:last-child { margin-bottom: 0; }
+.content h1, .content h2, .content h3 { font-weight: 600; margin: 12px 0 6px; color: var(--fg); }
+.content h1 { font-size: 16px; }
+.content h2 { font-size: 14px; }
+.content h3 { font-size: 13px; }
+.content ul, .content ol { padding-left: 20px; margin: 6px 0; }
+.content li { margin: 2px 0; }
+.content code { font-family: var(--editor-font); font-size: var(--editor-size); background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+.content blockquote { border-left: 3px solid var(--border); padding-left: var(--gap-sm); color: var(--muted); margin: 6px 0; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content a { color: var(--link); }
+
+/* ── Typing indicator ─────────────────────────────────────────────────────── */
+.typing-dot::after {
+  content: "";
+  display: inline-block;
+  animation: typingDots 1.2s steps(4, end) infinite;
+}
+@keyframes typingDots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+}
+
+/* ── Code block ───────────────────────────────────────────────────────────── */
+.code-block {
+  margin: var(--gap-sm) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--code-bg);
+  position: relative;
+}
+.cb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(0,0,0,.1);
+  border-bottom: 1px solid var(--border);
+  min-height: 28px;
+  gap: var(--gap-sm);
+}
+.cb-meta { display: flex; align-items: center; gap: 6px; font-size: 10.5px; flex-wrap: wrap; }
+.cb-lang { font-family: var(--editor-font); color: var(--muted); font-size: 10.5px; }
+.cb-path { color: var(--link); font-family: var(--editor-font); font-size: 10.5px; font-weight: 500; }
+.cb-mode { padding: 1px 5px; border-radius: 3px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em; }
+.cb-mode.mode-replace { background: rgba(46,160,67,.2); color: #2ea043; }
+.cb-mode.mode-patch   { background: rgba(210,130,0,.2); color: #d28200; }
+.cb-lines { color: var(--muted); font-size: 10px; }
+.cb-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 120ms ease; }
+.code-block:hover .cb-actions { opacity: 1; }
+.cb-btn {
+  background: var(--btn2-bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 2px 7px;
+  font-size: 10.5px;
+  border-radius: 3px;
+}
+.cb-btn:hover { background: var(--btn2-hover); }
+.cb-btn.primary-action { background: var(--btn-bg); color: var(--btn-fg); border-color: transparent; }
+.cb-btn.primary-action:hover { background: var(--btn-hover); }
+.cb-content {
+  padding: var(--gap-sm) var(--gap-md);
+  overflow-x: auto;
+  font-family: var(--editor-font);
+  font-size: var(--editor-size);
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+}
+.cb-content::-webkit-scrollbar { height: 4px; }
+.cb-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* Syntax highlight tokens */
+.hl-keyword { color: var(--vscode-symbolIcon-keywordForeground, #569cd6); font-weight: 500; }
+.hl-string  { color: var(--vscode-symbolIcon-stringForeground, #ce9178); }
+.hl-comment { color: var(--vscode-editorLineNumber-foreground, #6a9955); font-style: italic; }
+.hl-number  { color: var(--vscode-symbolIcon-numberForeground, #b5cea8); }
+.hl-builtin { color: var(--vscode-symbolIcon-classForeground, #4ec9b0); }
+
+/* ── Message actions (bottom of message) ─────────────────────────────────── */
+.msg-actions { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.msg-actions button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 3px 9px;
+  font-size: 11px;
+  border-radius: var(--radius);
+}
+.msg-actions button:hover { background: var(--btn2-hover); color: var(--fg); }
+.msg-actions button.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: transparent; }
+.msg-actions button.primary:hover { background: var(--btn-hover); }
+
+/* ── Error display ────────────────────────────────────────────────────────── */
+.err-msg {
+  font-size: 11.5px;
+  padding: var(--gap-sm) var(--gap-md);
+  border-left: 2px solid var(--error-fg);
+  background: var(--code-bg);
+  color: var(--error-fg);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-top: 4px;
+}
+
+/* ── Composer ─────────────────────────────────────────────────────────────── */
+#composer {
+  border-top: 1px solid var(--border);
+  padding: var(--gap-sm);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+#attachments { display: flex; flex-wrap: wrap; gap: 4px; }
+.attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  background: var(--btn2-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px 7px;
+  color: var(--link);
+}
+.attach-chip .rm { color: var(--muted); cursor: pointer; padding: 0 2px; font-weight: bold; }
+.attach-chip .rm:hover { color: var(--error-fg); }
+#composer-opts { display: flex; align-items: center; gap: var(--gap-sm); font-size: 10.5px; color: var(--muted); }
+#composer-opts label { display: flex; align-items: center; gap: 3px; cursor: pointer; }
+#composer-opts .spacer { flex: 1; }
+#input-row { display: flex; gap: 6px; align-items: flex-end; position: relative; }
+#input {
+  flex: 1;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  resize: none;
+  min-height: 34px;
+  max-height: 160px;
+  outline: none;
+  line-height: 1.45;
+  transition: border-color 120ms ease;
+}
+#input:focus { border-color: var(--vscode-focusBorder, var(--link)); }
+#input::placeholder { color: var(--muted); opacity: 0.8; }
+#send-btn {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-end;
+  min-height: 34px;
+}
+#send-btn:hover { background: var(--btn-hover); }
+#send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── @ mention dropdown ───────────────────────────────────────────────────── */
+#mention-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 60px;
+  background: var(--vscode-quickInput-background, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+}
+#mention-dropdown.open { display: block; }
+.mention-item {
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-family: var(--editor-font);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
+  transition: background 80ms;
+}
+.mention-item:hover, .mention-item.active { background: var(--btn2-hover); }
+.mention-item .match { color: var(--link); font-weight: 600; }
+.mention-empty { padding: 8px 10px; font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
-  <div id="toolbar">
-    <span style="font-weight: 600;">Cupid</span>
+
+<!-- ── Toolbar ─────────────────────────────────────────────────────────────── -->
+<div id="toolbar">
+  <span class="logo">Cupid</span>
+  <div id="connection-dot" title="Backend connection status"></div>
+  <div class="spacer"></div>
+  <button id="stop-btn" class="icon-btn" title="Stop generation">■ Stop</button>
+  <button id="reset-btn" class="icon-btn" title="Reset session memory">↺ Session</button>
+  <button id="settings-btn" class="icon-btn" title="Settings">⚙</button>
+</div>
+
+<!-- ── Messages ────────────────────────────────────────────────────────────── -->
+<div id="messages">
+  <div id="empty">
+    <div class="empty-icon">🤖</div>
+    <div class="empty-title">Cupid AI Router</div>
+    <div class="empty-sub">Analyzes your prompt and automatically routes to the best model — saving 90%+ vs always using the strongest.</div>
+    <div class="example-chips">
+      <button class="chip-btn" data-example="Explain this code">💡 Explain this code</button>
+      <button class="chip-btn" data-example="Fix the bug here">🐛 Fix the bug here</button>
+      <button class="chip-btn" data-example="Build me a small breakout game in HTML">🎮 Build me a breakout game</button>
+    </div>
+    <div id="backend-status" style="font-size:10.5px; color: var(--muted);">Checking backend…</div>
+  </div>
+</div>
+
+<!-- ── Composer ─────────────────────────────────────────────────────────────── -->
+<div id="composer">
+  <div id="attachments"></div>
+  <div id="composer-opts">
+    <label><input type="checkbox" id="include-sel"> include file</label>
     <span class="spacer"></span>
-    <button class="icon-btn" id="reset-btn" title="Reset session memory">↻ Session</button>
-    <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+    <span id="status-label" style="font-size:10.5px; color: var(--muted);"></span>
   </div>
-  <div id="messages">
-    <div id="empty">
-      Type a question below. <kbd>Enter</kbd> sends, <kbd>Shift+Enter</kbd> newline.<br>
-      Check the box to include current file as context.
-    </div>
+  <div id="input-row" style="position:relative;">
+    <div id="mention-dropdown"></div>
+    <textarea id="input" rows="1" placeholder="Ask Cupid — type @ to attach a file, Shift+Enter for newline…"></textarea>
+    <button id="send-btn">Send</button>
   </div>
-  <div id="composer">
-    <div class="row">
-      <label><input type="checkbox" id="include-sel"> include current file</label>
-      <span class="spacer" style="flex:1"></span>
-      <span id="status" style="font-size: 10.5px; color: var(--muted);"></span>
-    </div>
-    <div id="input-wrap">
-      <textarea id="input" rows="1" placeholder="Ask Cupid — it routes to the best model for your task..."></textarea>
-      <button id="send-btn">Send</button>
-    </div>
-  </div>
+</div>
+
 <script>
 (function() {
-  const vscode = acquireVsCodeApi();
-  const messagesEl = document.getElementById("messages");
-  const emptyEl = document.getElementById("empty");
-  const input = document.getElementById("input");
-  const sendBtn = document.getElementById("send-btn");
-  const includeSel = document.getElementById("include-sel");
-  const statusEl = document.getElementById("status");
+'use strict';
+const vscode = acquireVsCodeApi();
 
-  const msgState = new Map();
+// ── DOM refs ────────────────────────────────────────────────────────────────
+const messagesEl = document.getElementById('messages');
+const emptyEl    = document.getElementById('empty');
+const input      = document.getElementById('input');
+const sendBtn    = document.getElementById('send-btn');
+const stopBtn    = document.getElementById('stop-btn');
+const includeSel = document.getElementById('include-sel');
+const statusLbl  = document.getElementById('status-label');
+const connDot    = document.getElementById('connection-dot');
+const backendStatus = document.getElementById('backend-status');
+const attachmentsEl = document.getElementById('attachments');
+const mentionDrop   = document.getElementById('mention-dropdown');
 
-  function autoSize() {
-    input.style.height = "auto";
-    input.style.height = Math.min(input.scrollHeight, 200) + "px";
+// ── State ───────────────────────────────────────────────────────────────────
+const msgState     = new Map();
+const attachments  = [];   // { path: string }[]
+let allFiles       = [];   // workspace file list for @ mention
+let mentionQuery   = '';
+let mentionActive  = false;
+let mentionIndex   = 0;
+let isStreaming    = false;
+
+// ── Health check ─────────────────────────────────────────────────────────────
+vscode.postMessage({ type: 'checkHealth' });
+
+// ── Auto-resize textarea ────────────────────────────────────────────────────
+function autoSize() {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+}
+input.addEventListener('input', autoSize);
+
+function setStatus(s) { statusLbl.textContent = s || ''; }
+
+// ── Send ────────────────────────────────────────────────────────────────────
+function send() {
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+  const attachPaths = attachments.map(a => a.path);
+  vscode.postMessage({ type: 'send', text, includeSelection: includeSel.checked, attachments: attachPaths });
+  input.value = '';
+  autoSize();
+  closeMentionDropdown();
+  setIsStreaming(true);
+}
+
+function setIsStreaming(v) {
+  isStreaming = v;
+  sendBtn.disabled = v;
+  stopBtn.classList.toggle('visible', v);
+}
+
+sendBtn.addEventListener('click', send);
+input.addEventListener('keydown', (e) => {
+  if (mentionActive) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveMention(1); return; }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); moveMention(-1); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); selectMention(); return; }
+    if (e.key === 'Escape') { closeMentionDropdown(); return; }
   }
-  input.addEventListener("input", autoSize);
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
 
-  function setStatus(s) { statusEl.textContent = s || ""; }
+stopBtn.addEventListener('click', () => { vscode.postMessage({ type: 'stop' }); });
+document.getElementById('reset-btn').addEventListener('click', () => vscode.postMessage({ type: 'resetSession' }));
+document.getElementById('settings-btn').addEventListener('click', () => vscode.postMessage({ type: 'openSettings' }));
 
-  function send() {
-    const text = input.value.trim();
-    if (!text) return;
-    vscode.postMessage({ type: "send", text: text, includeSelection: includeSel.checked });
-    input.value = "";
+// ── Example chips ──────────────────────────────────────────────────────────
+document.querySelectorAll('.chip-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    input.value = btn.dataset.example || '';
     autoSize();
-    sendBtn.disabled = true;
-  }
-
-  sendBtn.addEventListener("click", send);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+    input.focus();
   });
-  document.getElementById("reset-btn").addEventListener("click", () => vscode.postMessage({ type: "resetSession" }));
-  document.getElementById("settings-btn").addEventListener("click", () => vscode.postMessage({ type: "openSettings" }));
+});
 
-  function clearEmpty() { if (emptyEl) emptyEl.style.display = "none"; }
+// ── @ mention ────────────────────────────────────────────────────────────────
+input.addEventListener('input', () => {
+  const val = input.value;
+  const pos = input.selectionStart || 0;
+  const before = val.slice(0, pos);
+  const atIdx = before.lastIndexOf('@');
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, function(c) {
-      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
-    });
-  }
-
-  const FENCE = String.fromCharCode(96,96,96);
-  function renderContent(raw) {
-    const re = new RegExp("(" + FENCE + "[\\s\\S]*?" + FENCE + ")", "g");
-    const parts = raw.split(re);
-    return parts.map(function(p) {
-      if (p.indexOf(FENCE) === 0) {
-        const inner = p.slice(3, -3);
-        const nlIdx = inner.indexOf("\n");
-        const lang = nlIdx >= 0 ? inner.slice(0, nlIdx).trim() : "";
-        const code = nlIdx >= 0 ? inner.slice(nlIdx + 1) : inner;
-        return '<pre><span class="lang-tag">' + escapeHtml(lang) + '</span><code>' + escapeHtml(code) + '</code></pre>';
-      }
-      return escapeHtml(p)
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/\n/g, "<br>");
-    }).join("");
-  }
-
-  function makeBadge(text, cls) {
-    const s = document.createElement("span");
-    s.className = "badge" + (cls ? " " + cls : "");
-    s.textContent = text;
-    return s;
-  }
-
-  window.addEventListener("message", function(ev) {
-    const m = ev.data;
-    switch (m.type) {
-      case "focusInput":
-        if (m.prefill) input.value = m.prefill;
-        autoSize();
-        input.focus();
-        break;
-      case "userMsg": {
-        clearEmpty();
-        const div = document.createElement("div");
-        div.className = "msg user";
-        div.textContent = m.text;
-        messagesEl.appendChild(div);
-        scrollToBottom();
-        break;
-      }
-      case "assistantStart": {
-        const wrap = document.createElement("div");
-        wrap.className = "msg assistant";
-        const badges = document.createElement("div");
-        badges.className = "badges";
-        badges.appendChild(makeBadge("routing…", "muted"));
-        const content = document.createElement("div");
-        content.className = "content typing";
-        content.setAttribute("data-role", "content");
-        wrap.appendChild(badges);
-        wrap.appendChild(content);
-        messagesEl.appendChild(wrap);
-        msgState.set(m.id, { wrap: wrap, raw: "" });
-        setStatus("routing…");
-        scrollToBottom();
-        break;
-      }
-      case "stream": {
-        const st = msgState.get(m.id); if (!st) break;
-        if (m.event === "routing") {
-          const badges = st.wrap.querySelector(".badges");
-          badges.innerHTML = "";
-          const r = m.data.routing;
-          const c = m.data.classification;
-          const ll = m.data.llmRouting;
-          // Classification mode badge (first, most visible)
-          if (ll) {
-            badges.appendChild(makeBadge(ll.fellBackToRules ? "rules (LLM fellback)" : "LLM-assisted", "muted"));
-          } else {
-            badges.appendChild(makeBadge("rule-based", "muted"));
-          }
-          badges.appendChild(makeBadge(r.displayName));
-          badges.appendChild(makeBadge(r.tier, "muted"));
-          badges.appendChild(makeBadge(c.taskType, "muted"));
-          if (r.reasons && r.reasons.length) {
-            const ul = document.createElement("ul");
-            ul.className = "reasons";
-            for (const reason of r.reasons.slice(0, 4)) {
-              const li = document.createElement("li");
-              li.textContent = reason;
-              ul.appendChild(li);
-            }
-            badges.after(ul);
-          }
-          setStatus("generating…");
-        } else if (m.event === "chunk") {
-          st.raw += m.data.text || "";
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.innerHTML = renderContent(st.raw);
-          scrollToBottom();
-        } else if (m.event === "done") {
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.classList.remove("typing");
-          const badges = st.wrap.querySelector(".badges");
-          const cost = m.data.costUsd;
-          badges.appendChild(makeBadge("$" + cost.toFixed(5), "muted"));
-          const hasCode = st.raw.indexOf(FENCE) >= 0;
-          const actions = document.createElement("div");
-          actions.className = "actions";
-          if (hasCode) {
-            const applyBtn = document.createElement("button");
-            applyBtn.className = "primary";
-            applyBtn.textContent = "Apply";
-            applyBtn.title = "Replace current file content (Ctrl+Z to undo) OR write to detected paths";
-            applyBtn.dataset.action = "apply";
-            const diffBtn = document.createElement("button");
-            diffBtn.textContent = "Diff";
-            diffBtn.title = "Open side-by-side diff to review before applying";
-            diffBtn.dataset.action = "diff";
-            const newFileBtn = document.createElement("button");
-            newFileBtn.textContent = "New file";
-            newFileBtn.dataset.action = "newFile";
-            const insertBtn = document.createElement("button");
-            insertBtn.textContent = "Insert at cursor";
-            insertBtn.dataset.action = "insert";
-            const copyBtn = document.createElement("button");
-            copyBtn.textContent = "Copy";
-            copyBtn.dataset.action = "copy";
-            actions.appendChild(applyBtn);
-            actions.appendChild(diffBtn);
-            actions.appendChild(newFileBtn);
-            actions.appendChild(insertBtn);
-            actions.appendChild(copyBtn);
-          } else {
-            const copyBtn = document.createElement("button");
-            copyBtn.textContent = "Copy";
-            copyBtn.dataset.action = "copy";
-            actions.appendChild(copyBtn);
-          }
-          actions.addEventListener("click", function(e) {
-            const tgt = e.target;
-            if (!tgt || tgt.tagName !== "BUTTON") return;
-            const action = tgt.dataset.action;
-            if (action === "copy") {
-              vscode.postMessage({ type: "copy", text: st.raw });
-            } else if (action === "apply" || action === "newFile" || action === "insert" || action === "diff") {
-              vscode.postMessage({ type: "apply", text: st.raw, mode: action === "apply" ? "auto" : action });
-            }
-          });
-          st.wrap.appendChild(actions);
-          msgState.delete(m.id);
-          setStatus("");
-          sendBtn.disabled = false;
-        } else if (m.event === "error") {
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.classList.remove("typing");
-          const errDiv = document.createElement("div");
-          errDiv.className = "err";
-          errDiv.textContent = m.data.message || "Error";
-          st.wrap.appendChild(errDiv);
-          msgState.delete(m.id);
-          setStatus("error");
-          sendBtn.disabled = false;
-        } else if (m.event === "cpl") {
-          const badges = st.wrap.querySelector(".badges");
-          badges.appendChild(makeBadge("CPL +" + m.data.injectedEntries, "muted"));
-        }
-        break;
-      }
-      case "error": {
-        const st = msgState.get(m.id);
-        if (st) {
-          const errDiv = document.createElement("div");
-          errDiv.className = "err";
-          errDiv.textContent = m.message;
-          st.wrap.appendChild(errDiv);
-          msgState.delete(m.id);
-        } else {
-          const div = document.createElement("div");
-          div.className = "err";
-          div.textContent = m.message;
-          messagesEl.appendChild(div);
-        }
-        setStatus("error");
-        sendBtn.disabled = false;
-        scrollToBottom();
-        break;
-      }
-      case "aborted": {
-        const st = msgState.get(m.id);
-        if (st) {
-          const note = document.createElement("div");
-          note.className = "err";
-          note.textContent = "Stopped.";
-          st.wrap.appendChild(note);
-          msgState.delete(m.id);
-        }
-        setStatus("");
-        sendBtn.disabled = false;
-        break;
-      }
-      case "assistantEnd":
-        sendBtn.disabled = false;
-        break;
-      case "sessionReset":
-        setStatus("session reset");
-        setTimeout(function() { setStatus(""); }, 1500);
-        break;
+  if (atIdx !== -1 && !before.slice(atIdx + 1).includes(' ') && !before.slice(atIdx + 1).includes('\n')) {
+    mentionQuery = before.slice(atIdx + 1).toLowerCase();
+    if (allFiles.length === 0) {
+      vscode.postMessage({ type: 'listFiles' });
     }
+    renderMentionDropdown();
+  } else {
+    closeMentionDropdown();
+  }
+});
+
+function renderMentionDropdown() {
+  const filtered = allFiles
+    .filter(f => mentionQuery ? f.toLowerCase().includes(mentionQuery) : true)
+    .slice(0, 20);
+
+  if (filtered.length === 0) {
+    mentionDrop.innerHTML = '<div class="mention-empty">No matching files</div>';
+  } else {
+    mentionDrop.innerHTML = filtered.map((f, i) => {
+      const esc = escapeHtml(f);
+      let display = esc;
+      if (mentionQuery) {
+        display = esc.replace(new RegExp(escapeRegex(escapeHtml(mentionQuery)), 'gi'), m => `<span class="match">${m}</span>`);
+      }
+      return `<div class="mention-item${i === mentionIndex ? ' active' : ''}" data-path="${esc}">${display}</div>`;
+    }).join('');
+  }
+
+  mentionDrop.classList.add('open');
+  mentionActive = filtered.length > 0;
+
+  mentionDrop.querySelectorAll('.mention-item').forEach((el, i) => {
+    el.addEventListener('click', () => {
+      mentionIndex = i;
+      selectMention();
+    });
+  });
+}
+
+function moveMention(dir) {
+  const items = mentionDrop.querySelectorAll('.mention-item');
+  mentionIndex = Math.max(0, Math.min(items.length - 1, mentionIndex + dir));
+  items.forEach((el, i) => el.classList.toggle('active', i === mentionIndex));
+}
+
+function selectMention() {
+  const items = mentionDrop.querySelectorAll('.mention-item');
+  const item = items[mentionIndex];
+  if (!item) return;
+  const filePath = item.dataset.path;
+  if (!filePath) return;
+
+  // Remove the @query from input
+  const val = input.value;
+  const pos = input.selectionStart || 0;
+  const before = val.slice(0, pos);
+  const atIdx = before.lastIndexOf('@');
+  const newVal = val.slice(0, atIdx) + val.slice(pos);
+  input.value = newVal;
+  input.selectionStart = input.selectionEnd = atIdx;
+  autoSize();
+
+  // Add attachment chip
+  addAttachment(filePath);
+  closeMentionDropdown();
+}
+
+function closeMentionDropdown() {
+  mentionDrop.classList.remove('open');
+  mentionActive = false;
+  mentionIndex = 0;
+}
+
+// ── Attachment chips ─────────────────────────────────────────────────────────
+function addAttachment(filePath) {
+  if (attachments.some(a => a.path === filePath)) return;
+  attachments.push({ path: filePath });
+  renderAttachments();
+}
+
+function removeAttachment(filePath) {
+  const idx = attachments.findIndex(a => a.path === filePath);
+  if (idx !== -1) attachments.splice(idx, 1);
+  renderAttachments();
+}
+
+function renderAttachments() {
+  attachmentsEl.innerHTML = attachments.map(a => {
+    const esc = escapeHtml(a.path);
+    const name = esc.split('/').pop() || esc;
+    return `<span class="attach-chip">📎 <span>${name}</span><span class="rm" data-path="${esc}" title="Remove">×</span></span>`;
+  }).join('');
+  attachmentsEl.querySelectorAll('.rm').forEach(el => {
+    el.addEventListener('click', () => removeAttachment(el.dataset.path));
+  });
+}
+
+// ── Clear empty state ────────────────────────────────────────────────────────
+function clearEmpty() {
+  if (emptyEl) { emptyEl.style.display = 'none'; }
+}
+
+// ── HTML/escaping utils ──────────────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// ── Syntax highlighting ──────────────────────────────────────────────────────
+const JS_KEYWORDS = new Set([
+  'const','let','var','function','class','return','if','else','for','while','do',
+  'switch','case','break','continue','import','export','default','from','async',
+  'await','try','catch','finally','throw','new','delete','typeof','instanceof',
+  'in','of','void','null','undefined','true','false','this','super','extends',
+  'implements','interface','type','enum','namespace','declare','abstract',
+  'public','private','protected','static','readonly','override','keyof',
+]);
+const JS_BUILTINS = new Set([
+  'console','Math','Array','Object','String','Number','Boolean','Date','JSON',
+  'Promise','Symbol','Map','Set','WeakMap','WeakSet','Error','TypeError',
+  'setTimeout','setInterval','clearTimeout','clearInterval','fetch','document',
+  'window','parseInt','parseFloat','isNaN','isFinite','encodeURIComponent',
+  'decodeURIComponent','require','module','exports','process','Buffer',
+]);
+const PY_KEYWORDS = new Set([
+  'def','class','return','if','elif','else','for','while','import','from','as',
+  'with','try','except','finally','raise','pass','break','continue','and','or',
+  'not','in','is','lambda','yield','global','nonlocal','del','assert','True',
+  'False','None','async','await',
+]);
+
+function tokenize(code, lang) {
+  const isPy = lang === 'py' || lang === 'python';
+  const keywords = isPy ? PY_KEYWORDS : JS_KEYWORDS;
+  const builtins = isPy ? new Set() : JS_BUILTINS;
+  const tokens = [];
+  let i = 0;
+
+  while (i < code.length) {
+    // Block comments
+    if (!isPy && code[i] === '/' && code[i+1] === '*') {
+      const end = code.indexOf('*/', i + 2);
+      const t = end >= 0 ? code.slice(i, end + 2) : code.slice(i);
+      tokens.push(['comment', t]); i += t.length; continue;
+    }
+    // Line comments
+    if ((!isPy && code[i] === '/' && code[i+1] === '/') ||
+        (isPy && code[i] === '#')) {
+      const end = code.indexOf('\n', i);
+      const t = end >= 0 ? code.slice(i, end) : code.slice(i);
+      tokens.push(['comment', t]); i += t.length; continue;
+    }
+    // Strings: single/double/backtick
+    if (code[i] === '"' || code[i] === "'" || (!isPy && code[i] === '`')) {
+      const q = code[i];
+      let j = i + 1;
+      while (j < code.length && code[j] !== q && code[j] !== '\n') {
+        if (code[j] === '\\') j++;
+        j++;
+      }
+      tokens.push(['string', code.slice(i, j + 1)]); i = j + 1; continue;
+    }
+    // Triple-quoted strings (Python)
+    if (isPy && (code.slice(i, i+3) === '"""' || code.slice(i, i+3) === "'''")) {
+      const q = code.slice(i, i+3);
+      const end = code.indexOf(q, i + 3);
+      const t = end >= 0 ? code.slice(i, end + 3) : code.slice(i);
+      tokens.push(['string', t]); i += t.length; continue;
+    }
+    // Numbers
+    if (/[0-9]/.test(code[i]) || (code[i] === '.' && /[0-9]/.test(code[i+1] || ''))) {
+      let j = i;
+      while (j < code.length && /[0-9a-fA-FxX._eE+\-]/.test(code[j])) j++;
+      tokens.push(['number', code.slice(i, j)]); i = j; continue;
+    }
+    // Identifiers
+    if (/[a-zA-Z_$]/.test(code[i])) {
+      let j = i;
+      while (j < code.length && /[a-zA-Z0-9_$]/.test(code[j])) j++;
+      const word = code.slice(i, j);
+      if (keywords.has(word))      tokens.push(['keyword', word]);
+      else if (builtins.has(word)) tokens.push(['builtin', word]);
+      else                          tokens.push(['plain', word]);
+      i = j; continue;
+    }
+    tokens.push(['plain', code[i]]); i++;
+  }
+  return tokens;
+}
+
+function highlightCode(rawCode, lang) {
+  const normalizedLang = (lang || '').toLowerCase();
+  const supportsHighlight = ['js','javascript','ts','typescript','jsx','tsx',
+    'py','python','go','rust','rs','java','c','cpp','cxx'].includes(normalizedLang);
+  if (!supportsHighlight) return escapeHtml(rawCode);
+
+  return tokenize(rawCode, normalizedLang).map(([type, text]) => {
+    const e = escapeHtml(text);
+    if (type === 'keyword') return `<span class="hl-keyword">${e}</span>`;
+    if (type === 'string')  return `<span class="hl-string">${e}</span>`;
+    if (type === 'comment') return `<span class="hl-comment">${e}</span>`;
+    if (type === 'number')  return `<span class="hl-number">${e}</span>`;
+    if (type === 'builtin') return `<span class="hl-builtin">${e}</span>`;
+    return e;
+  }).join('');
+}
+
+// ── Markdown renderer ────────────────────────────────────────────────────────
+let globalBlockIndex = 0;
+
+function renderCodeBlock(lang, fenceInfo, rawContent, raw) {
+  const pathMatch = fenceInfo.match(/path=([^\s]+)/);
+  const modeMatch = fenceInfo.match(/mode=(replace|patch)/);
+  const filePath = pathMatch ? pathMatch[1] : '';
+  const mode = modeMatch ? modeMatch[1] : '';
+
+  const lineCount = rawContent.trimEnd().split('\n').length;
+  const highlighted = highlightCode(rawContent.trimEnd(), lang);
+  const idx = globalBlockIndex++;
+
+  const metaParts = [];
+  if (lang) metaParts.push(`<span class="cb-lang">${escapeHtml(lang)}</span>`);
+  if (filePath) metaParts.push(`<span class="cb-path">${escapeHtml(filePath)}</span>`);
+  if (mode) metaParts.push(`<span class="cb-mode mode-${escapeHtml(mode)}">${escapeHtml(mode)}</span>`);
+  metaParts.push(`<span class="cb-lines">${lineCount}L</span>`);
+
+  const rawAttr = encodeURIComponent(raw);
+  return `<div class="code-block" data-raw="${rawAttr}" data-path="${escapeHtml(filePath)}" data-mode="${escapeHtml(mode)}">
+  <div class="cb-header">
+    <div class="cb-meta">${metaParts.join('')}</div>
+    <div class="cb-actions">
+      <button class="cb-btn" data-action="copy">Copy</button>
+      <button class="cb-btn primary-action" data-action="apply">Apply</button>
+      <button class="cb-btn" data-action="diff">Diff</button>
+    </div>
+  </div>
+  <pre class="cb-content"><code>${highlighted}</code></pre>
+</div>`;
+}
+
+function renderMarkdown(raw) {
+  // 1. Extract code blocks (protect from escaping)
+  const codeBlocks = [];
+  let text = raw.replace(/```([a-zA-Z0-9_+.-]*)([ \t][^\n]*)?\n([\s\S]*?)```/g, (_, lang, info, content) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push({ lang: lang || '', info: (info || '').trim(), content, fullMatch: _ });
+    return `\x00CB${idx}\x00`;
   });
 
-  function scrollToBottom() {
-    requestAnimationFrame(function() { messagesEl.scrollTop = messagesEl.scrollHeight; });
+  // 2. Extract inline code
+  const inlineCodes = [];
+  text = text.replace(/`([^`\n]+)`/g, (_, code) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(escapeHtml(code));
+    return `\x00IC${idx}\x00`;
+  });
+
+  // 3. Escape remaining HTML
+  text = escapeHtml(text);
+
+  // 4. Apply markdown (order matters!)
+  // Headings (must come before emphasis to avoid conflicts)
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  text = text.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+
+  // Bold before italic
+  text = text.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/__([^_\n]+)__/g,     '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+)\*/g,     '<em>$1</em>');
+  text = text.replace(/_([^_\n]+)_/g,       '<em>$1</em>');
+
+  // Blockquotes
+  text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // Links
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+  // Lists — collect consecutive li lines into ul/ol
+  text = text.replace(/^([*\-]) (.+)$/gm, '<li>$2</li>');
+  text = text.replace(/^\d+\. (.+)$/gm,   '<li>$1</li>');
+  text = text.replace(/(<li>[\s\S]*?<\/li>)(\n<li>[\s\S]*?<\/li>)*/g, m => `<ul>${m}</ul>`);
+
+  // Paragraphs
+  text = text.split(/\n\n+/).map(block => {
+    if (/^<(h[1-3]|ul|ol|blockquote|pre|div)/.test(block.trim())) return block;
+    if (/^\x00CB/.test(block.trim())) return block;
+    return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+  }).join('\n');
+
+  // 5. Restore inline codes
+  text = text.replace(/\x00IC(\d+)\x00/g, (_, i) => `<code>${inlineCodes[parseInt(i)]}</code>`);
+
+  // 6. Restore code blocks
+  text = text.replace(/\x00CB(\d+)\x00/g, (_, i) => {
+    const { lang, info, content, fullMatch } = codeBlocks[parseInt(i)];
+    return renderCodeBlock(lang, info, content, fullMatch);
+  });
+
+  return text;
+}
+
+// ── Badge factory ─────────────────────────────────────────────────────────────
+function makeBadge(text, cls) {
+  const s = document.createElement('span');
+  s.className = 'badge' + (cls ? ' ' + cls : '');
+  s.textContent = text;
+  return s;
+}
+
+// ── Append & scroll ───────────────────────────────────────────────────────────
+function appendMsg(el) {
+  messagesEl.appendChild(el);
+  scrollBottom();
+}
+
+function scrollBottom() {
+  requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
+}
+
+// ── Handle code block action buttons ─────────────────────────────────────────
+function wireCodeBlockActions(container, fullRaw) {
+  container.querySelectorAll('.code-block').forEach(block => {
+    const raw = decodeURIComponent(block.dataset.raw || '');
+    block.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        if (action === 'copy') {
+          // Extract just the code content from the block's raw fence
+          const fenceMatch = raw.match(/```[^\n]*\n([\s\S]*?)```/);
+          const codeOnly = fenceMatch ? fenceMatch[1] : raw;
+          vscode.postMessage({ type: 'copy', text: codeOnly });
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+        } else if (action === 'apply') {
+          vscode.postMessage({ type: 'apply', text: fullRaw, mode: 'auto' });
+        } else if (action === 'diff') {
+          vscode.postMessage({ type: 'apply', text: raw, mode: 'diff' });
+        }
+      });
+    });
+  });
+}
+
+// ── VSCode message handler ────────────────────────────────────────────────────
+window.addEventListener('message', function(ev) {
+  const m = ev.data;
+  switch (m.type) {
+
+    case 'focusInput':
+      if (m.prefill) { input.value = m.prefill; autoSize(); }
+      input.focus();
+      break;
+
+    case 'healthResult':
+      connDot.className = 'connection-dot' + (m.online ? ' online' : ' offline');
+      connDot.title = m.online ? `Connected to ${m.url}` : `Offline — ${m.url} unreachable`;
+      if (backendStatus) {
+        backendStatus.textContent = m.online
+          ? `● Connected to ${m.url}`
+          : `● Offline — run pnpm dev in the cupid folder`;
+        backendStatus.style.color = m.online ? 'var(--success)' : 'var(--error-fg)';
+      }
+      break;
+
+    case 'fileList':
+      allFiles = m.files || [];
+      if (mentionActive) renderMentionDropdown();
+      break;
+
+    case 'userMsg': {
+      clearEmpty();
+      const div = document.createElement('div');
+      div.className = 'msg-user';
+      div.textContent = m.text;
+      appendMsg(div);
+      break;
+    }
+
+    case 'assistantStart': {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-assistant';
+      wrap.id = 'msg-' + m.id;
+
+      const badges = document.createElement('div');
+      badges.className = 'badges';
+      badges.appendChild(makeBadge('routing…', 'muted'));
+
+      const content = document.createElement('div');
+      content.className = 'content';
+      content.setAttribute('data-role', 'content');
+      content.innerHTML = '<span class="typing-dot" style="color:var(--muted);font-style:italic;">Generating</span>';
+
+      wrap.appendChild(badges);
+      wrap.appendChild(content);
+      appendMsg(wrap);
+      msgState.set(m.id, { wrap, raw: '' });
+      setStatus('routing…');
+      break;
+    }
+
+    case 'stream': {
+      const st = msgState.get(m.id);
+      if (!st) break;
+
+      if (m.event === 'routing') {
+        const badges = st.wrap.querySelector('.badges');
+        badges.innerHTML = '';
+        const r = m.data.routing;
+        const c = m.data.classification;
+        const ll = m.data.llmRouting;
+
+        if (ll) badges.appendChild(makeBadge(ll.fellBackToRules ? 'rules fallback' : 'LLM routing', 'muted'));
+        else    badges.appendChild(makeBadge('rule-based', 'muted'));
+
+        badges.appendChild(makeBadge(r.displayName, 'primary'));
+        badges.appendChild(makeBadge(r.tier, 'muted'));
+        badges.appendChild(makeBadge(c.taskType, 'muted'));
+
+        if (r.reasons && r.reasons.length) {
+          const ul = document.createElement('ul');
+          ul.className = 'reasons';
+          r.reasons.slice(0, 3).forEach(reason => {
+            const li = document.createElement('li'); li.textContent = reason; ul.appendChild(li);
+          });
+          badges.insertAdjacentElement('afterend', ul);
+        }
+        setStatus('generating…');
+
+      } else if (m.event === 'chunk') {
+        st.raw += m.data.text || '';
+        const contentEl = st.wrap.querySelector('[data-role="content"]');
+        globalBlockIndex = 0;
+        contentEl.innerHTML = renderMarkdown(st.raw);
+        wireCodeBlockActions(contentEl, st.raw);
+        scrollBottom();
+
+      } else if (m.event === 'done') {
+        const contentEl = st.wrap.querySelector('[data-role="content"]');
+        // Final render (remove typing indicator if never got chunks)
+        if (!st.raw) { contentEl.innerHTML = ''; }
+        else {
+          globalBlockIndex = 0;
+          contentEl.innerHTML = renderMarkdown(st.raw);
+          wireCodeBlockActions(contentEl, st.raw);
+        }
+
+        // Cost badge
+        const badges = st.wrap.querySelector('.badges');
+        if (m.data.costUsd !== undefined) {
+          badges.appendChild(makeBadge('$' + m.data.costUsd.toFixed(5), 'muted'));
+        }
+
+        // Message-level action bar
+        const hasCode = st.raw.includes('```');
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'msg-actions';
+
+        if (hasCode) {
+          const applyBtn = document.createElement('button');
+          applyBtn.className = 'primary';
+          applyBtn.textContent = 'Apply all';
+          applyBtn.title = 'Apply all code blocks to workspace';
+          applyBtn.dataset.action = 'apply';
+
+          const diffBtn = document.createElement('button');
+          diffBtn.textContent = 'Diff';
+          diffBtn.dataset.action = 'diff';
+
+          const newFileBtn = document.createElement('button');
+          newFileBtn.textContent = 'New file';
+          newFileBtn.dataset.action = 'newFile';
+
+          const insertBtn = document.createElement('button');
+          insertBtn.textContent = 'Insert at cursor';
+          insertBtn.dataset.action = 'insert';
+
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = 'Copy all';
+          copyBtn.dataset.action = 'copy';
+
+          actionsEl.append(applyBtn, diffBtn, newFileBtn, insertBtn, copyBtn);
+        } else {
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = 'Copy';
+          copyBtn.dataset.action = 'copy';
+          actionsEl.appendChild(copyBtn);
+        }
+
+        actionsEl.addEventListener('click', (e) => {
+          const tgt = e.target;
+          if (!tgt || tgt.tagName !== 'BUTTON') return;
+          const action = tgt.dataset.action;
+          if (action === 'copy') {
+            vscode.postMessage({ type: 'copy', text: st.raw });
+            tgt.textContent = 'Copied!';
+            setTimeout(() => { tgt.textContent = 'Copy all'; }, 1500);
+          } else if (['apply','newFile','insert','diff'].includes(action)) {
+            vscode.postMessage({ type: 'apply', text: st.raw, mode: action === 'apply' ? 'auto' : action });
+          }
+        });
+
+        st.wrap.appendChild(actionsEl);
+        msgState.delete(m.id);
+        setStatus('');
+        setIsStreaming(false);
+        scrollBottom();
+
+      } else if (m.event === 'error') {
+        const contentEl = st.wrap.querySelector('[data-role="content"]');
+        contentEl.innerHTML = '';
+        const errEl = document.createElement('div');
+        errEl.className = 'err-msg';
+        errEl.textContent = m.data.message || 'Error';
+        st.wrap.appendChild(errEl);
+        msgState.delete(m.id);
+        setStatus('error');
+        setIsStreaming(false);
+
+      } else if (m.event === 'cpl') {
+        const badges = st.wrap.querySelector('.badges');
+        badges.appendChild(makeBadge('CPL +' + m.data.injectedEntries, 'muted'));
+      }
+      break;
+    }
+
+    case 'error': {
+      const st = msgState.get(m.id);
+      if (st) {
+        const errEl = document.createElement('div');
+        errEl.className = 'err-msg';
+        errEl.textContent = m.message;
+        st.wrap.appendChild(errEl);
+        msgState.delete(m.id);
+      } else {
+        const errEl = document.createElement('div');
+        errEl.className = 'err-msg';
+        errEl.textContent = m.message;
+        appendMsg(errEl);
+      }
+      setStatus('error');
+      setIsStreaming(false);
+      break;
+    }
+
+    case 'aborted': {
+      const st = msgState.get(m.id);
+      if (st) {
+        const note = document.createElement('div');
+        note.className = 'err-msg';
+        note.style.borderColor = 'var(--muted)';
+        note.style.color = 'var(--muted)';
+        note.textContent = 'Stopped.';
+        st.wrap.appendChild(note);
+        msgState.delete(m.id);
+      }
+      setStatus('');
+      setIsStreaming(false);
+      break;
+    }
+
+    case 'assistantEnd':
+      setIsStreaming(false);
+      break;
+
+    case 'sessionReset':
+      setStatus('session reset');
+      setTimeout(() => setStatus(''), 1500);
+      break;
   }
+});
+
 })();
 </script>
 </body>

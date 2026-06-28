@@ -171,6 +171,15 @@ export async function registerStreamRoutes(app: FastifyInstance) {
         fileName: body.fileName,
       });
 
+      // ── Inject active-file context into system prompt ──
+      // Tells the LLM the exact file it's editing so path= attributes are correct.
+      if (body.fileName && build.messages[0]?.role === "system") {
+        const baseName = body.fileName.split(/[/\\]/).pop() ?? body.fileName;
+        const editHint = `\n\n[ACTIVE FILE] You are editing \`${baseName}\` (path: ${body.fileName}). ` +
+          `Use \`path=${body.fileName}\` in your fence info when outputting changes to this file.`;
+        build.messages[0] = { ...build.messages[0], content: build.messages[0].content + editHint };
+      }
+
       // ── Phase 4: stream the response ──
       let collected = "";
       await new Promise<void>((resolve) => {
