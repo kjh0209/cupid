@@ -1,4 +1,4 @@
-import type { TaskClassification, ModelTier, UserMode } from "../types.js";
+import type { TaskClassification, ModelTier, UserMode, TaskType } from "../types.js";
 
 export interface TierPolicy {
   allowedTiers: ModelTier[];
@@ -38,41 +38,41 @@ export function getTierPolicy(
     };
   }
 
-  // Security-sensitive: never cheap
+  // Security-sensitive: strong tier required — auth bugs are security incidents
   if (taskType === "security_sensitive_change" || riskLevel >= 5) {
     return {
-      allowedTiers: ["mid", "strong"],
-      requiredMinTier: "mid",
-      reason: "Security-sensitive task: minimum mid-tier required",
+      allowedTiers: ["strong", "long_context"],
+      requiredMinTier: "strong",
+      reason: "Security-sensitive task: strong tier required (auth bugs = security incidents)",
     };
   }
 
-  // Risk >= 4: mid or strong
-  if (riskLevel >= 4) {
-    return {
-      allowedTiers: ["mid", "strong", "long_context"],
-      requiredMinTier: "mid",
-      reason: `High risk (${riskLevel}/5): minimum mid-tier required`,
-    };
-  }
-
-  // Database schema: mid or strong
+  // Database schema: strong tier required — migrations are irreversible data ops
   if (taskType === "database_schema_change") {
     return {
-      allowedTiers: ["mid", "strong"],
-      requiredMinTier: "mid",
-      reason: "Database schema changes carry data loss risk: mid-tier minimum",
+      allowedTiers: ["strong", "long_context"],
+      requiredMinTier: "strong",
+      reason: "Database schema changes are irreversible: strong tier required",
     };
   }
 
-  // Architecture: strong preferred
+  // Risk >= 4: strong only — concurrency, memory leaks, sharding all need deep reasoning
+  if (riskLevel >= 4) {
+    return {
+      allowedTiers: ["strong", "long_context"],
+      requiredMinTier: "strong",
+      reason: `High risk (${riskLevel}/5): strong tier required for deep diagnosis`,
+    };
+  }
+
+  // Architecture: strong tier (design decisions have long-term consequences)
   if (taskType === "architecture_design") {
     const allowed: ModelTier[] =
-      userMode === "max_quality" ? ["strong"] : ["mid", "strong", "long_context"];
+      userMode === "cost_saving" ? ["mid", "strong", "long_context"] : ["strong", "long_context"];
     return {
       allowedTiers: allowed,
-      requiredMinTier: "mid",
-      reason: "Architecture design requires strong reasoning: mid-tier minimum",
+      requiredMinTier: userMode === "cost_saving" ? "mid" : "strong",
+      reason: "Architecture design has long-term consequences: strong tier preferred",
     };
   }
 
@@ -184,6 +184,35 @@ export function getTierPolicy(
     requiredMinTier: null,
     reason: "Unknown task type: all tiers allowed",
   };
+}
+
+// Task types that always require a minimum difficulty (cannot be routed to cheap tier)
+const TASK_MIN_DIFFICULTY: Partial<Record<TaskType, number>> = {
+  creative_generation: 4,   // design taste is decisive
+  architecture_design: 4,   // long-term impact
+  security_sensitive_change: 4, // bugs = incidents
+  database_schema_change: 4,    // irreversible ops
+};
+
+/**
+ * Enforce minimum difficulty for tasks that have structural complexity floors.
+ * Returns the effective difficulty (>= input).
+ */
+export function enforceMinDifficulty(
+  taskType: TaskType,
+  difficulty: number,
+  hasCodeContext?: boolean
+): number {
+  const floor = TASK_MIN_DIFFICULTY[taskType];
+  let effective = difficulty;
+  if (floor !== undefined) {
+    effective = Math.max(effective, floor);
+  }
+  // multi_file_refactor without code context: complexity is unpredictable
+  if (taskType === "multi_file_refactor" && !hasCodeContext) {
+    effective = Math.max(effective, 4);
+  }
+  return effective;
 }
 
 export function getFallbackModel(riskLevel: number): string {

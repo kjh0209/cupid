@@ -43,7 +43,11 @@ export type ChangeScope =
   | "repo_wide";
 
 // ── User Mode ────────────────────────────────────────────────
-export type UserMode = "cost_saving" | "balanced" | "max_quality";
+// cost_aggressive: CI/배치용, DRS 무시, cheap-tier 최대 허용
+// cost_saving (기본): DRS ≥ 3 이면 cheap tier 차단
+// balanced: DRS ≥ 2 이면 cheap tier 차단
+// max_quality: 항상 strong tier
+export type UserMode = "cost_aggressive" | "cost_saving" | "balanced" | "max_quality";
 
 // ── Source Confidence ────────────────────────────────────────
 export type SourceConfidence =
