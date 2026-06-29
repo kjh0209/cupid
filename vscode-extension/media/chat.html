@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <style>
@@ -14,80 +14,240 @@
     --btn-fg: var(--vscode-button-foreground);
     --btn-hover: var(--vscode-button-hoverBackground);
     --muted: var(--vscode-descriptionForeground);
-    --link: var(--vscode-textLink-foreground);
     --user-bubble: var(--vscode-editor-inactiveSelectionBackground);
     --code-bg: var(--vscode-textCodeBlock-background);
     --badge-bg: var(--vscode-badge-background);
     --badge-fg: var(--vscode-badge-foreground);
+    --accent: #8b5cf6;
+    --accent-dim: rgba(139,92,246,0.10);
+    --green: #10b981;
+    --green-dim: rgba(16,185,129,0.12);
+    --red-dim: rgba(248,113,113,0.12);
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; padding: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--fg); background: var(--bg); }
+  html, body {
+    height: 100%; margin: 0; padding: 0;
+    font-family: var(--vscode-font-family); font-size: var(--vscode-font-size);
+    color: var(--fg); background: var(--bg);
+  }
   body { display: flex; flex-direction: column; }
-  #toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 11px; }
+
+  /* ── Toolbar ── */
+  #toolbar {
+    display: flex; align-items: center; gap: 3px;
+    padding: 5px 8px; border-bottom: 1px solid var(--border);
+    font-size: 11px; flex-shrink: 0;
+  }
+  #toolbar .brand { font-weight: 700; font-size: 12px; letter-spacing: -0.2px; }
+  #toolbar .brand span { color: var(--accent); }
   #toolbar .spacer { flex: 1; }
-  .icon-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 3px; font-size: 12px; }
+  #session-saved {
+    font-size: 10.5px; font-weight: 600; color: var(--green);
+    padding: 2px 6px; border-radius: 10px; background: var(--green-dim);
+    display: none; cursor: pointer;
+  }
+  .icon-btn {
+    background: transparent; border: none; color: var(--muted);
+    cursor: pointer; padding: 3px 5px; border-radius: 3px; font-size: 12px;
+    line-height: 1; transition: all 80ms;
+  }
   .icon-btn:hover { background: var(--btn-hover); color: var(--fg); }
-  #messages { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 10px; }
-  .msg { font-size: 12.5px; line-height: 1.5; }
-  .msg.user { background: var(--user-bubble); padding: 8px 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
-  .msg.assistant { padding: 4px 2px; }
+
+  /* ── Messages ── */
+  #messages {
+    flex: 1; overflow-y: auto; padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .msg { font-size: 12.5px; line-height: 1.55; }
+  .msg.user {
+    background: var(--user-bubble); padding: 8px 10px;
+    border-radius: 6px; white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.assistant { padding: 2px 0; }
+
+  /* ── Routing badges ── */
   .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; font-size: 10.5px; }
-  .badge { background: var(--badge-bg); color: var(--badge-fg); padding: 2px 6px; border-radius: 8px; }
-  .badge.savings { background: #1a7f37; color: white; }
+  .badge {
+    display: inline-flex; align-items: center;
+    background: var(--badge-bg); color: var(--badge-fg);
+    padding: 2px 7px; border-radius: 8px;
+  }
+  .badge.savings { background: var(--green-dim); color: var(--green); font-weight: 600; }
   .badge.muted { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .reasons { color: var(--muted); font-size: 10.5px; margin: 4px 0 8px; padding-left: 12px; }
+  .badge.accent { background: var(--accent-dim); color: var(--accent); }
+  .reasons { color: var(--muted); font-size: 10.5px; margin: 3px 0 7px; padding-left: 10px; }
   .reasons li { margin: 1px 0; }
+
+  /* ── Content / Code ── */
   .content { white-space: pre-wrap; word-wrap: break-word; }
-  .content pre { background: var(--code-bg); padding: 8px 10px; border-radius: 4px; overflow-x: auto; margin: 6px 0; font-family: var(--vscode-editor-font-family); font-size: 12px; white-space: pre; position: relative; }
-  .content pre .lang-tag { position: absolute; top: 4px; right: 6px; font-size: 9px; color: var(--muted); }
-  .content code { font-family: var(--vscode-editor-font-family); font-size: 12px; }
-  .content :not(pre) > code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
-  .actions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-  .actions button { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; font-size: 11px; cursor: pointer; border-radius: 3px; }
+  .content h1, .content h2, .content h3 {
+    margin: 10px 0 4px; font-size: 13px; font-weight: 700;
+  }
+  .content strong { font-weight: 700; }
+  .content em { font-style: italic; }
+  .content ul, .content ol { padding-left: 16px; margin: 4px 0; }
+  .content li { margin: 2px 0; }
+  .content blockquote {
+    border-left: 3px solid var(--border); padding-left: 8px;
+    margin: 4px 0; color: var(--muted);
+  }
+  .content a { color: var(--vscode-textLink-foreground); }
+  .content pre {
+    background: var(--code-bg); padding: 8px 10px; border-radius: 5px;
+    overflow-x: auto; margin: 6px 0; font-family: var(--vscode-editor-font-family);
+    font-size: 11.5px; white-space: pre; position: relative;
+    border: 1px solid var(--border);
+  }
+  .pre-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 3px 8px; background: var(--border);
+    border-radius: 5px 5px 0 0; font-size: 10px; color: var(--muted);
+    margin-bottom: -5px; font-family: var(--vscode-editor-font-family);
+  }
+  .pre-header-actions { display: flex; gap: 4px; }
+  .pre-btn {
+    background: transparent; border: none; color: var(--muted); cursor: pointer;
+    padding: 1px 5px; border-radius: 2px; font-size: 10px;
+  }
+  .pre-btn:hover { background: var(--btn-hover); color: var(--fg); }
+  .content code {
+    font-family: var(--vscode-editor-font-family); font-size: 11.5px;
+  }
+  .content :not(pre) > code {
+    background: var(--code-bg); padding: 1px 4px; border-radius: 3px;
+  }
+
+  /* ── Actions ── */
+  .actions { display: flex; gap: 4px; margin-top: 7px; flex-wrap: wrap; }
+  .actions button {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 3px 8px; font-size: 11px; cursor: pointer; border-radius: 3px;
+    transition: all 80ms;
+  }
   .actions button:hover { background: var(--btn-hover); color: var(--fg); }
-  .actions button.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+  .actions button.primary {
+    background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg);
+  }
   .actions button.primary:hover { background: var(--btn-hover); }
-  #empty { color: var(--muted); font-size: 11px; padding: 16px; text-align: center; }
-  #empty kbd { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-family: var(--vscode-editor-font-family); font-size: 10px; }
-  #composer { border-top: 1px solid var(--border); padding: 8px; }
-  #composer .row { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
-  #composer label { font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+  /* ── Empty state ── */
+  #empty {
+    color: var(--muted); font-size: 11.5px;
+    padding: 20px 12px; display: flex; flex-direction: column; gap: 12px;
+  }
+  #empty .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  #empty .logo span { color: var(--accent); }
+  #empty .tagline { font-size: 11px; color: var(--muted); margin-top: -8px; }
+  #empty .status-row { display: flex; align-items: center; gap: 6px; font-size: 10.5px; }
+  #conn-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+    flex-shrink: 0; transition: background 300ms;
+  }
+  #conn-dot.ok { background: var(--green); }
+  #conn-dot.err { background: #f87171; }
+  #example-prompts { display: flex; flex-direction: column; gap: 5px; }
+  #example-prompts .ep-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+  .example-chip {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 6px 10px; font-size: 11px; cursor: pointer;
+    transition: all 80ms; text-align: left; color: var(--fg);
+    display: block; width: 100%;
+  }
+  .example-chip:hover { background: var(--btn-hover); border-color: var(--accent); }
+  #empty .hint { font-size: 10.5px; color: var(--muted); }
+  #empty kbd {
+    background: var(--code-bg); padding: 1px 5px; border-radius: 3px;
+    font-family: var(--vscode-editor-font-family); font-size: 10px;
+  }
+
+  /* ── Streaming ── */
+  .typing-dots::after {
+    content: ""; display: inline-block; animation: dots 1.2s steps(3, end) infinite;
+    width: 1.5em; overflow: hidden; vertical-align: bottom;
+  }
+  @keyframes dots { 0%{content:"."}33%{content:".."}66%{content:"..."}100%{content:""} }
+
+  /* ── Error ── */
+  .err {
+    color: var(--vscode-errorForeground); font-size: 11px; padding: 6px 8px;
+    border-left: 2px solid var(--vscode-errorForeground);
+    background: var(--code-bg); border-radius: 0 4px 4px 0; margin-top: 4px;
+  }
+
+  /* ── Composer ── */
+  #composer { border-top: 1px solid var(--border); padding: 7px 8px; flex-shrink: 0; }
+  #composer .row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 10.5px;
+  }
+  #composer label { color: var(--muted); display: flex; align-items: center; gap: 4px; cursor: pointer; }
   #composer label input { margin: 0; }
-  #input-wrap { display: flex; gap: 4px; }
-  #input { flex: 1; background: var(--input-bg); color: var(--input-fg); border: 1px solid var(--input-border); border-radius: 4px; padding: 6px 8px; font-family: var(--vscode-font-family); font-size: 12.5px; resize: none; min-height: 32px; max-height: 200px; outline: none; }
+  #status { font-size: 10px; color: var(--muted); }
+  #input-wrap { display: flex; gap: 4px; align-items: flex-end; }
+  #input {
+    flex: 1; background: var(--input-bg); color: var(--input-fg);
+    border: 1px solid var(--input-border); border-radius: 5px;
+    padding: 6px 8px; font-family: var(--vscode-font-family); font-size: 12.5px;
+    resize: none; min-height: 32px; max-height: 180px; outline: none;
+    transition: border-color 100ms;
+  }
   #input:focus { border-color: var(--vscode-focusBorder); }
-  #send-btn { background: var(--btn-bg); color: var(--btn-fg); border: none; padding: 0 14px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  #send-btn {
+    background: var(--btn-bg); color: var(--btn-fg); border: none;
+    padding: 0 12px; border-radius: 5px; cursor: pointer; font-size: 11px;
+    height: 32px; transition: background 80ms;
+  }
   #send-btn:hover { background: var(--btn-hover); }
   #send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .typing::after { content: "▍"; animation: blink 1s steps(2) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .err { color: var(--vscode-errorForeground); font-size: 11px; padding: 6px; border-left: 2px solid var(--vscode-errorForeground); background: var(--code-bg); }
+  #stop-btn {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 0 10px; border-radius: 5px; cursor: pointer; font-size: 11px;
+    height: 32px; display: none; transition: all 80ms;
+  }
+  #stop-btn:hover { border-color: #f87171; color: #f87171; }
+  #stop-btn.visible { display: block; }
 </style>
 </head>
 <body>
   <div id="toolbar">
-    <span style="font-weight: 600;">Cupid</span>
-    <span class="spacer"></span>
-    <button class="icon-btn" id="reset-btn" title="Reset session memory">↻ Session</button>
-    <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+    <span class="brand">⚡<span>Cupid</span></span>
+    <div class="spacer"></div>
+    <span id="session-saved" title="총 절감 금액 (vs Claude Opus 4) — 클릭하면 대시보드 열기"></span>
+    <button class="icon-btn" id="analytics-btn" title="Savings Dashboard 열기 (아낀 비용 · 모델 비율)">📊</button>
+    <button class="icon-btn" id="reset-btn" title="CPL 세션 메모리 초기화">↻</button>
+    <button class="icon-btn" id="settings-btn" title="설정">⚙</button>
   </div>
+
   <div id="messages">
     <div id="empty">
-      Type a question below. <kbd>Enter</kbd> sends, <kbd>Shift+Enter</kbd> newline.<br>
-      Check the box to include current file as context.
+      <div class="logo">⚡<span>Cupid</span></div>
+      <div class="tagline">Don't code stupid. Use Cupid.</div>
+      <div class="status-row">
+        <div id="conn-dot"></div>
+        <span id="conn-text" style="font-size:10px">백엔드 연결 확인 중...</span>
+      </div>
+      <div id="example-prompts">
+        <div class="ep-label">💡 예시 프롬프트</div>
+        <button class="example-chip" data-prompt="이 코드의 버그를 찾아서 수정해줘">🐛 이 코드의 버그를 찾아서 수정해줘</button>
+        <button class="example-chip" data-prompt="간단한 breakout 게임을 웹 게임으로 만들어줘">🎮 간단한 breakout 게임을 웹 게임으로 만들어줘</button>
+        <button class="example-chip" data-prompt="이 함수가 어떻게 동작하는지 설명해줘">📖 이 함수가 어떻게 동작하는지 설명해줘</button>
+      </div>
+      <div class="hint"><kbd>Enter</kbd> 전송 · <kbd>Shift+Enter</kbd> 줄바꿈 · <kbd>Ctrl+Shift+L</kbd> 선택 코드 질문</div>
     </div>
   </div>
+
   <div id="composer">
     <div class="row">
-      <label><input type="checkbox" id="include-sel"> include current file</label>
-      <span class="spacer" style="flex:1"></span>
-      <span id="status" style="font-size: 10.5px; color: var(--muted);"></span>
+      <label><input type="checkbox" id="include-sel"> 현재 파일 포함</label>
+      <div class="spacer"></div>
+      <span id="status"></span>
     </div>
     <div id="input-wrap">
-      <textarea id="input" rows="1" placeholder="Ask Cupid — it routes to the best model for your task..."></textarea>
+      <textarea id="input" rows="1" placeholder="Cupid에게 물어보세요 — 최적 모델을 자동 선택합니다..."></textarea>
+      <button id="stop-btn" title="응답 중단">■ Stop</button>
       <button id="send-btn">Send</button>
     </div>
   </div>
+
 <script>
 (function() {
   const vscode = acquireVsCodeApi();
@@ -95,60 +255,168 @@
   const emptyEl = document.getElementById("empty");
   const input = document.getElementById("input");
   const sendBtn = document.getElementById("send-btn");
+  const stopBtn = document.getElementById("stop-btn");
   const includeSel = document.getElementById("include-sel");
   const statusEl = document.getElementById("status");
+  const sessionSavedEl = document.getElementById("session-saved");
 
   const msgState = new Map();
+  let streaming = false;
 
+  // ── Auto-resize textarea ──
   function autoSize() {
     input.style.height = "auto";
-    input.style.height = Math.min(input.scrollHeight, 200) + "px";
+    input.style.height = Math.min(input.scrollHeight, 180) + "px";
   }
   input.addEventListener("input", autoSize);
 
   function setStatus(s) { statusEl.textContent = s || ""; }
 
-  function send() {
-    const text = input.value.trim();
-    if (!text) return;
-    vscode.postMessage({ type: "send", text: text, includeSelection: includeSel.checked });
-    input.value = "";
-    autoSize();
-    sendBtn.disabled = true;
+  function setStreaming(on) {
+    streaming = on;
+    sendBtn.disabled = on;
+    stopBtn.classList.toggle("visible", on);
   }
 
-  sendBtn.addEventListener("click", send);
+  // ── Send ──
+  function send(prefillText) {
+    const text = (prefillText || input.value).trim();
+    if (!text) return;
+    vscode.postMessage({ type: "send", text, includeSelection: includeSel.checked });
+    if (!prefillText) { input.value = ""; autoSize(); }
+    setStreaming(true);
+  }
+
+  sendBtn.addEventListener("click", () => send());
+  stopBtn.addEventListener("click", () => vscode.postMessage({ type: "stop" }));
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   });
+
+  // Toolbar actions
   document.getElementById("reset-btn").addEventListener("click", () => vscode.postMessage({ type: "resetSession" }));
   document.getElementById("settings-btn").addEventListener("click", () => vscode.postMessage({ type: "openSettings" }));
+  document.getElementById("analytics-btn").addEventListener("click", () => vscode.postMessage({ type: "openAnalytics" }));
+  sessionSavedEl.addEventListener("click", () => vscode.postMessage({ type: "openAnalytics" }));
 
-  function clearEmpty() { if (emptyEl) emptyEl.style.display = "none"; }
-
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, function(c) {
-      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+  // Example prompts
+  document.querySelectorAll(".example-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      input.value = btn.dataset.prompt;
+      autoSize();
+      input.focus();
     });
+  });
+
+  function clearEmpty() {
+    if (emptyEl) emptyEl.style.display = "none";
   }
 
-  const FENCE = String.fromCharCode(96,96,96);
-  function renderContent(raw) {
-    const re = new RegExp("(" + FENCE + "[\\s\\S]*?" + FENCE + ")", "g");
-    const parts = raw.split(re);
-    return parts.map(function(p) {
-      if (p.indexOf(FENCE) === 0) {
-        const inner = p.slice(3, -3);
-        const nlIdx = inner.indexOf("\n");
-        const lang = nlIdx >= 0 ? inner.slice(0, nlIdx).trim() : "";
-        const code = nlIdx >= 0 ? inner.slice(nlIdx + 1) : inner;
-        return '<pre><span class="lang-tag">' + escapeHtml(lang) + '</span><code>' + escapeHtml(code) + '</code></pre>';
-      }
-      return escapeHtml(p)
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/\n/g, "<br>");
-    }).join("");
+  // Connection status updates via routing/error events from real messages
+  // Timeout: if no connection after 8s from page load, show offline hint
+  setTimeout(() => {
+    const dot = document.getElementById("conn-dot");
+    if (!dot.classList.contains("ok") && !dot.classList.contains("err")) {
+      document.getElementById("conn-text").textContent =
+        "백엔드 미연결 — pnpm dev 실행 필요";
+    }
+  }, 8000);
+
+  // ── Escape HTML ──
+  function escHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]
+    );
   }
+
+  // ── Markdown renderer (lightweight) ──
+  function renderMarkdown(raw) {
+    // Process code blocks first
+    const codeBlocks = [];
+    let text = raw.replace(/```([\w.]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+      const idx = codeBlocks.length;
+      codeBlocks.push({ lang: lang.trim(), code: code.trimEnd() });
+      return `\x00CODE${idx}\x00`;
+    });
+
+    // Process line-level markdown
+    const lines = text.split("\n");
+    const out = [];
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+
+      // Headers
+      if (/^### /.test(line)) { out.push(`<h3>${inlineRender(line.slice(4))}</h3>`); inList = false; continue; }
+      if (/^## /.test(line))  { out.push(`<h2>${inlineRender(line.slice(3))}</h2>`); inList = false; continue; }
+      if (/^# /.test(line))   { out.push(`<h1>${inlineRender(line.slice(2))}</h1>`); inList = false; continue; }
+
+      // Bullet list
+      if (/^[-*] /.test(line)) {
+        if (!inList) { out.push("<ul>"); inList = true; }
+        out.push(`<li>${inlineRender(line.slice(2))}</li>`);
+        continue;
+      }
+      // Numbered list
+      if (/^\d+\. /.test(line)) {
+        if (!inList) { out.push("<ol>"); inList = true; }
+        out.push(`<li>${inlineRender(line.replace(/^\d+\. /, ""))}</li>`);
+        continue;
+      }
+      // Blockquote
+      if (/^> /.test(line)) {
+        if (inList) { out.push(inList === "ul" ? "</ul>" : "</ol>"); inList = false; }
+        out.push(`<blockquote>${inlineRender(line.slice(2))}</blockquote>`);
+        continue;
+      }
+
+      if (inList) { out.push("</ul>"); inList = false; }
+
+      // Code placeholder
+      if (line.includes("\x00CODE")) {
+        out.push(line);
+        continue;
+      }
+
+      if (line.trim() === "") { out.push("<br>"); continue; }
+      out.push(`<p style="margin:2px 0">${inlineRender(line)}</p>`);
+    }
+    if (inList) out.push("</ul>");
+
+    // Restore code blocks with headers
+    let result = out.join("\n");
+    result = result.replace(/\x00CODE(\d+)\x00/g, (_, idx) => {
+      const { lang, code } = codeBlocks[Number(idx)];
+      const lineCount = code.split("\n").length;
+      const langLabel = lang || "code";
+      return `<div class="pre-header">
+        <span>${escHtml(langLabel)} · ${lineCount} lines</span>
+        <div class="pre-header-actions">
+          <button class="pre-btn" onclick="copyPre(this)">Copy</button>
+        </div>
+      </div><pre><code>${escHtml(code)}</code></pre>`;
+    });
+
+    return result;
+  }
+
+  function inlineRender(s) {
+    return escHtml(s)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g, "<em>$1</em>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+  }
+
+  window.copyPre = function(btn) {
+    const code = btn.closest(".pre-header").nextElementSibling?.querySelector("code");
+    if (code) {
+      vscode.postMessage({ type: "copy", text: code.textContent });
+      btn.textContent = "✓";
+      setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+    }
+  };
 
   function makeBadge(text, cls) {
     const s = document.createElement("span");
@@ -157,23 +425,27 @@
     return s;
   }
 
+  // ── Message event handler ──
   window.addEventListener("message", function(ev) {
     const m = ev.data;
+
+    // Ignore internal health ping responses (they'll show as errors which is fine)
     switch (m.type) {
       case "focusInput":
-        if (m.prefill) input.value = m.prefill;
-        autoSize();
+        if (m.prefill) { input.value = m.prefill; autoSize(); }
         input.focus();
         break;
+
       case "userMsg": {
         clearEmpty();
         const div = document.createElement("div");
         div.className = "msg user";
         div.textContent = m.text;
         messagesEl.appendChild(div);
-        scrollToBottom();
+        scrollBottom();
         break;
       }
+
       case "assistantStart": {
         const wrap = document.createElement("div");
         wrap.className = "msg assistant";
@@ -181,121 +453,165 @@
         badges.className = "badges";
         badges.appendChild(makeBadge("routing…", "muted"));
         const content = document.createElement("div");
-        content.className = "content typing";
+        content.className = "content";
         content.setAttribute("data-role", "content");
+        const typingLine = document.createElement("div");
+        typingLine.className = "typing-dots";
+        typingLine.setAttribute("data-role", "typing");
+        typingLine.style.color = "var(--muted)";
+        typingLine.style.fontSize = "10.5px";
+        typingLine.textContent = "생성 중";
         wrap.appendChild(badges);
         wrap.appendChild(content);
+        wrap.appendChild(typingLine);
         messagesEl.appendChild(wrap);
-        msgState.set(m.id, { wrap: wrap, raw: "" });
+        msgState.set(m.id, { wrap, raw: "" });
         setStatus("routing…");
-        scrollToBottom();
+        scrollBottom();
         break;
       }
+
       case "stream": {
-        const st = msgState.get(m.id); if (!st) break;
+        const st = msgState.get(m.id);
+        if (!st) break;
+
         if (m.event === "routing") {
+          // Update badges with routing info
           const badges = st.wrap.querySelector(".badges");
           badges.innerHTML = "";
           const r = m.data.routing;
           const c = m.data.classification;
           const ll = m.data.llmRouting;
-          // Classification mode badge (first, most visible)
           if (ll) {
-            badges.appendChild(makeBadge(ll.fellBackToRules ? "rules (LLM fellback)" : "LLM-assisted", "muted"));
+            badges.appendChild(makeBadge(ll.fellBackToRules ? "rules (fallback)" : "LLM-assisted", "muted"));
           } else {
             badges.appendChild(makeBadge("rule-based", "muted"));
           }
-          badges.appendChild(makeBadge(r.displayName));
-          badges.appendChild(makeBadge(r.tier, "muted"));
-          badges.appendChild(makeBadge(c.taskType, "muted"));
-          if (r.reasons && r.reasons.length) {
+          if (r) {
+            badges.appendChild(makeBadge(r.displayName));
+            if (r.tier) badges.appendChild(makeBadge(r.tier, "muted"));
+          }
+          if (c && c.taskType) badges.appendChild(makeBadge(c.taskType, "muted"));
+          if (r && r.reasons && r.reasons.length) {
             const ul = document.createElement("ul");
             ul.className = "reasons";
-            for (const reason of r.reasons.slice(0, 4)) {
+            for (const reason of r.reasons.slice(0, 3)) {
               const li = document.createElement("li");
               li.textContent = reason;
               ul.appendChild(li);
             }
-            badges.after(ul);
+            const content = st.wrap.querySelector('[data-role="content"]');
+            content.before(ul);
           }
           setStatus("generating…");
+
+          // Mark backend as connected
+          document.getElementById("conn-dot").className = "ok";
+          document.getElementById("conn-text").textContent = "백엔드 연결됨";
+
         } else if (m.event === "chunk") {
           st.raw += m.data.text || "";
           const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.innerHTML = renderContent(st.raw);
-          scrollToBottom();
+          contentEl.innerHTML = renderMarkdown(st.raw);
+          scrollBottom();
+
         } else if (m.event === "done") {
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.classList.remove("typing");
+          // Remove typing indicator
+          const typing = st.wrap.querySelector('[data-role="typing"]');
+          if (typing) typing.remove();
+
           const badges = st.wrap.querySelector(".badges");
           const cost = m.data.costUsd;
-          badges.appendChild(makeBadge("$" + cost.toFixed(5), "muted"));
-          const hasCode = st.raw.indexOf(FENCE) >= 0;
+          if (cost !== undefined) {
+            badges.appendChild(makeBadge("$" + cost.toFixed(5), "muted"));
+          }
+          if (m.data.savedPct > 1) {
+            const savPct = m.data.savedPct.toFixed(0);
+            const saved = m.data.savedCostUsd.toFixed(5);
+            badges.appendChild(makeBadge(`↓${savPct}% vs Opus ($${saved} saved)`, "savings"));
+          }
+
+          // Re-render final content with full markdown
+          const contentEl = st.wrap.querySelector('[data-role="content"]');
+          if (contentEl && st.raw) contentEl.innerHTML = renderMarkdown(st.raw);
+
+          // Action buttons
+          const hasCode = /```/.test(st.raw);
           const actions = document.createElement("div");
           actions.className = "actions";
+
           if (hasCode) {
             const applyBtn = document.createElement("button");
             applyBtn.className = "primary";
             applyBtn.textContent = "Apply";
-            applyBtn.title = "Replace current file content (Ctrl+Z to undo) OR write to detected paths";
+            applyBtn.title = "Replace active file or write detected paths (Ctrl+Z to undo)";
             applyBtn.dataset.action = "apply";
             const diffBtn = document.createElement("button");
             diffBtn.textContent = "Diff";
-            diffBtn.title = "Open side-by-side diff to review before applying";
+            diffBtn.title = "Open side-by-side diff";
             diffBtn.dataset.action = "diff";
             const newFileBtn = document.createElement("button");
             newFileBtn.textContent = "New file";
             newFileBtn.dataset.action = "newFile";
             const insertBtn = document.createElement("button");
-            insertBtn.textContent = "Insert at cursor";
+            insertBtn.textContent = "Insert";
             insertBtn.dataset.action = "insert";
             const copyBtn = document.createElement("button");
             copyBtn.textContent = "Copy";
             copyBtn.dataset.action = "copy";
-            actions.appendChild(applyBtn);
-            actions.appendChild(diffBtn);
-            actions.appendChild(newFileBtn);
-            actions.appendChild(insertBtn);
-            actions.appendChild(copyBtn);
+            actions.append(applyBtn, diffBtn, newFileBtn, insertBtn, copyBtn);
           } else {
             const copyBtn = document.createElement("button");
             copyBtn.textContent = "Copy";
             copyBtn.dataset.action = "copy";
             actions.appendChild(copyBtn);
           }
+
           actions.addEventListener("click", function(e) {
             const tgt = e.target;
             if (!tgt || tgt.tagName !== "BUTTON") return;
             const action = tgt.dataset.action;
             if (action === "copy") {
               vscode.postMessage({ type: "copy", text: st.raw });
-            } else if (action === "apply" || action === "newFile" || action === "insert" || action === "diff") {
-              vscode.postMessage({ type: "apply", text: st.raw, mode: action === "apply" ? "auto" : action });
+            } else if (["apply", "newFile", "insert", "diff"].includes(action)) {
+              vscode.postMessage({
+                type: "apply", text: st.raw,
+                mode: action === "apply" ? "auto" : action,
+              });
             }
           });
+
           st.wrap.appendChild(actions);
           msgState.delete(m.id);
           setStatus("");
-          sendBtn.disabled = false;
+          setStreaming(false);
+
         } else if (m.event === "error") {
-          const contentEl = st.wrap.querySelector('[data-role="content"]');
-          contentEl.classList.remove("typing");
+          const typing = st.wrap.querySelector('[data-role="typing"]');
+          if (typing) typing.remove();
           const errDiv = document.createElement("div");
           errDiv.className = "err";
           errDiv.textContent = m.data.message || "Error";
           st.wrap.appendChild(errDiv);
           msgState.delete(m.id);
           setStatus("error");
-          sendBtn.disabled = false;
+          setStreaming(false);
+          // Mark backend status
+          document.getElementById("conn-dot").classList.add("err");
+          document.getElementById("conn-text").textContent = "백엔드 연결 실패 — pnpm dev 실행 필요";
+
         } else if (m.event === "cpl") {
           const badges = st.wrap.querySelector(".badges");
           badges.appendChild(makeBadge("CPL +" + m.data.injectedEntries, "muted"));
         }
         break;
       }
+
       case "error": {
         const st = msgState.get(m.id);
         if (st) {
+          const typing = st.wrap.querySelector('[data-role="typing"]');
+          if (typing) typing.remove();
           const errDiv = document.createElement("div");
           errDiv.className = "err";
           errDiv.textContent = m.message;
@@ -308,36 +624,57 @@
           messagesEl.appendChild(div);
         }
         setStatus("error");
-        sendBtn.disabled = false;
-        scrollToBottom();
+        setStreaming(false);
+        scrollBottom();
         break;
       }
+
       case "aborted": {
         const st = msgState.get(m.id);
         if (st) {
+          const typing = st.wrap.querySelector('[data-role="typing"]');
+          if (typing) typing.remove();
           const note = document.createElement("div");
           note.className = "err";
-          note.textContent = "Stopped.";
+          note.style.borderLeftColor = "var(--muted)";
+          note.textContent = "■ 중단됨";
           st.wrap.appendChild(note);
           msgState.delete(m.id);
         }
         setStatus("");
-        sendBtn.disabled = false;
+        setStreaming(false);
         break;
       }
+
       case "assistantEnd":
-        sendBtn.disabled = false;
+        setStreaming(false);
+        setStatus("");
         break;
+
       case "sessionReset":
-        setStatus("session reset");
-        setTimeout(function() { setStatus(""); }, 1500);
+        setStatus("세션 초기화 완료");
+        setTimeout(() => setStatus(""), 1500);
         break;
+
+      case "analyticsUpdate": {
+        // Update session savings counter in toolbar
+        const saved = m.sessionSaved || 0;
+        if (saved > 0.0001) {
+          sessionSavedEl.textContent = "↓ $" + saved.toFixed(4) + " saved";
+          sessionSavedEl.style.display = "";
+        }
+        break;
+      }
     }
   });
 
-  function scrollToBottom() {
-    requestAnimationFrame(function() { messagesEl.scrollTop = messagesEl.scrollHeight; });
+  function scrollBottom() {
+    requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
   }
+
+  // ── Initial analytics load ──
+  // Load any saved session total from last run
+  // (will be populated by first analyticsUpdate message)
 })();
 </script>
 </body>

@@ -173,6 +173,8 @@ export async function registerStreamRoutes(app: FastifyInstance) {
 
       // ── Phase 4: stream the response ──
       let collected = "";
+      let finalUsage = { inputTokens: 0, outputTokens: 0 };
+      let finalCost = 0;
       await new Promise<void>((resolve) => {
         callLLMStream(
           routerModel.id,
@@ -184,6 +186,8 @@ export async function registerStreamRoutes(app: FastifyInstance) {
             },
             onDone: (usage, finishReason, latencyMs) => {
               const cost = priceUsd(routerModel, usage.inputTokens, usage.outputTokens);
+              finalUsage = usage;
+              finalCost = cost;
               send("done", {
                 modelId: routerModel.id,
                 inputTokens: usage.inputTokens,
@@ -214,7 +218,9 @@ export async function registerStreamRoutes(app: FastifyInstance) {
             taskType: classification.taskType,
             routedModel: routerModel.id,
             responseSummary: collected.slice(0, 480),
-            tokensIn: 0, tokensOut: 0, costUsd: 0,
+            tokensIn: finalUsage.inputTokens,
+            tokensOut: finalUsage.outputTokens,
+            costUsd: finalCost,
             metadata: { riskLevel: classification.riskLevel, difficulty: classification.difficulty },
           });
           if (extractCpl) {

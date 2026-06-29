@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: var(--vscode-editor-background, #1e1e1e);
+    --fg: var(--vscode-foreground, #cccccc);
+    --border: var(--vscode-panel-border, #3c3c3c);
+    --card-bg: var(--vscode-sideBar-background, #252526);
+    --code-bg: var(--vscode-textCodeBlock-background, #2d2d2d);
+    --muted: var(--vscode-descriptionForeground, #858585);
+    --btn-bg: var(--vscode-button-background, #0e639c);
+    --btn-fg: var(--vscode-button-foreground, #ffffff);
+    --btn-hover: var(--vscode-button-hoverBackground, #1177bb);
+    --input-bg: var(--vscode-input-background, #3c3c3c);
+    --tab-active: var(--vscode-tab-activeBackground, #1e1e1e);
+    --accent: #8b5cf6;
+    --accent-dim: rgba(139, 92, 246, 0.12);
+    --green: #10b981;
+    --green-dim: rgba(16, 185, 129, 0.12);
+    --red: #f87171;
+    --yellow: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; font-family: var(--vscode-font-family, system-ui); font-size: 13px;
+    color: var(--fg); background: var(--bg);
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── Header ── */
+  .header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    background: var(--card-bg);
+  }
+  .header-logo { display: flex; flex-direction: column; flex: 1; }
+  .header-logo h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-logo h1 span { color: var(--accent); }
+  .header-logo .tagline { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+  .header-actions { display: flex; gap: 6px; }
+  .btn {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer;
+    transition: all 80ms;
+  }
+  .btn:hover { background: var(--code-bg); color: var(--fg); }
+  .btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    padding: 16px 20px;
+  }
+  @media (max-width: 600px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .kpi-card.highlight { border-color: var(--green); background: var(--green-dim); }
+  .kpi-card.accent { border-color: var(--accent); background: var(--accent-dim); }
+  .kpi-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.purple { color: var(--accent); }
+  .kpi-label { font-size: 10.5px; color: var(--muted); margin-top: 4px; }
+  .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Tabs ── */
+  .tabs-nav {
+    display: flex; gap: 0; padding: 0 20px;
+    border-bottom: 1px solid var(--border); background: var(--card-bg);
+  }
+  .tab-btn {
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    padding: 9px 14px; font-size: 12px; color: var(--muted); cursor: pointer;
+    transition: all 100ms; margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--fg); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+  /* ── Tab Content ── */
+  .tab-content { display: none; padding: 20px; }
+  .tab-content.active { display: block; }
+
+  /* ── Section headers ── */
+  .section-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px;
+  }
+
+  /* ── Comparison Bar ── */
+  .compare-bar {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-bottom: 16px;
+  }
+  .compare-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .compare-label { font-size: 11px; color: var(--muted); width: 80px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--code-bg); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 600ms ease; }
+  .bar-fill.actual { background: var(--accent); }
+  .bar-fill.baseline { background: var(--border); }
+  .compare-val { font-size: 11px; font-weight: 600; width: 70px; text-align: right; }
+  .compare-note {
+    font-size: 11px; color: var(--green); margin-top: 8px;
+    padding: 6px 10px; background: var(--green-dim); border-radius: 4px;
+  }
+
+  /* ── Model Distribution ── */
+  .model-list { display: flex; flex-direction: column; gap: 10px; }
+  .model-row { display: flex; flex-direction: column; gap: 4px; }
+  .model-row-header { display: flex; align-items: center; gap: 8px; }
+  .model-name { font-size: 12px; font-weight: 600; flex: 1; }
+  .model-tier { font-size: 10px; color: var(--muted); }
+  .model-count { font-size: 11px; color: var(--muted); }
+  .model-cost-val { font-size: 11px; font-weight: 600; }
+  .model-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .model-bar-track { flex: 1; height: 6px; background: var(--code-bg); border-radius: 3px; overflow: hidden; }
+  .model-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+  .model-pct { font-size: 10px; color: var(--muted); width: 36px; text-align: right; }
+
+  /* ── Task type breakdown ── */
+  .task-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  .task-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px;
+  }
+  .task-name { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .task-stats { font-size: 10.5px; color: var(--muted); }
+
+  /* ── Token Stats ── */
+  .token-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;
+  }
+  @media (max-width: 500px) { .token-grid { grid-template-columns: 1fr 1fr; } }
+  .token-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .token-value { font-size: 18px; font-weight: 700; }
+  .token-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* ── History table ── */
+  .history-table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 11.5px; min-width: 560px;
+  }
+  thead th {
+    text-align: left; padding: 6px 10px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+    background: var(--card-bg); position: sticky; top: 0;
+  }
+  tbody tr:hover { background: var(--code-bg); }
+  tbody td { padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .td-model { font-weight: 600; }
+  .td-saved { color: var(--green); font-weight: 600; }
+  .td-cost { color: var(--muted); }
+  .td-tasktype { font-size: 10.5px; color: var(--muted); }
+
+  /* ── Tier pills ── */
+  .tier { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 9.5px; font-weight: 600; }
+  .tier-cheap { background: rgba(16,185,129,0.15); color: #10b981; }
+  .tier-mid { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .tier-strong { background: rgba(248,113,113,0.15); color: #f87171; }
+  .tier-default { background: var(--accent-dim); color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--muted);
+  }
+  .empty .icon { font-size: 32px; margin-bottom: 10px; }
+  .empty p { font-size: 12px; margin-top: 6px; }
+
+  /* ── Info boxes ── */
+  .info-box {
+    background: var(--accent-dim); border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 6px; padding: 10px 14px; font-size: 11.5px; margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .info-box strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <h1>⚡ CUPID <span>Arbitrage</span> Dashboard</h1>
+    <div class="tagline">Don't code stupid. Use Cupid. — vs Claude Opus 4 baseline</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="vscode.postMessage({type:'refresh'})">↻ 새로고침</button>
+    <button class="btn danger" onclick="confirmClear()">🗑 기록 삭제</button>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid" id="kpi-grid">
+  <div class="kpi-card highlight">
+    <div class="kpi-value green" id="kpi-saved">$0.0000</div>
+    <div class="kpi-label">💰 Total Saved</div>
+    <div class="kpi-sub">vs Claude Opus 4</div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="kpi-value purple" id="kpi-pct">0%</div>
+    <div class="kpi-label">📊 Avg Savings</div>
+    <div class="kpi-sub">per request</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value" id="kpi-requests">0</div>
+    <div class="kpi-label">🔢 Total Requests</div>
+    <div class="kpi-sub">all time</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value" id="kpi-actual">$0.0000</div>
+    <div class="kpi-label">💸 Actual Cost</div>
+    <div class="kpi-sub" id="kpi-baseline-sub">Baseline: —</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<nav class="tabs-nav">
+  <button class="tab-btn active" onclick="switchTab('overview', this)">📈 개요</button>
+  <button class="tab-btn" onclick="switchTab('tokens', this)">🔢 아낀 토큰</button>
+  <button class="tab-btn" onclick="switchTab('models', this)">🤖 모델 비율</button>
+  <button class="tab-btn" onclick="switchTab('history', this)">📋 히스토리</button>
+</nav>
+
+<!-- Overview Tab -->
+<div class="tab-content active" id="tab-overview">
+  <div id="overview-empty" class="empty" style="display:none">
+    <div class="icon">💡</div>
+    <div style="font-size:14px;font-weight:600;color:var(--fg)">아직 데이터가 없습니다</div>
+    <p>Cupid 채팅에서 질문을 보내면<br>절감 내역이 여기에 누적됩니다.</p>
+  </div>
+  <div id="overview-content">
+    <div class="info-box" id="savings-headline">
+      Cupid로 지금까지 <strong id="hl-saved">$0</strong>를 절감했습니다.
+      Opus를 쓰면 <strong id="hl-baseline">$0</strong>가 들었을 것입니다.
+    </div>
+
+    <div class="section-title" style="margin-bottom:10px">비용 비교</div>
+    <div class="compare-bar">
+      <div class="compare-row">
+        <div class="compare-label">Cupid (실제)</div>
+        <div class="bar-track"><div class="bar-fill actual" id="bar-actual" style="width:0%"></div></div>
+        <div class="compare-val" id="bar-actual-val">$0</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Opus (기준)</div>
+        <div class="bar-track"><div class="bar-fill baseline" id="bar-baseline" style="width:100%"></div></div>
+        <div class="compare-val" id="bar-baseline-val">$0</div>
+      </div>
+      <div class="compare-note" id="savings-note" style="display:none"></div>
+    </div>
+
+    <div class="section-title">Task Type별 사용 현황</div>
+    <div class="task-grid" id="task-grid"></div>
+  </div>
+</div>
+
+<!-- Token Stats Tab -->
+<div class="tab-content" id="tab-tokens">
+  <div id="tokens-empty" class="empty" style="display:none">
+    <div class="icon">🔢</div>
+    <div style="font-size:14px;font-weight:600;color:var(--fg)">토큰 데이터 없음</div>
+    <p>요청을 보내면 토큰 통계가 나타납니다.</p>
+  </div>
+  <div id="tokens-content">
+    <div class="info-box">
+      <strong>토큰 절감 방식</strong>: Cupid는 저렴한 모델에 같은 토큰을 보내지만,
+      Opus 대비 <strong id="token-price-ratio">—배</strong> 저렴한 단가를 적용합니다.
+      또한 Prompt Optimizer가 평균 30-50% 토큰을 압축합니다.
+    </div>
+    <div class="token-grid">
+      <div class="token-card">
+        <div class="token-value" id="tok-input">—</div>
+        <div class="token-label">Input Tokens</div>
+      </div>
+      <div class="token-card">
+        <div class="token-value" id="tok-output">—</div>
+        <div class="token-label">Output Tokens</div>
+      </div>
+      <div class="token-card">
+        <div class="token-value" id="tok-total">—</div>
+        <div class="token-label">Total Tokens</div>
+      </div>
+      <div class="token-card" style="border-color:var(--green);background:var(--green-dim)">
+        <div class="token-value green" id="tok-cost-per-k">—</div>
+        <div class="token-label">Cupid Cost / 1K tok</div>
+      </div>
+      <div class="token-card">
+        <div class="token-value" style="color:var(--muted)" id="tok-opus-cost-per-k">—</div>
+        <div class="token-label">Opus Cost / 1K tok</div>
+      </div>
+      <div class="token-card" style="border-color:var(--accent);background:var(--accent-dim)">
+        <div class="token-value purple" id="tok-effective-saving">—</div>
+        <div class="token-label">Cost Efficiency</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:4px">Input / Output 비율</div>
+    <div class="compare-bar" style="margin-bottom:0">
+      <div class="compare-row">
+        <div class="compare-label">Input</div>
+        <div class="bar-track"><div class="bar-fill actual" id="bar-input" style="width:0%"></div></div>
+        <div class="compare-val" id="bar-input-val">0</div>
+      </div>
+      <div class="compare-row" style="margin-bottom:0">
+        <div class="compare-label">Output</div>
+        <div class="bar-track"><div class="bar-fill" style="background:var(--yellow);width:0%" id="bar-output"></div></div>
+        <div class="compare-val" id="bar-output-val">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Model Distribution Tab -->
+<div class="tab-content" id="tab-models">
+  <div id="models-empty" class="empty" style="display:none">
+    <div class="icon">🤖</div>
+    <div style="font-size:14px;font-weight:600;color:var(--fg)">모델 데이터 없음</div>
+    <p>요청을 보내면 모델 사용 분포가 나타납니다.</p>
+  </div>
+  <div id="models-content">
+    <div class="info-box">
+      Cupid가 각 task에 맞는 모델을 자동 선택합니다.
+      cheap 모델 비율이 높을수록 비용 효율이 좋습니다.
+    </div>
+    <div class="section-title">모델별 사용 횟수</div>
+    <div class="model-list" id="model-list-count"></div>
+
+    <div class="section-title" style="margin-top:20px">모델별 비용 사용</div>
+    <div class="model-list" id="model-list-cost"></div>
+
+    <div class="section-title" style="margin-top:20px">Tier 분포</div>
+    <div class="model-list" id="tier-list"></div>
+  </div>
+</div>
+
+<!-- History Tab -->
+<div class="tab-content" id="tab-history">
+  <div id="history-empty" class="empty" style="display:none">
+    <div class="icon">📋</div>
+    <div style="font-size:14px;font-weight:600;color:var(--fg)">히스토리 없음</div>
+    <p>요청을 보내면 이곳에 기록됩니다.</p>
+  </div>
+  <div id="history-content">
+    <div class="history-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>시간</th>
+            <th>Task Type</th>
+            <th>Model</th>
+            <th>Tokens (in/out)</th>
+            <th>Actual Cost</th>
+            <th>Saved</th>
+            <th>Savings %</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const vscode = acquireVsCodeApi();
+  const data = __ANALYTICS_DATA__;
+
+  function fmt$(v) { return "$" + (v || 0).toFixed(4); }
+  function fmtPct(v) { return (v || 0).toFixed(1) + "%"; }
+  function fmtNum(v) { return (v || 0).toLocaleString(); }
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" }) + " "
+      + d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function tierClass(t) {
+    if (!t) return "tier-default";
+    t = t.toLowerCase();
+    if (t === "cheap") return "tier-cheap";
+    if (t === "mid") return "tier-mid";
+    if (t === "strong") return "tier-strong";
+    return "tier-default";
+  }
+  function esc(s) {
+    return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // ── KPI Cards ──
+  document.getElementById("kpi-saved").textContent = fmt$(data.totalSaved);
+  document.getElementById("kpi-pct").textContent = fmtPct(data.avgSavedPct);
+  document.getElementById("kpi-requests").textContent = String(data.totalRequests);
+  document.getElementById("kpi-actual").textContent = fmt$(data.totalActualCost);
+  document.getElementById("kpi-baseline-sub").textContent =
+    "Baseline: " + fmt$(data.totalBaselineCost);
+
+  const hasData = data.totalRequests > 0;
+
+  // ── Overview Tab ──
+  document.getElementById("overview-empty").style.display = hasData ? "none" : "";
+  document.getElementById("overview-content").style.display = hasData ? "" : "none";
+
+  if (hasData) {
+    document.getElementById("hl-saved").textContent = fmt$(data.totalSaved);
+    document.getElementById("hl-baseline").textContent = fmt$(data.totalBaselineCost);
+
+    const actualPct = data.totalBaselineCost > 0
+      ? (data.totalActualCost / data.totalBaselineCost * 100) : 0;
+    document.getElementById("bar-actual").style.width = Math.min(actualPct, 100) + "%";
+    document.getElementById("bar-actual-val").textContent = fmt$(data.totalActualCost);
+    document.getElementById("bar-baseline").style.width = "100%";
+    document.getElementById("bar-baseline-val").textContent = fmt$(data.totalBaselineCost);
+
+    const note = document.getElementById("savings-note");
+    if (data.totalSaved > 0) {
+      note.style.display = "";
+      note.textContent = "✓ " + fmtPct(data.avgSavedPct) + " 절감 · "
+        + fmt$(data.totalSaved) + " 아낌 ("
+        + data.totalRequests + "건 기준)";
+    }
+
+    // Task type grid
+    const taskEl = document.getElementById("task-grid");
+    const tasks = Object.entries(data.taskTypeBreakdown)
+      .sort((a, b) => b[1].count - a[1].count);
+    taskEl.innerHTML = tasks.map(([k, v]) =>
+      `<div class="task-card">
+        <div class="task-name">${esc(k)}</div>
+        <div class="task-stats">${v.count}건 · ${fmt$(v.cost)}</div>
+      </div>`
+    ).join("") || "<div class='task-stats' style='color:var(--muted)'>데이터 없음</div>";
+  }
+
+  // ── Token Stats Tab ──
+  const tokEmpty = document.getElementById("tokens-empty");
+  const tokContent = document.getElementById("tokens-content");
+  tokEmpty.style.display = hasData ? "none" : "";
+  tokContent.style.display = hasData ? "" : "none";
+
+  if (hasData) {
+    const totalTok = data.totalInputTokens + data.totalOutputTokens;
+    document.getElementById("tok-input").textContent = fmtNum(data.totalInputTokens);
+    document.getElementById("tok-output").textContent = fmtNum(data.totalOutputTokens);
+    document.getElementById("tok-total").textContent = fmtNum(totalTok);
+
+    const cupidPer1k = totalTok > 0 ? (data.totalActualCost / totalTok * 1000) : 0;
+    const opusPer1k = totalTok > 0 ? (data.totalBaselineCost / totalTok * 1000) : 0;
+    document.getElementById("tok-cost-per-k").textContent = "$" + cupidPer1k.toFixed(5);
+    document.getElementById("tok-opus-cost-per-k").textContent = "$" + opusPer1k.toFixed(5);
+    document.getElementById("tok-effective-saving").textContent =
+      opusPer1k > 0 ? (opusPer1k / cupidPer1k).toFixed(1) + "x 저렴" : "—";
+    document.getElementById("token-price-ratio").textContent =
+      opusPer1k > 0 && cupidPer1k > 0 ? (opusPer1k / cupidPer1k).toFixed(1) : "—";
+
+    const inPct = totalTok > 0 ? (data.totalInputTokens / totalTok * 100) : 0;
+    const outPct = totalTok > 0 ? (data.totalOutputTokens / totalTok * 100) : 0;
+    document.getElementById("bar-input").style.width = inPct + "%";
+    document.getElementById("bar-input-val").textContent = fmtNum(data.totalInputTokens);
+    document.getElementById("bar-output").style.width = outPct + "%";
+    document.getElementById("bar-output-val").textContent = fmtNum(data.totalOutputTokens);
+  }
+
+  // ── Model Distribution Tab ──
+  const mdlEmpty = document.getElementById("models-empty");
+  const mdlContent = document.getElementById("models-content");
+  mdlEmpty.style.display = hasData ? "none" : "";
+  mdlContent.style.display = hasData ? "" : "none";
+
+  if (hasData) {
+    const models = Object.entries(data.modelBreakdown);
+    const maxCount = models.reduce((m, [, v]) => Math.max(m, v.count), 0);
+    const maxCost = models.reduce((m, [, v]) => Math.max(m, v.cost), 0);
+
+    // By count
+    const byCount = [...models].sort((a, b) => b[1].count - a[1].count);
+    document.getElementById("model-list-count").innerHTML = byCount.map(([, v]) => {
+      const pct = maxCount > 0 ? (v.count / maxCount * 100) : 0;
+      const reqPct = data.totalRequests > 0 ? (v.count / data.totalRequests * 100) : 0;
+      return `<div class="model-row">
+        <div class="model-row-header">
+          <div class="model-name">${esc(v.displayName)}</div>
+          <span class="tier ${tierClass(v.tier)}">${esc(v.tier)}</span>
+          <div class="model-count">${v.count}건</div>
+        </div>
+        <div class="model-bar-wrap">
+          <div class="model-bar-track"><div class="model-bar-fill" style="width:${pct}%"></div></div>
+          <div class="model-pct">${reqPct.toFixed(0)}%</div>
+        </div>
+      </div>`;
+    }).join("");
+
+    // By cost
+    const byCost = [...models].sort((a, b) => b[1].cost - a[1].cost);
+    document.getElementById("model-list-cost").innerHTML = byCost.map(([, v]) => {
+      const pct = maxCost > 0 ? (v.cost / maxCost * 100) : 0;
+      const costPct = data.totalActualCost > 0 ? (v.cost / data.totalActualCost * 100) : 0;
+      return `<div class="model-row">
+        <div class="model-row-header">
+          <div class="model-name">${esc(v.displayName)}</div>
+          <span class="tier ${tierClass(v.tier)}">${esc(v.tier)}</span>
+          <div class="model-cost-val">${fmt$(v.cost)}</div>
+        </div>
+        <div class="model-bar-wrap">
+          <div class="model-bar-track"><div class="model-bar-fill" style="width:${pct}%;background:var(--yellow)"></div></div>
+          <div class="model-pct">${costPct.toFixed(0)}%</div>
+        </div>
+      </div>`;
+    }).join("");
+
+    // Tier distribution
+    const tierCounts = {};
+    for (const [, v] of models) {
+      const t = v.tier || "unknown";
+      tierCounts[t] = (tierCounts[t] || 0) + v.count;
+    }
+    const tierTotal = Object.values(tierCounts).reduce((a, b) => a + b, 0);
+    const tierOrder = ["cheap", "mid", "strong", "local_private"];
+    const sortedTiers = Object.entries(tierCounts).sort((a, b) => {
+      return tierOrder.indexOf(a[0]) - tierOrder.indexOf(b[0]);
+    });
+    document.getElementById("tier-list").innerHTML = sortedTiers.map(([t, cnt]) => {
+      const pct = tierTotal > 0 ? (cnt / tierTotal * 100) : 0;
+      return `<div class="model-row">
+        <div class="model-row-header">
+          <div class="model-name"><span class="tier ${tierClass(t)}">${esc(t)}</span></div>
+          <div class="model-count">${cnt}건 (${pct.toFixed(0)}%)</div>
+        </div>
+        <div class="model-bar-wrap">
+          <div class="model-bar-track"><div class="model-bar-fill" style="width:${pct}%"></div></div>
+          <div class="model-pct">${pct.toFixed(0)}%</div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  // ── History Tab ──
+  const histEmpty = document.getElementById("history-empty");
+  const histContent = document.getElementById("history-content");
+  histEmpty.style.display = hasData ? "none" : "";
+  histContent.style.display = hasData ? "" : "none";
+
+  if (hasData) {
+    const tbody = document.getElementById("history-tbody");
+    tbody.innerHTML = data.recentRecords.slice(0, 200).map((r) => {
+      const savColor = r.savedPct > 50 ? "var(--green)" : r.savedPct > 20 ? "var(--yellow)" : "var(--muted)";
+      return `<tr>
+        <td class="td-cost">${fmtTime(r.timestamp)}</td>
+        <td class="td-tasktype">${esc(r.taskType)}</td>
+        <td class="td-model">${esc(r.modelDisplayName)} <span class="tier ${tierClass(r.tier)}">${esc(r.tier)}</span></td>
+        <td class="td-cost">${fmtNum(r.inputTokens)}/${fmtNum(r.outputTokens)}</td>
+        <td class="td-cost">${fmt$(r.actualCostUsd)}</td>
+        <td class="td-saved">${fmt$(r.savedCostUsd)}</td>
+        <td style="color:${savColor};font-weight:600">${fmtPct(r.savedPct)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  // ── Tab switching ──
+  function switchTab(name, btn) {
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+  }
+  window.switchTab = switchTab;
+
+  // ── Clear ──
+  function confirmClear() {
+    if (confirm("기록을 모두 삭제하시겠습니까?")) {
+      vscode.postMessage({ type: "clear" });
+    }
+  }
+  window.confirmClear = confirmClear;
+})();
+</script>
+</body>
+</html>

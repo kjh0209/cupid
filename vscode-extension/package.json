@@ -1,8 +1,8 @@
 {
   "name": "cupid-ai-router",
   "displayName": "Cupid AI Router",
-  "description": "Cursor-style AI chat with intelligent multi-model routing — saves 90%+ cost vs always using Opus",
-  "version": "0.2.0",
+  "description": "Don't code stupid. Use Cupid. — Intelligent multi-model routing saves 50-99% vs always using Opus",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -57,8 +57,27 @@
       {
         "command": "cupid.moveToRight",
         "title": "Cupid: Move chat to right (Secondary Side Bar)"
+      },
+      {
+        "command": "cupid.openAnalytics",
+        "title": "Cupid: Open Savings Dashboard",
+        "icon": "$(graph)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "cupid.openAnalytics",
+          "when": "view == cupid.chatView",
+          "group": "navigation@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "cupid.openAnalytics"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "cupid.openChat",
@@ -70,6 +89,11 @@
         "key": "ctrl+shift+l",
         "mac": "cmd+shift+l",
         "when": "editorHasSelection"
+      },
+      {
+        "command": "cupid.openAnalytics",
+        "key": "ctrl+shift+j",
+        "mac": "cmd+shift+j"
       }
     ],
     "configuration": {
@@ -78,24 +102,33 @@
         "cupid.backendUrl": {
           "type": "string",
           "default": "http://localhost:3300",
-          "description": "URL of the Cupid backend server"
+          "description": "Cupid 백엔드 URL. 기본값: http://localhost:3300. 실행: pnpm dev (cupid 루트 디렉토리에서)"
         },
         "cupid.userMode": {
           "type": "string",
           "enum": ["cost_saving", "balanced", "max_quality"],
+          "enumDescriptions": [
+            "최저 비용 우선 — cheap 모델을 적극 활용",
+            "비용과 품질 균형 (기본값)",
+            "항상 최고 품질 모델 사용"
+          ],
           "default": "balanced",
-          "description": "cost_saving aggressively prefers cheap models; max_quality always uses strong models"
+          "description": "라우팅 모드: cost_saving은 비용 최소화, max_quality는 품질 최대화"
         },
         "cupid.routingMode": {
           "type": "string",
           "enum": ["rule_based", "llm_assisted"],
+          "enumDescriptions": [
+            "규칙 기반 분류 (빠름, 라우팅 비용 없음)",
+            "LLM 분류 (정확도 높음, 소량의 추가 비용)"
+          ],
           "default": "llm_assisted",
-          "description": "How tasks are classified before routing"
+          "description": "작업 분류 방식: llm_assisted 권장"
         },
         "cupid.autoMoveToRight": {
           "type": "boolean",
           "default": true,
-          "description": "On first activation, move the Cupid chat to the right Secondary Side Bar (Cursor-style)"
+          "description": "첫 활성화 시 Cupid 채팅을 오른쪽 Secondary Side Bar로 자동 이동 (Cursor 스타일)"
         }
       }
     }

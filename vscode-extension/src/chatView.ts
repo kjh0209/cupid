@@ -3,14 +3,19 @@ import * as fs from "fs";
 import * as path from "path";
 import { getWorkspaceSessionKey } from "./sessionKey.js";
 import { applyCodeBlocks, extractCodeBlocks } from "./apply.js";
+import { analyticsStore, calcBaselineCost } from "./analytics.js";
+import { AnalyticsPanel } from "./analyticsPanel.js";
 
 export class CupidChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "cupid.chatView";
+  public readonly extensionUri: vscode.Uri;
 
   private view?: vscode.WebviewView;
   private activeStream?: AbortController;
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(extensionUri: vscode.Uri) {
+    this.extensionUri = extensionUri;
+  }
 
   resolveWebviewView(view: vscode.WebviewView) {
     this.view = view;
@@ -38,8 +43,14 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
         case "openSettings":
           await vscode.commands.executeCommand("workbench.action.openSettings", "@ext:cupid-ai-router");
           break;
+        case "openAnalytics":
+          AnalyticsPanel.createOrShow(this.extensionUri);
+          break;
         case "resetSession":
           await this.handleResetSession();
+          break;
+        case "getFileList":
+          await this.handleGetFileList();
           break;
       }
     });
@@ -91,6 +102,9 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
     this.activeStream?.abort();
     this.activeStream = new AbortController();
 
+    // Capture routing info for analytics
+    let routingInfo: { displayName: string; tier: string; taskType: string } | null = null;
+
     try {
       const res = await fetch(`${backendUrl}/api/compare/stream`, {
         method: "POST",
@@ -136,9 +150,61 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
           }
           if (!data) continue;
           try {
-            const parsed = JSON.parse(data);
-            this.view.webview.postMessage({ type: "stream", id, event, data: parsed });
-          } catch { /* skip */ }
+            const parsed = JSON.parse(data) as Record<string, unknown>;
+
+            if (event === "routing") {
+              // Capture routing info for analytics
+              const r = parsed["routing"] as Record<string, unknown> | undefined;
+              const c = parsed["classification"] as Record<string, unknown> | undefined;
+              routingInfo = {
+                displayName: String(r?.["displayName"] ?? ""),
+                tier: String(r?.["tier"] ?? ""),
+                taskType: String(c?.["taskType"] ?? ""),
+              };
+              this.view.webview.postMessage({ type: "stream", id, event, data: parsed });
+
+            } else if (event === "done") {
+              // Compute and attach savings to the done event before forwarding
+              const inputTokens = Number(parsed["inputTokens"] ?? 0);
+              const outputTokens = Number(parsed["outputTokens"] ?? 0);
+              const actualCostUsd = Number(parsed["costUsd"] ?? 0);
+              const baselineCostUsd = calcBaselineCost(inputTokens, outputTokens);
+              const savedCostUsd = Math.max(0, baselineCostUsd - actualCostUsd);
+              const savedPct = baselineCostUsd > 0 ? (savedCostUsd / baselineCostUsd) * 100 : 0;
+
+              this.view.webview.postMessage({
+                type: "stream", id, event,
+                data: { ...parsed, baselineCostUsd, savedCostUsd, savedPct },
+              });
+
+              // Record to analytics store and refresh panel
+              if (routingInfo) {
+                const modelId = String(parsed["modelId"] ?? routingInfo.displayName);
+                const latencyMs = Number(parsed["latencyMs"] ?? 0);
+                void analyticsStore.record({
+                  taskType: routingInfo.taskType,
+                  modelId,
+                  modelDisplayName: routingInfo.displayName,
+                  tier: routingInfo.tier,
+                  inputTokens,
+                  outputTokens,
+                  actualCostUsd,
+                  latencyMs,
+                }).then(() => {
+                  const summary = analyticsStore.getSummary();
+                  this.view?.webview.postMessage({
+                    type: "analyticsUpdate",
+                    sessionSaved: summary.totalSaved,
+                    sessionSavedPct: summary.avgSavedPct,
+                  });
+                  AnalyticsPanel.notifyUpdate();
+                }).catch(() => { /* ignore analytics errors */ });
+              }
+
+            } else {
+              this.view.webview.postMessage({ type: "stream", id, event, data: parsed });
+            }
+          } catch { /* skip unparseable SSE */ }
         }
       }
       this.view.webview.postMessage({ type: "assistantEnd", id });
@@ -185,6 +251,24 @@ export class CupidChatViewProvider implements vscode.WebviewViewProvider {
     } catch (err) {
       vscode.window.showErrorMessage(`Reset failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  private async handleGetFileList() {
+    const files: string[] = [];
+    const ws = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (ws) {
+      try {
+        const found = await vscode.workspace.findFiles(
+          "**/*.{ts,tsx,js,jsx,py,go,rs,java,md,json,yaml,yml,html,css,scss}",
+          "**/node_modules/**",
+          100,
+        );
+        for (const f of found) {
+          files.push(vscode.workspace.asRelativePath(f));
+        }
+      } catch { /* ignore */ }
+    }
+    this.view?.webview.postMessage({ type: "fileList", files });
   }
 
   private html(): string {
