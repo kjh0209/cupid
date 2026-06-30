@@ -11,6 +11,7 @@ import {
   getSessionUser,
 } from "../auth/session.js";
 import { logger } from "../utils/logger.js";
+import { authLimiter } from "./rateLimiter.js";
 
 interface SignupBody { email?: string; password?: string }
 interface LoginBody { email?: string; password?: string }
@@ -21,6 +22,9 @@ function isValidEmail(s: string): boolean {
 
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.post<{ Body: SignupBody }>("/api/auth/signup", async (req, reply) => {
+    if (!authLimiter.consume(req.ip)) {
+      return reply.status(429).send({ error: "too many attempts, try again later" });
+    }
     const email = (req.body?.email ?? "").trim().toLowerCase();
     const password = req.body?.password ?? "";
     if (!isValidEmail(email)) return reply.status(400).send({ error: "invalid email" });
@@ -53,6 +57,9 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   app.post<{ Body: LoginBody }>("/api/auth/login", async (req, reply) => {
+    if (!authLimiter.consume(req.ip)) {
+      return reply.status(429).send({ error: "too many attempts, try again later" });
+    }
     const email = (req.body?.email ?? "").trim().toLowerCase();
     const password = req.body?.password ?? "";
     const user = getSqlite()

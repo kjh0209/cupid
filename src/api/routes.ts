@@ -32,14 +32,16 @@ import { nowIso } from "../utils/sourceFreshness.js";
 import { randomUUID } from "crypto";
 import { getModelById } from "../recommender/modelTiering.js";
 import type { EngineerChatOutput } from "../types.js";
+import { requireAuth } from "../auth/session.js";
 
 export async function registerRoutes(app: FastifyInstance) {
 
   // ── Health ─────────────────────────────────────────────────
   app.get("/health", async () => ({ status: "ok", ts: new Date().toISOString() }));
 
-  // ── Ingest ────────────────────────────────────────────────
-  app.post("/ingest/all", async (_req, reply) => {
+  // ── Ingest (auth-protected admin operations) ──────────────────
+  app.post("/ingest/all", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       await importAll();
       const litellmCount = await collectLiteLLM().catch(() => 0);
@@ -54,7 +56,8 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/ingest/litellm", async (_req, reply) => {
+  app.post("/ingest/litellm", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       const count = await collectLiteLLM();
       return { ok: true, count };
@@ -63,7 +66,8 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/ingest/openrouter", async (_req, reply) => {
+  app.post("/ingest/openrouter", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       const count = await collectOpenRouter();
       return { ok: true, count };
@@ -72,7 +76,8 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/ingest/manual-pricing", async (_req, reply) => {
+  app.post("/ingest/manual-pricing", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       const { importManualPricing } = await import("../collectors/manualImporter.js");
       const count = await importManualPricing();
@@ -82,7 +87,8 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/ingest/manual-benchmark", async (_req, reply) => {
+  app.post("/ingest/manual-benchmark", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       const { importManualBenchmarks } = await import("../collectors/manualImporter.js");
       const count = await importManualBenchmarks();
@@ -92,7 +98,8 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/ingest/prompt-optimization-rules", async (_req, reply) => {
+  app.post("/ingest/prompt-optimization-rules", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       const count = await collectBuiltinOptimizationRules();
       return { ok: true, count };
@@ -101,7 +108,8 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/rag/reindex", async (_req, reply) => {
+  app.post("/rag/reindex", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
     try {
       await reindexAll();
       return { ok: true };
