@@ -9,9 +9,8 @@ import { callLLM } from "../evaluation/llmExecutor.js";
 import type { LLMMessage } from "../evaluation/llmExecutor.js";
 import type { ModelRecord, ModelTier, UserMode, TaskClassification } from "../types.js";
 import { logger } from "../utils/logger.js";
-import { sessionContextStore } from "../cpl/sessionContextStore.js";
-import { extractAndStore } from "../cpl/contextExtractor.js";
-import { injectRepoFileTree } from "../cpl/repoFileTree.js";
+import { priceUsd } from "../utils/pricing.js";
+import { buildCPLPreamble, injectCPLRepoTree, performCPLBookkeeping } from "../utils/cplHelpers.js";
 
 const BENCHMARK_MODEL_ID = "anthropic/claude-opus-4-5";
 
@@ -53,12 +52,6 @@ interface ExecutionResult {
   error?: string;
   revisionApplied?: boolean;
   firstPassResponse?: string;
-}
-
-function priceUsd(model: ModelRecord, inputTokens: number, outputTokens: number): number {
-  const inputCost = (inputTokens / 1_000_000) * model.inputPricePerMillion;
-  const outputCost = (outputTokens / 1_000_000) * model.outputPricePerMillion;
-  return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000;
 }
 
 async function executeWithMessages(
@@ -168,9 +161,8 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const selfRevise = selfReviseExplicit ?? (classification.riskLevel >= 4);
     const selfReviseAutoTriggered = selfReviseExplicit === undefined && classification.riskLevel >= 4;
 
-    // Inject repo file tree into CPL for tasks that need workspace context
     if (useCpl) {
-      void injectRepoFileTree(sessionKey, classification.taskType);
+      injectCPLRepoTree(sessionKey, classification.taskType);
     }
 
     const promptOpt = optimizePrompt
@@ -206,25 +198,14 @@ export async function registerCompareRoutes(app: FastifyInstance) {
 
     logger.info(`Compare: router=${routerModel.id} vs benchmark=${benchmarkModel.id}`);
 
-    // ── Build CPL preamble (model-agnostic session memory) ──────
     let cplPreamble = "";
     let cplDebug: { entriesUsed: number; tokensUsed: number; debug: unknown } | null = null;
     if (useCpl) {
-      const built = sessionContextStore.buildPreamble({
-        sessionKey,
-        query: prompt + " " + (body.fileName ?? ""),
-        taskType: classification.taskType,
-        tokenBudget: 1800,
-        includeRecentTasks: true,
-      });
+      const built = buildCPLPreamble({ sessionKey, prompt, fileName: body.fileName, taskType: classification.taskType });
       cplPreamble = built.preamble;
-      cplDebug = {
-        entriesUsed: built.entriesUsed.length,
-        tokensUsed: built.tokensUsed,
-        debug: built.debug,
-      };
+      cplDebug = { entriesUsed: built.entriesUsed, tokensUsed: built.tokensUsed, debug: built.debug };
       if (cplPreamble) {
-        logger.info(`CPL: injected ${built.entriesUsed.length} entries (~${built.tokensUsed} tokens) into session=${sessionKey}`);
+        logger.info(`CPL: injected ${built.entriesUsed} entries (~${built.tokensUsed} tokens) into session=${sessionKey}`);
       }
     }
 
@@ -342,39 +323,21 @@ export async function registerCompareRoutes(app: FastifyInstance) {
     const savingsPercent =
       benchmarkResult.costUsd > 0 ? (savingsUsd / benchmarkResult.costUsd) * 100 : 0;
 
-    // ── CPL: record task history + extract durable facts ──────
     let cplExtraction: { stored: number; facts: Array<{ kind: string; title: string }> } | null = null;
     if (sessionKey && finalRouterExec.response && !finalRouterExec.error) {
-      try {
-        sessionContextStore.recordTask({
-          sessionKey,
-          promptSummary: prompt.slice(0, 480),
-          taskType: classification.taskType,
-          routedModel: finalRouterExec.modelId,
-          responseSummary: finalRouterExec.response.slice(0, 480),
-          tokensIn: finalRouterExec.inputTokens,
-          tokensOut: finalRouterExec.outputTokens,
-          costUsd: finalRouterExec.costUsd,
-          metadata: { riskLevel: classification.riskLevel, difficulty: classification.difficulty },
-        });
-        if (extractCpl) {
-          const ext = await extractAndStore({
-            sessionKey,
-            userPrompt: prompt,
-            routedModel: finalRouterExec.modelId,
-            responseContent: finalRouterExec.response,
-            taskType: classification.taskType,
-            fileName: body.fileName,
-            rawCode: body.rawCode,
-          }, { useLlm: classification.difficulty >= 3 && finalRouterExec.response.length > 600 });
-          cplExtraction = {
-            stored: ext.stored,
-            facts: ext.facts.map((f) => ({ kind: f.kind, title: f.title })),
-          };
-        }
-      } catch (err) {
-        logger.warn("CPL record/extract failed", err);
-      }
+      cplExtraction = await performCPLBookkeeping({
+        sessionKey,
+        prompt,
+        classification,
+        routedModel: finalRouterExec.modelId,
+        response: finalRouterExec.response,
+        inputTokens: finalRouterExec.inputTokens,
+        outputTokens: finalRouterExec.outputTokens,
+        costUsd: finalRouterExec.costUsd,
+        extractCpl,
+        fileName: body.fileName,
+        rawCode: body.rawCode,
+      });
     }
 
     return reply.send({

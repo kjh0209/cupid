@@ -4,6 +4,7 @@ import { contextStorage } from "../cupid/contextStorage.js";
 import { MODEL_REGISTRY } from "../cupid/registry.js";
 import type { IDEContext } from "../cupid/types.js";
 import { logger } from "../utils/logger.js";
+import { initSSE } from "../utils/sse.js";
 
 interface PipelineRequestBody {
   prompt?: string;
@@ -59,24 +60,7 @@ export async function registerCupidRoutes(app: FastifyInstance) {
       return reply.send(result);
     }
 
-    // SSE streaming — emit one event per step, then a `done` event
-    reply.hijack();
-    reply.raw.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    });
-    // Force flush so SSE starts streaming immediately even behind buffering proxies
-    reply.raw.write(": ping\n\n");
-    if (typeof (reply.raw as { flushHeaders?: () => void }).flushHeaders === "function") {
-      (reply.raw as { flushHeaders: () => void }).flushHeaders();
-    }
-
-    const send = (event: string, data: unknown) => {
-      reply.raw.write(`event: ${event}\n`);
-      reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-    };
+    const { send, end } = initSSE(reply);
 
     try {
       const result = runPipeline(prompt, context);
@@ -102,7 +86,7 @@ export async function registerCupidRoutes(app: FastifyInstance) {
       logger.error("Pipeline SSE failed", err);
       send("error", { message: String(err) });
     } finally {
-      reply.raw.end();
+      end();
     }
   });
 }

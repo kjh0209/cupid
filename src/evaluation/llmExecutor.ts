@@ -53,6 +53,28 @@ function toOpenRouterSlug(modelId: string): string {
   return OPENROUTER_SLUG_OVERRIDES[modelId] ?? modelId;
 }
 
+function normalizeModel(baseUrl: string, modelId: string): string {
+  const isOpenRouter = baseUrl.includes("openrouter.ai");
+  const isLiteLLM = baseUrl === process.env["LITELLM_BASE_URL"];
+  return isOpenRouter
+    ? toOpenRouterSlug(modelId)
+    : isLiteLLM
+      ? modelId
+      : modelId.split("/").slice(1).join("/") || modelId;
+}
+
+function foldGeminiSystemMessages(normalizedModel: string, messages: LLMMessage[]): LLMMessage[] {
+  if (!normalizedModel.toLowerCase().includes("gemini")) return messages;
+  const sysParts = messages.filter((m) => m.role === "system").map((m) => m.content);
+  const nonSys = messages.filter((m) => m.role !== "system");
+  if (sysParts.length === 0 || nonSys.length === 0) return messages;
+  const sysText = sysParts.join("\n\n");
+  return [
+    { role: nonSys[0]!.role, content: `[System instructions]\n${sysText}\n\n[User]\n${nonSys[0]!.content}` },
+    ...nonSys.slice(1),
+  ];
+}
+
 function resolveEndpoint(modelId: string): { baseUrl: string; apiKey: string } {
   const provider = modelId.split("/")[0];
 
@@ -92,31 +114,8 @@ export async function callLLM(
   const { baseUrl, apiKey } = resolveEndpoint(modelId);
 
   const start = Date.now();
-
-  // Normalize model ID: OpenRouter/LiteLLM keep "provider/model", direct providers use "model" only
-  const isOpenRouter = baseUrl.includes("openrouter.ai");
-  const isLiteLLM = baseUrl === process.env["LITELLM_BASE_URL"];
-  const normalizedModel = isOpenRouter
-    ? toOpenRouterSlug(modelId)
-    : isLiteLLM
-      ? modelId
-      : modelId.split("/").slice(1).join("/") || modelId;
-
-  // Some Gemini models on OpenRouter occasionally return empty responses when
-  // system messages are too long. Fold the system message into the first user
-  // turn for Gemini routes to stabilize responses.
-  let finalMessages = messages;
-  if (normalizedModel.toLowerCase().includes("gemini")) {
-    const sysParts = messages.filter((m) => m.role === "system").map((m) => m.content);
-    const nonSys = messages.filter((m) => m.role !== "system");
-    if (sysParts.length > 0 && nonSys.length > 0) {
-      const sysText = sysParts.join("\n\n");
-      finalMessages = [
-        { role: nonSys[0]!.role, content: `[System instructions]\n${sysText}\n\n[User]\n${nonSys[0]!.content}` },
-        ...nonSys.slice(1),
-      ];
-    }
-  }
+  const normalizedModel = normalizeModel(baseUrl, modelId);
+  const finalMessages = foldGeminiSystemMessages(normalizedModel, messages);
 
   const body = {
     model: normalizedModel,
@@ -190,27 +189,8 @@ export async function callLLMStream(
 ): Promise<void> {
   const { baseUrl, apiKey } = resolveEndpoint(modelId);
   const start = Date.now();
-  const isOpenRouter = baseUrl.includes("openrouter.ai");
-  const isLiteLLM = baseUrl === process.env["LITELLM_BASE_URL"];
-  const normalizedModel = isOpenRouter
-    ? toOpenRouterSlug(modelId)
-    : isLiteLLM
-      ? modelId
-      : modelId.split("/").slice(1).join("/") || modelId;
-
-  // Fold system message into user turn for Gemini (same as non-streaming version)
-  let finalMessages = messages;
-  if (normalizedModel.toLowerCase().includes("gemini")) {
-    const sysParts = messages.filter((m) => m.role === "system").map((m) => m.content);
-    const nonSys = messages.filter((m) => m.role !== "system");
-    if (sysParts.length > 0 && nonSys.length > 0) {
-      const sysText = sysParts.join("\n\n");
-      finalMessages = [
-        { role: nonSys[0]!.role, content: `[System instructions]\n${sysText}\n\n[User]\n${nonSys[0]!.content}` },
-        ...nonSys.slice(1),
-      ];
-    }
-  }
+  const normalizedModel = normalizeModel(baseUrl, modelId);
+  const finalMessages = foldGeminiSystemMessages(normalizedModel, messages);
 
   // Anthropic direct API uses a different protocol; we route Anthropic through
   // a regular call + chunked-by-paragraph emit for now to keep one code path.

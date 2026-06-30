@@ -28,27 +28,13 @@
 
 import fs from "fs";
 import path from "path";
+import { loadDotEnv } from "../utils/loadEnv.js";
 import { CORPUS } from "./realWorldCorpus.js";
 import type { CorpusPrompt } from "./realWorldCorpus.js";
 import type { ModelTier, TaskType } from "../types.js";
 import { logger } from "../utils/logger.js";
 
-// Load .env so this can run standalone
-{
-  const envPath = path.resolve(process.cwd(), ".env");
-  if (fs.existsSync(envPath)) {
-    const lines = fs.readFileSync(envPath, "utf8").split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      const k = trimmed.slice(0, eq).trim();
-      const v = trimmed.slice(eq + 1).trim();
-      if (k && process.env[k] === undefined) process.env[k] = v;
-    }
-  }
-}
+loadDotEnv();
 
 const TIER_ORDER: Record<ModelTier, number> = {
   cheap: 0, mid: 1, long_context: 2, strong: 3, local_private: 0, unknown: 0,
