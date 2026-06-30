@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { callLLM } from "../evaluation/llmExecutor.js";
 import { getModelById } from "../recommender/modelTiering.js";
 import { logger } from "../utils/logger.js";
+import { priceUsd } from "../utils/pricing.js";
 import { requireAuth } from "../auth/session.js";
 
 interface ChatMessage { role: "system" | "user" | "assistant"; content: string }
@@ -49,8 +50,6 @@ export async function registerChatRoutes(app: FastifyInstance) {
             return { modelId, displayName: modelId, tier: "unknown", content: "", inputTokens: 0, outputTokens: 0, costUsd: 0, latencyMs: 0, error: "model not in catalogue" };
           }
           const res = await callLLM(modelId, messages, temperature, maxTokens);
-          const inputCost = (res.usage.inputTokens / 1_000_000) * model.inputPricePerMillion;
-          const outputCost = (res.usage.outputTokens / 1_000_000) * model.outputPricePerMillion;
           return {
             modelId,
             displayName: model.displayName,
@@ -58,7 +57,7 @@ export async function registerChatRoutes(app: FastifyInstance) {
             content: res.content,
             inputTokens: res.usage.inputTokens,
             outputTokens: res.usage.outputTokens,
-            costUsd: Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000,
+            costUsd: priceUsd(model, res.usage.inputTokens, res.usage.outputTokens),
             latencyMs: res.latencyMs,
           };
         } catch (err) {

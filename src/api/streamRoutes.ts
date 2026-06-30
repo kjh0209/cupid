@@ -25,9 +25,9 @@ import { callLLMStream } from "../evaluation/llmExecutor.js";
 import type { LLMMessage } from "../evaluation/llmExecutor.js";
 import type { ModelRecord, ModelTier, UserMode, TaskClassification } from "../types.js";
 import { logger } from "../utils/logger.js";
-import { sessionContextStore } from "../cpl/sessionContextStore.js";
-import { extractAndStore } from "../cpl/contextExtractor.js";
-import { injectRepoFileTree } from "../cpl/repoFileTree.js";
+import { priceUsd } from "../utils/pricing.js";
+import { initSSE } from "../utils/sse.js";
+import { buildCPLPreamble, injectCPLRepoTree, performCPLBookkeeping } from "../utils/cplHelpers.js";
 
 interface StreamBody {
   prompt?: string;
@@ -39,12 +39,6 @@ interface StreamBody {
   sessionKey?: string;
   useCpl?: boolean;
   extractCpl?: boolean;
-}
-
-function priceUsd(model: ModelRecord, inputTokens: number, outputTokens: number): number {
-  const inputCost = (inputTokens / 1_000_000) * model.inputPricePerMillion;
-  const outputCost = (outputTokens / 1_000_000) * model.outputPricePerMillion;
-  return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000;
 }
 
 export async function registerStreamRoutes(app: FastifyInstance) {
@@ -60,23 +54,7 @@ export async function registerStreamRoutes(app: FastifyInstance) {
     const extractCpl = (body.extractCpl ?? true) && !!sessionKey;
     const maxTokens = Math.min(16384, Math.max(256, Number(body.maxTokens ?? 4096)));
 
-    // ── Open SSE ──
-    reply.hijack();
-    reply.raw.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    });
-    reply.raw.write(": ping\n\n");
-    if (typeof (reply.raw as { flushHeaders?: () => void }).flushHeaders === "function") {
-      (reply.raw as { flushHeaders: () => void }).flushHeaders();
-    }
-
-    const send = (event: string, data: unknown) => {
-      reply.raw.write(`event: ${event}\n`);
-      reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-    };
+    const { send, end } = initSSE(reply);
 
     try {
       // ── Phase 1: classify ──
@@ -99,8 +77,7 @@ export async function registerStreamRoutes(app: FastifyInstance) {
         classification = taskClassifier.classify({ message: prompt, userMode, selectedCode: body.rawCode, activeFilePath: body.fileName });
       }
 
-      // Inject repo tree if relevant
-      if (useCpl) void injectRepoFileTree(sessionKey, classification.taskType);
+      if (useCpl) injectCPLRepoTree(sessionKey, classification.taskType);
 
       // ── Phase 2: optimize prompt + recommend model ──
       const promptOpt = promptTokenOptimizer.optimize({
@@ -143,19 +120,12 @@ export async function registerStreamRoutes(app: FastifyInstance) {
         },
       });
 
-      // ── Phase 3: build CPL preamble + executor messages ──
       let cplPreamble = "";
       let cplInjected = 0;
       if (useCpl) {
-        const built = sessionContextStore.buildPreamble({
-          sessionKey,
-          query: prompt + " " + (body.fileName ?? ""),
-          taskType: classification.taskType,
-          tokenBudget: 1800,
-          includeRecentTasks: true,
-        });
+        const built = buildCPLPreamble({ sessionKey, prompt, fileName: body.fileName, taskType: classification.taskType });
         cplPreamble = built.preamble;
-        cplInjected = built.entriesUsed.length;
+        cplInjected = built.entriesUsed;
       }
       if (cplInjected > 0) {
         send("cpl", { injectedEntries: cplInjected });
@@ -209,43 +179,26 @@ export async function registerStreamRoutes(app: FastifyInstance) {
         );
       });
 
-      // ── Phase 5: CPL bookkeeping ──
       if (sessionKey && collected) {
-        try {
-          sessionContextStore.recordTask({
-            sessionKey,
-            promptSummary: prompt.slice(0, 480),
-            taskType: classification.taskType,
-            routedModel: routerModel.id,
-            responseSummary: collected.slice(0, 480),
-            tokensIn: finalUsage.inputTokens,
-            tokensOut: finalUsage.outputTokens,
-            costUsd: finalCost,
-            metadata: { riskLevel: classification.riskLevel, difficulty: classification.difficulty },
-          });
-          if (extractCpl) {
-            await extractAndStore({
-              sessionKey,
-              userPrompt: prompt,
-              routedModel: routerModel.id,
-              responseContent: collected,
-              taskType: classification.taskType,
-              fileName: body.fileName,
-              rawCode: body.rawCode,
-            }, { useLlm: false });
-          }
-        } catch (err) {
-          logger.warn("Stream CPL bookkeeping failed", err);
-        }
+        await performCPLBookkeeping({
+          sessionKey,
+          prompt,
+          classification,
+          routedModel: routerModel.id,
+          response: collected,
+          inputTokens: finalUsage.inputTokens,
+          outputTokens: finalUsage.outputTokens,
+          costUsd: finalCost,
+          extractCpl,
+          fileName: body.fileName,
+          rawCode: body.rawCode,
+        });
       }
     } catch (err) {
       logger.error("Stream route failed", err);
-      try {
-        reply.raw.write(`event: error\n`);
-        reply.raw.write(`data: ${JSON.stringify({ message: String(err) })}\n\n`);
-      } catch { /* socket may already be closed */ }
+      try { send("error", { message: String(err) }); } catch { /* socket may already be closed */ }
     } finally {
-      try { reply.raw.end(); } catch { /* ignore */ }
+      end();
     }
   });
 }

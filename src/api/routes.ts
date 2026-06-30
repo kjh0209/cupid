@@ -29,9 +29,19 @@ import {
 } from "../db/schema.js";
 import { logger } from "../utils/logger.js";
 import { nowIso } from "../utils/sourceFreshness.js";
+import type { FastifyReply } from "fastify";
 import { randomUUID } from "crypto";
 import { getModelById } from "../recommender/modelTiering.js";
 import type { EngineerChatOutput } from "../types.js";
+
+async function wrapIngest<T>(reply: FastifyReply, fn: () => Promise<T>): Promise<T | void> {
+  try {
+    return await fn();
+  } catch (err) {
+    logger.error("Ingest failed", err);
+    return reply.status(500).send({ error: String(err) });
+  }
+}
 
 export async function registerRoutes(app: FastifyInstance) {
 
@@ -40,7 +50,7 @@ export async function registerRoutes(app: FastifyInstance) {
 
   // ── Ingest ────────────────────────────────────────────────
   app.post("/ingest/all", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       await importAll();
       const litellmCount = await collectLiteLLM().catch(() => 0);
       const openrouterCount = await collectOpenRouter().catch(() => 0);
@@ -48,66 +58,51 @@ export async function registerRoutes(app: FastifyInstance) {
       await collectBuiltinOptimizationRules();
       await buildAllDocuments();
       return { ok: true, litellmCount, openrouterCount };
-    } catch (err) {
-      logger.error("Ingest failed", err);
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   app.post("/ingest/litellm", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       const count = await collectLiteLLM();
       return { ok: true, count };
-    } catch (err) {
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   app.post("/ingest/openrouter", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       const count = await collectOpenRouter();
       return { ok: true, count };
-    } catch (err) {
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   app.post("/ingest/manual-pricing", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       const { importManualPricing } = await import("../collectors/manualImporter.js");
       const count = await importManualPricing();
       return { ok: true, count };
-    } catch (err) {
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   app.post("/ingest/manual-benchmark", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       const { importManualBenchmarks } = await import("../collectors/manualImporter.js");
       const count = await importManualBenchmarks();
       return { ok: true, count };
-    } catch (err) {
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   app.post("/ingest/prompt-optimization-rules", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       const count = await collectBuiltinOptimizationRules();
       return { ok: true, count };
-    } catch (err) {
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   app.post("/rag/reindex", async (_req, reply) => {
-    try {
+    return wrapIngest(reply, async () => {
       await reindexAll();
       return { ok: true };
-    } catch (err) {
-      return reply.status(500).send({ error: String(err) });
-    }
+    });
   });
 
   // ── Classify Task ─────────────────────────────────────────
