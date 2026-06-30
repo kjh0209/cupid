@@ -5,7 +5,7 @@ import { todayIso } from "../utils/sourceFreshness.js";
 
 // Built-in prompt optimization rules based on official provider documentation
 // and engineering best practices.
-const BUILTIN_RULES = [
+export const BUILTIN_RULES = [
   {
     id: "stable-context-first",
     title: "Place stable context before dynamic instructions",

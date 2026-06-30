@@ -267,9 +267,15 @@ const subcommand = process.argv[2];
 
 async function main() {
   initDb();
-  await importManualPricing().catch(() => {});
-  await collectBuiltinBenchmarks().catch(() => {});
-  await collectBuiltinOptimizationRules().catch(() => {});
+  await importManualPricing().catch((err) => {
+    logger.warn("Failed to import manual pricing, continuing with existing data", err);
+  });
+  await collectBuiltinBenchmarks().catch((err) => {
+    logger.warn("Failed to collect builtin benchmarks, continuing with existing data", err);
+  });
+  await collectBuiltinOptimizationRules().catch((err) => {
+    logger.warn("Failed to collect optimization rules, continuing with existing data", err);
+  });
 
   if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 

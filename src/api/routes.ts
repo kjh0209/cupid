@@ -42,8 +42,14 @@ export async function registerRoutes(app: FastifyInstance) {
   app.post("/ingest/all", async (_req, reply) => {
     try {
       await importAll();
-      const litellmCount = await collectLiteLLM().catch(() => 0);
-      const openrouterCount = await collectOpenRouter().catch(() => 0);
+      const litellmCount = await collectLiteLLM().catch((err) => {
+        logger.warn("LiteLLM collection failed during full ingest, continuing", err);
+        return 0;
+      });
+      const openrouterCount = await collectOpenRouter().catch((err) => {
+        logger.warn("OpenRouter collection failed during full ingest, continuing", err);
+        return 0;
+      });
       await collectBuiltinBenchmarks();
       await collectBuiltinOptimizationRules();
       await buildAllDocuments();
@@ -315,8 +321,8 @@ export async function registerRoutes(app: FastifyInstance) {
         estimatedTokenSavings: promptOpt.estimatedTokenSavings,
         createdAt: nowIso(),
       });
-    } catch {
-      // Non-fatal logging failure
+    } catch (err) {
+      logger.warn("Failed to log recommendation", err);
     }
 
     return output;
@@ -377,11 +383,15 @@ export async function registerRoutes(app: FastifyInstance) {
       const db = getDb();
       const rules = await db.select().from(promptOptimizationRules);
       return { rules };
-    } catch {
-      const { BUILTIN_RULES } = await import("../collectors/promptOptimizationCollector.js").catch(
-        () => ({ BUILTIN_RULES: [] })
-      );
-      return { rules: [] };
+    } catch (err) {
+      logger.warn("Failed to fetch optimization rules from DB, falling back to built-in rules", err);
+      try {
+        const { BUILTIN_RULES } = await import("../collectors/promptOptimizationCollector.js");
+        return { rules: BUILTIN_RULES };
+      } catch (importErr) {
+        logger.error("Failed to load built-in optimization rules", importErr);
+        return { rules: [] };
+      }
     }
   });
 
@@ -395,7 +405,8 @@ export async function registerRoutes(app: FastifyInstance) {
         .prepare("SELECT * FROM recommendation_logs ORDER BY created_at DESC LIMIT ?")
         .all(limit);
       return { logs: rows };
-    } catch {
+    } catch (err) {
+      logger.warn("Failed to fetch recommendation logs", err);
       return { logs: [] };
     }
   });
@@ -414,7 +425,8 @@ export async function registerRoutes(app: FastifyInstance) {
         FROM recommendation_logs
       `).get() as Record<string, number>;
       return { stats };
-    } catch {
+    } catch (err) {
+      logger.warn("Failed to fetch cost-savings stats", err);
       return { stats: null };
     }
   });
@@ -431,7 +443,8 @@ export async function registerRoutes(app: FastifyInstance) {
         WHERE estimated_raw_tokens > 0
       `).get() as Record<string, number>;
       return { stats };
-    } catch {
+    } catch (err) {
+      logger.warn("Failed to fetch prompt-token-savings stats", err);
       return { stats: null };
     }
   });
@@ -451,7 +464,8 @@ export async function registerRoutes(app: FastifyInstance) {
         ORDER BY uses DESC
       `).all();
       return { stats };
-    } catch {
+    } catch (err) {
+      logger.warn("Failed to fetch model-performance stats", err);
       return { stats: [] };
     }
   });

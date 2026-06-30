@@ -143,8 +143,8 @@ export async function collectLiteLLM(): Promise<number> {
           },
         });
       count++;
-    } catch {
-      // Skip invalid entries
+    } catch (err) {
+      logger.warn(`Failed to upsert LiteLLM model ${normalizedId}`, err);
     }
   }
 
