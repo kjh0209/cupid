@@ -118,8 +118,8 @@ export async function collectOpenRouter(): Promise<number> {
           },
         });
       count++;
-    } catch {
-      // Skip
+    } catch (err) {
+      logger.warn(`Failed to upsert OpenRouter model ${model.id}`, err);
     }
   }
 

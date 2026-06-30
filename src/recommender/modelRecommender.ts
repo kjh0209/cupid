@@ -33,7 +33,8 @@ export class ModelRecommender {
     let allModels: ModelRecord[];
     try {
       allModels = await getAllActiveModels();
-    } catch {
+    } catch (err) {
+      logger.warn("Failed to fetch models from DB, falling back to built-in catalogue", err);
       allModels = KNOWN_MODELS.filter((m) => !m.deprecated);
     }
 

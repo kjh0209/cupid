@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { randomUUID } from "crypto";
 import { getSqlite } from "../db/database.js";
 import { requireAuth } from "../auth/session.js";
+import { logger } from "../utils/logger.js";
 
 interface WorkspaceRow {
   id: string;
@@ -133,7 +134,12 @@ export async function registerWorkspaceRoutes(app: FastifyInstance) {
           .prepare(`INSERT INTO ide_workspace_files (id, workspace_id, path, content, updated_at) VALUES (?, ?, ?, ?, ?)`)
           .run(id, req.params.id, path, content, now);
       } catch (e) {
-        return reply.status(409).send({ error: "file with that path already exists" });
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes("UNIQUE constraint")) {
+          return reply.status(409).send({ error: "file with that path already exists" });
+        }
+        logger.error("Failed to create workspace file", e);
+        return reply.status(500).send({ error: "failed to create file" });
       }
       getSqlite()
         .prepare(`UPDATE ide_workspaces SET updated_at = ? WHERE id = ?`)
@@ -169,7 +175,12 @@ export async function registerWorkspaceRoutes(app: FastifyInstance) {
           .prepare(`UPDATE ide_workspace_files SET content = ?, path = ?, updated_at = ? WHERE id = ?`)
           .run(newContent, newPath, now, req.params.fileId);
       } catch (e) {
-        return reply.status(409).send({ error: "path conflict" });
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes("UNIQUE constraint")) {
+          return reply.status(409).send({ error: "path conflict" });
+        }
+        logger.error("Failed to update workspace file", e);
+        return reply.status(500).send({ error: "failed to update file" });
       }
       getSqlite()
         .prepare(`UPDATE ide_workspaces SET updated_at = ? WHERE id = ?`)
